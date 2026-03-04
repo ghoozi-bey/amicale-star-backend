@@ -28,7 +28,7 @@ public class EvenementController {
         return evenementService.getAllEvenements();
     }
 
-    @PutMapping("/archiver/{id}")
+    @PatchMapping("/{id}/archiver")
     public Evenement archiver(@PathVariable Long id) {
         return evenementService.archiverEvenement(id);
     }
