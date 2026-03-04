@@ -34,5 +34,6 @@ public class Evenement {
     private Integer nbPlaces;
 
     @Enumerated(EnumType.STRING)
+
     private StatutEvenement statut;
 }

@@ -11,4 +11,8 @@ public interface EvenementService {
     List<Evenement> getAllEvenements();
 
     Evenement archiverEvenement(Long id);
+
+    void deleteEvenement(Long id);
+
+    Evenement updateEvenement(Long id, Evenement evenement);
 }

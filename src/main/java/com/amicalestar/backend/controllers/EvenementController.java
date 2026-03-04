@@ -32,8 +32,19 @@ public class EvenementController {
     public Evenement archiver(@PathVariable Long id) {
         return evenementService.archiverEvenement(id);
     }
-    @GetMapping("/")
+
+    @GetMapping("/test")
     public String test() {
         return "Backend Amicale STAR fonctionne 🚀";
+    }
+
+    @DeleteMapping("/{id}")
+    public void delete(@PathVariable Long id) {
+        evenementService.deleteEvenement(id);
+    }
+
+    @PatchMapping("/{id}")
+    public Evenement updatePrix(@PathVariable Long id, @RequestBody Evenement evenement) {
+        return evenementService.updateEvenement(id, evenement);
     }
 }

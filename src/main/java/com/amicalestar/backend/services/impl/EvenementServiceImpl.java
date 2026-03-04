@@ -34,4 +34,26 @@ public class EvenementServiceImpl implements EvenementService {
         event.setStatut(StatutEvenement.ARCHIVE);
         return evenementRepository.save(event);
     }
+
+    @Override
+    public void deleteEvenement(Long id) {
+        evenementRepository.deleteById(id);
+    }
+
+    @Override
+    public Evenement updateEvenement(Long id, Evenement evenement) {
+
+        Evenement existing = evenementRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Evenement non trouvé"));
+
+        if (evenement.getPrix() != null) {
+            existing.setPrix(evenement.getPrix());
+        }
+
+        if (evenement.getTitre() != null) {
+            existing.setTitre(evenement.getTitre());
+        }
+
+        return evenementRepository.save(existing);
+    }
 }
