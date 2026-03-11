@@ -4,7 +4,7 @@ public enum TypeAdherent {
 
     ADMIN,
     MEMBRE_AMICALE,
-    ORGANISATEUR_ELECTIONS,
+    RESPONSABLE_ELECTION,
     ADHERENT
 
 }

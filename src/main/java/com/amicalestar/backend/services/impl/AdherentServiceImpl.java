@@ -18,6 +18,10 @@ public class AdherentServiceImpl implements AdherentService {
     @Override
     public Adherent createAdherent(Adherent adherent) {
 
+        if (adherentRepository.existsById(adherent.getMatricule())) {
+            throw new RuntimeException("Matricule already exists");
+        }
+
         if (adherent.getTypeAdherent() == null) {
             adherent.setTypeAdherent(TypeAdherent.ADHERENT);
         }
@@ -31,14 +35,14 @@ public class AdherentServiceImpl implements AdherentService {
     }
 
     @Override
-    public Adherent getAdherentById(Long id) {
-        return adherentRepository.findById(id).orElse(null);
+    public Adherent getAdherentById(String matricule) {
+        return adherentRepository.findById(matricule).orElse(null);
     }
 
     @Override
-    public Adherent updateAdherent(Long id, Adherent adherent) {
+    public Adherent updateAdherent(String matricule, Adherent adherent) {
 
-        Adherent existing = adherentRepository.findById(id).orElse(null);
+        Adherent existing = adherentRepository.findById(matricule).orElse(null);
 
         if (existing != null) {
 
@@ -85,7 +89,7 @@ public class AdherentServiceImpl implements AdherentService {
     }
 
     @Override
-    public void deleteAdherent(Long id) {
-        adherentRepository.deleteById(id);
+    public void deleteAdherent(String matricule) {
+        adherentRepository.deleteById(matricule);
     }
 }

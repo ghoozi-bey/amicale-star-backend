@@ -10,6 +10,7 @@ import java.util.Date;
 
 @Entity
 @Table(name = "adherents")
+@Inheritance(strategy = InheritanceType.JOINED)
 @Getter
 @Setter
 @NoArgsConstructor
@@ -18,8 +19,9 @@ import java.util.Date;
 public class Adherent {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long idAdherent;
+    @Pattern(regexp = "STAR\\d{6}")
+    @Column(length = 10)
+    private String matricule;
 
     private String nom;
 
@@ -33,10 +35,6 @@ public class Adherent {
     @Pattern(regexp = "\\d{8}")
     @Column(unique = true, length = 8)
     private String cin;
-
-    @Pattern(regexp = "STAR\\d{6}")
-    @Column(unique = true, nullable = false, length = 10)
-    private String matricule;
 
     @Temporal(TemporalType.DATE)
     @Column(updatable = false)

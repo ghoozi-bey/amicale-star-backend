@@ -9,12 +9,14 @@ import java.util.List;
 import java.util.Optional;
 
 @Repository
-public interface AdherentRepository extends JpaRepository<Adherent, Long> {
+public interface AdherentRepository extends JpaRepository<Adherent, String> {
 
     Optional<Adherent> findByEmail(String email);
+
     List<Adherent> findByDepartement(Departement departement);
+
     List<Adherent> findByActif(Boolean actif);
+
     Optional<Adherent> findByCin(String cin);
-    Optional<Adherent> findByMatricule(String matricule);
 
 }

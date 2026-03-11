@@ -10,10 +10,10 @@ public interface AdherentService {
 
     List<Adherent> getAllAdherents();
 
-    Adherent getAdherentById(Long id);
+    Adherent getAdherentById(String matricule);
 
-    Adherent updateAdherent(Long id, Adherent adherent);
+    Adherent updateAdherent(String matricule, Adherent adherent);
 
-    void deleteAdherent(Long id);
+    void deleteAdherent(String matricule);
 
 }

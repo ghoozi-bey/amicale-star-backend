@@ -25,19 +25,19 @@ public class AdherentController {
         return adherentService.getAllAdherents();
     }
 
-    @GetMapping("/{id}")
-    public Adherent getById(@PathVariable Long id) {
-        return adherentService.getAdherentById(id);
+    @GetMapping("/{matricule}")
+    public Adherent getById(@PathVariable String matricule) {
+        return adherentService.getAdherentById(matricule);
     }
 
-    @DeleteMapping("/{id}")
-    public void delete(@PathVariable Long id) {
-        adherentService.deleteAdherent(id);
+    @DeleteMapping("/{matricule}")
+    public void delete(@PathVariable String matricule) {
+        adherentService.deleteAdherent(matricule);
     }
 
-    @PatchMapping("/{id}")
-    public Adherent update(@PathVariable Long id, @RequestBody Adherent adherent) {
-        return adherentService.updateAdherent(id, adherent);
+    @PatchMapping("/{matricule}")
+    public Adherent update(@PathVariable String matricule, @RequestBody Adherent adherent) {
+        return adherentService.updateAdherent(matricule, adherent);
     }
 
     @GetMapping("/test")
