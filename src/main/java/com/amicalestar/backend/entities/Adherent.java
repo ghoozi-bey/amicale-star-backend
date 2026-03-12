@@ -2,11 +2,13 @@ package com.amicalestar.backend.entities;
 
 import com.amicalestar.backend.enums.Departement;
 import com.amicalestar.backend.enums.TypeAdherent;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Pattern;
 import lombok.*;
 
 import java.util.Date;
+import java.util.List;
 
 @Entity
 @Table(name = "adherents")
@@ -24,7 +26,6 @@ public class Adherent {
     private String matricule;
 
     private String nom;
-
     private String prenom;
 
     @Column(unique = true, nullable = false)
@@ -58,13 +59,15 @@ public class Adherent {
     @Column(length = 255)
     private String photoProfil;
 
+    @JsonIgnore
+    @OneToMany(mappedBy = "adherent")
+    private List<Inscription> inscriptions;
+
     @PrePersist
     public void prePersist() {
         this.dateinscription = new Date();
-
         if (this.actif == null) {
             this.actif = true;
         }
     }
-
 }
