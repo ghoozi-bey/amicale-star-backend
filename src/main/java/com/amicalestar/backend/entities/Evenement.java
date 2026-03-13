@@ -35,6 +35,8 @@ public class Evenement {
 
     private Integer nbPlaces;
 
+    private String photo;
+
     @Enumerated(EnumType.STRING)
     private StatutEvenement statut;
 
