@@ -4,6 +4,8 @@ import com.amicalestar.backend.entities.Adherent;
 import com.amicalestar.backend.enums.TypeAdherent;
 import com.amicalestar.backend.repositories.AdherentRepository;
 import com.amicalestar.backend.services.AdherentService;
+import com.amicalestar.backend.dto.UpdateProfileRequest;
+
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -91,5 +93,33 @@ public class AdherentServiceImpl implements AdherentService {
     @Override
     public void deleteAdherent(String matricule) {
         adherentRepository.deleteById(matricule);
+    }
+
+    // 🔵 modification profil adhérent
+    @Override
+    public void updateProfile(String matricule, UpdateProfileRequest request) {
+
+        Adherent adherent = adherentRepository.findById(matricule)
+                .orElse(null);
+
+        if(request.getEmail() != null){
+            adherent.setEmail(request.getEmail());
+        }
+
+        if(request.getTelephone() != null){
+            adherent.setTelephone(request.getTelephone());
+        }
+
+        if(request.getPassword() != null){
+            adherent.setMotdepasse(request.getPassword());
+        }
+
+        adherentRepository.save(adherent);
+    }
+    @Override
+    public Adherent getProfile(String matricule) {
+
+        return adherentRepository.findById(matricule)
+                .orElseThrow(() -> new RuntimeException("Adherent not found"));
     }
 }

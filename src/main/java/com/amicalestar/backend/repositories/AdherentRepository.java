@@ -19,4 +19,6 @@ public interface AdherentRepository extends JpaRepository<Adherent, String> {
 
     Optional<Adherent> findByCin(String cin);
 
+    Adherent findByEmailAndMotdepasse(String email, String motdepasse);
+
 }
