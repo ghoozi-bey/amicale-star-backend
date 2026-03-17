@@ -9,6 +9,8 @@ import org.springframework.web.bind.annotation.*;
 
 import lombok.RequiredArgsConstructor;
 
+import java.util.List;
+
 @RestController
 @RequestMapping("/api/adherents")
 @RequiredArgsConstructor
@@ -47,5 +49,9 @@ public class AdherentController {
         Adherent adherent = adherentService.getProfile(matricule);
 
         return ResponseEntity.ok(adherent);
+    }
+    @GetMapping("/all")
+    public ResponseEntity<List<Adherent>> getAll() {
+        return ResponseEntity.ok(adherentService.getAllAdherents());
     }
 }
