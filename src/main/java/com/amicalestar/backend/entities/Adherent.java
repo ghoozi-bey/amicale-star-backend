@@ -31,7 +31,7 @@ public class Adherent {
     @Column(unique = true, nullable = false)
     private String email;
 
-    private String motdepasse;
+    private String password;
 
     @Pattern(regexp = "\\d{8}")
     @Column(unique = true, length = 8)
@@ -69,5 +69,9 @@ public class Adherent {
         if (this.actif == null) {
             this.actif = true;
         }
+    }
+
+    public String getRoleName() {
+        return "ROLE_" + this.typeAdherent.name();
     }
 }

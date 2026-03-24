@@ -9,6 +9,8 @@ import com.amicalestar.backend.dto.UpdateProfileRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import org.springframework.security.crypto.password.PasswordEncoder;
+
 import java.util.List;
 
 @Service
@@ -16,6 +18,7 @@ import java.util.List;
 public class AdherentServiceImpl implements AdherentService {
 
     private final AdherentRepository adherentRepository;
+    private final PasswordEncoder passwordEncoder;
 
     @Override
     public Adherent createAdherent(Adherent adherent) {
@@ -27,6 +30,9 @@ public class AdherentServiceImpl implements AdherentService {
         if (adherent.getTypeAdherent() == null) {
             adherent.setTypeAdherent(TypeAdherent.ADHERENT);
         }
+
+        // Encrypt password BEFORE saving
+        adherent.setPassword(passwordEncoder.encode(adherent.getPassword()));
 
         return adherentRepository.save(adherent);
     }
@@ -57,8 +63,8 @@ public class AdherentServiceImpl implements AdherentService {
             if (adherent.getEmail() != null)
                 existing.setEmail(adherent.getEmail());
 
-            if (adherent.getMotdepasse() != null)
-                existing.setMotdepasse(adherent.getMotdepasse());
+            if (adherent.getPassword() != null)
+                existing.setPassword(passwordEncoder.encode(adherent.getPassword()));
 
             if (adherent.getTypeAdherent() != null)
                 existing.setTypeAdherent(adherent.getTypeAdherent());
@@ -95,7 +101,7 @@ public class AdherentServiceImpl implements AdherentService {
         adherentRepository.deleteById(matricule);
     }
 
-    // 🔵 modification profil adhérent
+    // modification profil adhérent
     @Override
     public void updateProfile(String matricule, UpdateProfileRequest request) {
 
@@ -111,11 +117,12 @@ public class AdherentServiceImpl implements AdherentService {
         }
 
         if(request.getPassword() != null){
-            adherent.setMotdepasse(request.getPassword());
+            adherent.setPassword(passwordEncoder.encode(request.getPassword()));
         }
 
         adherentRepository.save(adherent);
     }
+
     @Override
     public Adherent getProfile(String matricule) {
 
