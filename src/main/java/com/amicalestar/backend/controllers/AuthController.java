@@ -20,6 +20,19 @@ public class AuthController {
     private final AdherentRepository adherentRepository;
 
     @PostMapping("/login")
+    public String login(@RequestBody LoginRequest request) {
+
+        authenticationManager.authenticate(
+                new UsernamePasswordAuthenticationToken(
+                        request.getEmail(),
+                        request.getPassword()
+                )
+        );
+
+        return jwtService.generateToken(request.getEmail());
+    }
+
+    /*@PostMapping("/login")
     public Adherent login(@RequestBody Adherent loginData){
 
         Adherent adherent = adherentRepository
@@ -33,18 +46,5 @@ public class AuthController {
         }
 
         return adherent;
-    }
-
-    /*@PostMapping("/login")
-    public String login(@RequestBody LoginRequest request) {
-
-        authenticationManager.authenticate(
-                new UsernamePasswordAuthenticationToken(
-                        request.getEmail(),
-                        request.getPassword()
-                )
-        );
-
-        return jwtService.generateToken(request.getEmail());
     }*/
 }

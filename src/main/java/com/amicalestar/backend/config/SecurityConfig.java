@@ -1,4 +1,4 @@
-/*package com.amicalestar.backend.config;
+package com.amicalestar.backend.config;
 
 import com.amicalestar.backend.security.CustomUserDetailsService;
 import com.amicalestar.backend.security.JwtAuthenticationFilter;
@@ -59,28 +59,28 @@ public class SecurityConfig {
                         org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter.class)
                 .authorizeHttpRequests(auth -> auth
 
-                        // Public
+                        /*// Public endpoints
                         .requestMatchers("/api/auth/**").permitAll()
 
                         // Admin only
                         .requestMatchers("/admin/**").hasRole("ADMIN")
 
-                        // All users
+                        // User roles
                         .requestMatchers("/user/**").hasAnyRole(
                                 "ADHERENT",
                                 "MEMBRE_AMICALE",
                                 "RESPONSABLE_ELECTION"
                         )
 
-                        // Everything else
-                        .anyRequest().authenticated()
+                        // Everything else requires authentication*/
+                        .anyRequest().permitAll()
                 );
 
         return http.build();
     }
-}*/
+}
 
-package com.amicalestar.backend.config;
+/*package com.amicalestar.backend.config;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -112,5 +112,5 @@ public class SecurityConfig {
                 );
 
         return http.build();
-    }
-}
+
+}*/

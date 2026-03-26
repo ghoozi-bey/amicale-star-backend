@@ -18,6 +18,11 @@ public class AdherentController {
 
     private final AdherentService adherentService;
 
+    @PostMapping
+    public ResponseEntity<Adherent> create(@RequestBody Adherent adherent) {
+        return ResponseEntity.ok(adherentService.createAdherent(adherent));
+    }
+
     @DeleteMapping("/{matricule}")
     public void delete(@PathVariable String matricule) {
         adherentService.deleteAdherent(matricule);
