@@ -21,18 +21,15 @@ public class Evenement {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    // 🟢 Champs communs
     private String titre;
-
     private String description;
-
     private String lieu;
 
     private LocalDate dateDebut;
-
     private LocalDate dateFin;
 
     private Double prix;
-
     private Integer nbPlaces;
 
     private String photo;
@@ -40,6 +37,17 @@ public class Evenement {
     @Enumerated(EnumType.STRING)
     private StatutEvenement statut;
 
+    // 🟢 Type d'événement (relation)
+    @ManyToOne
+    @JoinColumn(name = "type_evenement_id")
+    private TypeEvenement typeEvenement;
+
+    // 🟢 Champs spécifiques selon type
+    private String societe;     // CONVENTION
+    private String agence;      // OMRA / HAJJ
+    private String destination; // VOYAGE
+
+    // 🟢 Relations
     @JsonIgnore
     @OneToMany(mappedBy = "evenement", cascade = CascadeType.ALL)
     private List<Inscription> inscriptions;

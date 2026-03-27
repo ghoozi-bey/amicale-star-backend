@@ -24,18 +24,22 @@ public class AdherentController {
     }
 
     @DeleteMapping("/{matricule}")
-    public void delete(@PathVariable String matricule) {
+    public ResponseEntity<Void> delete(@PathVariable String matricule) {
         adherentService.deleteAdherent(matricule);
+        return ResponseEntity.noContent().build();
     }
 
     @PatchMapping("/{matricule}")
-    public Adherent update(@PathVariable String matricule, @RequestBody Adherent adherent) {
-        return adherentService.updateAdherent(matricule, adherent);
+    public ResponseEntity<Adherent> update(
+            @PathVariable String matricule,
+            @RequestBody Adherent adherent
+    ) {
+        return ResponseEntity.ok(adherentService.updateAdherent(matricule, adherent));
     }
 
     @GetMapping("/test")
-    public String test() {
-        return "Adherent API fonctionne 🚀";
+    public ResponseEntity<String> test() {
+        return ResponseEntity.ok("Adherent API fonctionne 🚀");
     }
 
     @PutMapping("/profile/{matricule}")
@@ -43,18 +47,15 @@ public class AdherentController {
             @PathVariable String matricule,
             @RequestBody UpdateProfileRequest request
     ) {
-
         adherentService.updateProfile(matricule, request);
-
         return ResponseEntity.ok("Profil modifié");
     }
+
     @GetMapping("/profile/{matricule}")
     public ResponseEntity<Adherent> getProfile(@PathVariable String matricule) {
-
-        Adherent adherent = adherentService.getProfile(matricule);
-
-        return ResponseEntity.ok(adherent);
+        return ResponseEntity.ok(adherentService.getProfile(matricule));
     }
+
     @GetMapping("/all")
     public ResponseEntity<List<Adherent>> getAll() {
         return ResponseEntity.ok(adherentService.getAllAdherents());

@@ -12,7 +12,6 @@ import java.util.List;
 
 @Entity
 @Table(name = "adherents")
-@Inheritance(strategy = InheritanceType.JOINED)
 @Getter
 @Setter
 @NoArgsConstructor
@@ -58,6 +57,11 @@ public class Adherent {
 
     @Column(length = 255)
     private String photoProfil;
+
+    // 🔥 AJOUT IMPORTANT (relation avec type evenement)
+    @ManyToOne
+    @JoinColumn(name = "type_evenement_id")
+    private TypeEvenement typeEvenement;
 
     @JsonIgnore
     @OneToMany(mappedBy = "adherent")
