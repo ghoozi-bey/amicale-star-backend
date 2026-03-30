@@ -1,40 +1,32 @@
 package com.amicalestar.backend.security;
 
-import io.jsonwebtoken.*;
-import io.jsonwebtoken.security.Keys;
+import com.amicalestar.backend.entities.Adherent;
+import io.jsonwebtoken.Jwts;
+import io.jsonwebtoken.SignatureAlgorithm;
 import org.springframework.stereotype.Service;
 
-import java.security.Key;
 import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
 
 @Service
 public class JwtService {
 
-    private final String SECRET = "mysecretkeymysecretkeymysecretkey123"; // change later
+    private final String SECRET = "secret-key";
 
-    private Key getSignKey() {
-        return Keys.hmacShaKeyFor(SECRET.getBytes());
-    }
+    public String generateToken(Adherent user) {
 
-    public String generateToken(String username) {
+        Map<String, Object> claims = new HashMap<>();
+
+        // 🔥 CORRECTION ICI
+        claims.put("role", "ROLE_" + user.getTypeAdherent().name());
+
         return Jwts.builder()
-                .setSubject(username)
+                .setClaims(claims)
+                .setSubject(user.getEmail())
                 .setIssuedAt(new Date())
-                .setExpiration(new Date(System.currentTimeMillis() + 1000 * 60 * 60)) // 1h
-                .signWith(getSignKey(), SignatureAlgorithm.HS256)
+                .setExpiration(new Date(System.currentTimeMillis() + 1000 * 60 * 60 * 24))
+                .signWith(SignatureAlgorithm.HS256, SECRET)
                 .compact();
-    }
-
-    public String extractUsername(String token) {
-        return Jwts.parserBuilder()
-                .setSigningKey(getSignKey())
-                .build()
-                .parseClaimsJws(token)
-                .getBody()
-                .getSubject();
-    }
-
-    public boolean isTokenValid(String token, String username) {
-        return extractUsername(token).equals(username);
     }
 }

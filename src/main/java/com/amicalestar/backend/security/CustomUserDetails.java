@@ -10,7 +10,7 @@ import java.util.List;
 
 public class CustomUserDetails implements UserDetails {
 
-    private Adherent adherent;
+    private final Adherent adherent;
 
     public CustomUserDetails(Adherent adherent) {
         this.adherent = adherent;
@@ -18,18 +18,21 @@ public class CustomUserDetails implements UserDetails {
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
-        return List.of(
-                new SimpleGrantedAuthority(adherent.getRoleName())
-        );
+
+        // 🔥 FIX PRINCIPAL
+        String role = "ROLE_" + adherent.getTypeAdherent().name();
+
+        return List.of(new SimpleGrantedAuthority(role));
     }
 
+    @Override
     public String getPassword() {
-        return adherent.getPassword();
+        return adherent.getPassword(); // BCrypt
     }
 
     @Override
     public String getUsername() {
-        return adherent.getEmail(); // login with email
+        return adherent.getEmail();
     }
 
     @Override
@@ -49,6 +52,6 @@ public class CustomUserDetails implements UserDetails {
 
     @Override
     public boolean isEnabled() {
-        return adherent.getActif();
+        return adherent.getActif() == null || adherent.getActif();
     }
 }
