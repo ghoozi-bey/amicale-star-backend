@@ -19,7 +19,7 @@ public class CustomUserDetails implements UserDetails {
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
 
-        // 🔥 FIX PRINCIPAL
+        // FIX PRINCIPAL
         String role = "ROLE_" + adherent.getTypeAdherent().name();
 
         return List.of(new SimpleGrantedAuthority(role));

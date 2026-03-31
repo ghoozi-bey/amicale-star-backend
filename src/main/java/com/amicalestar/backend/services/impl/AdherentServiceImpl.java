@@ -11,6 +11,10 @@ import org.springframework.stereotype.Service;
 
 import org.springframework.security.crypto.password.PasswordEncoder;
 
+import com.amicalestar.backend.exceptions.ValidationException;
+import java.util.HashMap;
+import java.util.Map;
+
 import java.util.List;
 
 @Service
@@ -20,19 +24,42 @@ public class AdherentServiceImpl implements AdherentService {
     private final AdherentRepository adherentRepository;
     private final PasswordEncoder passwordEncoder;
 
+
     @Override
     public Adherent createAdherent(Adherent adherent) {
 
+        // 🔥 collect all errors
+        Map<String, String> errors = new HashMap<>();
+
         if (adherentRepository.existsById(adherent.getMatricule())) {
-            throw new RuntimeException("Matricule already exists");
+            errors.put("matricule", "Matricule déjà utilisé");
         }
 
+        if (adherentRepository.existsByEmail(adherent.getEmail())) {
+            errors.put("email", "Email déjà utilisé");
+        }
+
+        if (adherentRepository.existsByCin(adherent.getCin())) {
+            errors.put("cin", "CIN déjà utilisé");
+        }
+
+        if (adherentRepository.existsByTelephone(adherent.getTelephone())) {
+            errors.put("telephone", "Téléphone déjà utilisé");
+        }
+
+        // if any error → stop everything
+        if (!errors.isEmpty()) {
+            throw new ValidationException(errors);
+        }
+
+        // default role
         if (adherent.getTypeAdherent() == null) {
             adherent.setTypeAdherent(TypeAdherent.ADHERENT);
         }
 
-        // Encrypt password BEFORE saving
+        // encrypt password
         adherent.setPassword(passwordEncoder.encode(adherent.getPassword()));
+        System.out.println("🔥 createAdherent CALLED");
 
         return adherentRepository.save(adherent);
     }

@@ -12,7 +12,7 @@ import java.util.Optional;
 @Repository
 public interface AdherentRepository extends JpaRepository<Adherent, String> {
 
-    // 🔐 utilisé pour login (UserDetailsService)
+    // utilisé pour login (UserDetailsService)
     Optional<Adherent> findByEmail(String email);
 
     List<Adherent> findByDepartement(Departement departement);
@@ -20,4 +20,10 @@ public interface AdherentRepository extends JpaRepository<Adherent, String> {
     List<Adherent> findByActif(Boolean actif);
 
     Optional<Adherent> findByCin(String cin);
+
+    boolean existsByEmail(String email);
+
+    boolean existsByCin(String cin);
+
+    boolean existsByTelephone(String telephone);
 }

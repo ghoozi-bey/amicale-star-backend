@@ -37,17 +37,17 @@ public class Evenement {
     @Enumerated(EnumType.STRING)
     private StatutEvenement statut;
 
-    // 🟢 Type d'événement (relation)
+    // Type d'événement (relation)
     @ManyToOne
     @JoinColumn(name = "type_evenement_id")
     private TypeEvenement typeEvenement;
 
-    // 🟢 Champs spécifiques selon type
+    // Champs spécifiques selon type
     private String societe;     // CONVENTION
     private String agence;      // OMRA / HAJJ
     private String destination; // VOYAGE
 
-    // 🟢 Relations
+    // Relations
     @JsonIgnore
     @OneToMany(mappedBy = "evenement", cascade = CascadeType.ALL)
     private List<Inscription> inscriptions;

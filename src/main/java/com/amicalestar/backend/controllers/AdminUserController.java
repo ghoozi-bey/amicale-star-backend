@@ -3,6 +3,7 @@ package com.amicalestar.backend.controllers;
 import com.amicalestar.backend.dto.CreateUserRequest;
 import com.amicalestar.backend.entities.Adherent;
 import com.amicalestar.backend.services.AdminUserService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
@@ -16,19 +17,19 @@ public class AdminUserController {
 
     private final AdminUserService adminUserService;
 
-    // ✅ CREATE USER (corrigé)
+    // CREATE USER (corrigé)
     @PostMapping("/create-user")
-    public Adherent create(@RequestBody CreateUserRequest request) {
+    public Adherent create(@Valid @RequestBody CreateUserRequest request) {
         return adminUserService.createUser(request);
     }
 
-    // ✅ READ
+    // READ
     @GetMapping("/users")
     public List<Adherent> getAll() {
         return adminUserService.getAllUsers();
     }
 
-    // ✅ DELETE
+    // DELETE
     @DeleteMapping("/users/{matricule}")
     public void delete(@PathVariable String matricule) {
         adminUserService.deleteUser(matricule);

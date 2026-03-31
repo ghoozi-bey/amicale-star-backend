@@ -4,6 +4,7 @@ import com.amicalestar.backend.entities.Adherent;
 import com.amicalestar.backend.dto.UpdateProfileRequest;
 
 import java.util.List;
+
 public interface AdherentService {
 
     Adherent createAdherent(Adherent adherent);
@@ -17,6 +18,6 @@ public interface AdherentService {
     void deleteAdherent(String matricule);
 
     void updateProfile(String matricule, UpdateProfileRequest request);
-    Adherent getProfile(String matricule);
 
+    Adherent getProfile(String matricule);
 }
