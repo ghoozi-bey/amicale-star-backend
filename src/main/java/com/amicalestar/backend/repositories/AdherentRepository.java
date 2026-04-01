@@ -26,4 +26,6 @@ public interface AdherentRepository extends JpaRepository<Adherent, String> {
     boolean existsByCin(String cin);
 
     boolean existsByTelephone(String telephone);
+
+    Optional<Adherent> findByMatricule(String matricule);
 }

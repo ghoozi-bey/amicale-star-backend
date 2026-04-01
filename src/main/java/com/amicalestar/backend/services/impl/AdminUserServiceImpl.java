@@ -66,4 +66,10 @@ public class AdminUserServiceImpl implements AdminUserService {
     public void deleteUser(String matricule) {
         adherentRepository.deleteById(matricule);
     }
+
+    @Override
+    public Adherent getUserByMatricule(String matricule) {
+        return adherentRepository.findByMatricule(matricule)
+                .orElseThrow(() -> new RuntimeException("Utilisateur non trouvé"));
+    }
 }

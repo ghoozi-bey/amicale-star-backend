@@ -34,4 +34,10 @@ public class AdminUserController {
     public void delete(@PathVariable String matricule) {
         adminUserService.deleteUser(matricule);
     }
+
+    // READ SINGLE USER
+    @GetMapping("/users/{matricule}")
+    public Adherent getUser(@PathVariable String matricule) {
+        return adminUserService.getUserByMatricule(matricule);
+    }
 }

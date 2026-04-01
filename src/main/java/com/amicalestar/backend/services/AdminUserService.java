@@ -9,4 +9,5 @@ public interface AdminUserService {
     Adherent createUser(CreateUserRequest request);
     List<Adherent> getAllUsers();
     void deleteUser(String matricule);
+    public Adherent getUserByMatricule(String matricule);
 }
