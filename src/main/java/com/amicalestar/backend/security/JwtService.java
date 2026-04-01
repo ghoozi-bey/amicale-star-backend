@@ -22,14 +22,27 @@ public class JwtService {
     public String generateToken(Adherent user) {
 
         Map<String, Object> claims = new HashMap<>();
+
+        // ROLE
         claims.put("role", "ROLE_" + user.getTypeAdherent().name());
+
+        // INFOS USER
+        claims.put("prenom", user.getPrenom());
+        claims.put("nom", user.getNom());
+
+        // 🔥🔥🔥 AJOUT CRITIQUE
+        if (user.getTypeEvenement() != null) {
+            claims.put("type_evenement_id", user.getTypeEvenement().getId());
+        } else {
+            claims.put("type_evenement_id", null);
+        }
 
         return Jwts.builder()
                 .setClaims(claims)
                 .setSubject(user.getEmail())
                 .setIssuedAt(new Date())
                 .setExpiration(new Date(System.currentTimeMillis() + 1000 * 60 * 60 * 24))
-                .signWith(getSignInKey()) // FIX HERE
+                .signWith(getSignInKey())
                 .compact();
     }
 }

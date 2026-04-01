@@ -19,15 +19,13 @@ public class CustomUserDetails implements UserDetails {
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
 
-        // FIX PRINCIPAL
-        String role = "ROLE_" + adherent.getTypeAdherent().name();
-
-        return List.of(new SimpleGrantedAuthority(role));
+        // 🔥 IMPORTANT : utiliser EXACTEMENT le role DB
+        return List.of(new SimpleGrantedAuthority("ROLE_" + adherent.getTypeAdherent().name()));
     }
 
     @Override
     public String getPassword() {
-        return adherent.getPassword(); // BCrypt
+        return adherent.getPassword();
     }
 
     @Override

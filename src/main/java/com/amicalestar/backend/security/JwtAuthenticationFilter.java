@@ -12,6 +12,7 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
@@ -22,7 +23,7 @@ import java.security.Key;
 @RequiredArgsConstructor
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
-    private final String SECRET = "my-super-secret-key-12345678901234567890"; // SAME as JwtService
+    private final String SECRET = "my-super-secret-key-12345678901234567890";
     private final UserDetailsService userDetailsService;
 
     private Key getSignInKey() {
@@ -50,20 +51,25 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
                 String email = claims.getSubject();
 
-                // LOAD USER FROM DB
-                UserDetails userDetails = userDetailsService.loadUserByUsername(email);
-                System.out.println("Authorities: " + userDetails.getAuthorities());
+                // 🔥 IMPORTANT : éviter double auth
+                if (email != null && SecurityContextHolder.getContext().getAuthentication() == null) {
 
-                // SET AUTH WITH AUTHORITIES
-                UsernamePasswordAuthenticationToken auth =
-                        new UsernamePasswordAuthenticationToken(
-                                userDetails,
-                                null,
-                                userDetails.getAuthorities()
-                        );
+                    UserDetails userDetails = userDetailsService.loadUserByUsername(email);
 
-                SecurityContextHolder.getContext().setAuthentication(auth);
-                System.out.println("AUTH SET: " + SecurityContextHolder.getContext().getAuthentication());
+                    UsernamePasswordAuthenticationToken auth =
+                            new UsernamePasswordAuthenticationToken(
+                                    userDetails,
+                                    null,
+                                    userDetails.getAuthorities()
+                            );
+
+                    // 🔥 IMPORTANT
+                    auth.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+
+                    SecurityContextHolder.getContext().setAuthentication(auth);
+
+                    System.out.println("AUTH OK : " + userDetails.getAuthorities());
+                }
 
             } catch (Exception e) {
                 System.out.println("JWT Error: " + e.getMessage());

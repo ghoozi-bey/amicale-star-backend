@@ -34,7 +34,15 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/api/auth/**").permitAll()
                         .requestMatchers(org.springframework.http.HttpMethod.OPTIONS, "/**").permitAll()
-                        .requestMatchers("/api/admin/**").hasRole("ADMIN") //IMPORTANT
+
+                        // 🔥 CORRECTION ICI
+                        .requestMatchers("/api/evenements", "/api/evenements/**")
+                        .hasRole("MEMBRE_AMICALE")
+
+                        // ADMIN
+                        .requestMatchers("/api/admin/**")
+                        .hasRole("ADMIN")
+
                         .anyRequest().authenticated()
                 )
                 .addFilterBefore(jwtFilter,
@@ -67,5 +75,4 @@ public class SecurityConfig {
     public AuthenticationManager authenticationManager(AuthenticationConfiguration config) throws Exception {
         return config.getAuthenticationManager();
     }
-
 }

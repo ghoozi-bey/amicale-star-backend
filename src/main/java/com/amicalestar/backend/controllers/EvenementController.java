@@ -1,7 +1,9 @@
 package com.amicalestar.backend.controllers;
 
 import com.amicalestar.backend.entities.Evenement;
+import com.amicalestar.backend.entities.TypeEvenement;
 import com.amicalestar.backend.services.EvenementService;
+import com.amicalestar.backend.services.TypeEvenementService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
@@ -10,6 +12,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
+import java.time.LocalDate;
 import java.util.List;
 
 @RestController
@@ -19,16 +22,27 @@ import java.util.List;
 public class EvenementController {
 
     private final EvenementService evenementService;
+    private final TypeEvenementService typeEvenementService;
 
     @PostMapping(consumes = "multipart/form-data")
     public Evenement create(
+
             @RequestParam String titre,
             @RequestParam String lieu,
             @RequestParam String description,
-            @RequestParam String dateDebut,
-            @RequestParam String dateFin,
-            @RequestParam Integer nbPlaces,
-            @RequestParam Double prix,
+
+            // 🔥 ON REÇOIT ID
+            @RequestParam Long typeEvenement,
+
+            @RequestParam(required = false) String dateDebut,
+            @RequestParam(required = false) String dateFin,
+            @RequestParam(required = false) Integer nbPlaces,
+            @RequestParam(required = false) Double prix,
+
+            @RequestParam(required = false) String societe,
+            @RequestParam(required = false) String agence,
+            @RequestParam(required = false) String destination,
+
             @RequestParam(required = false) MultipartFile photo
     ) {
 
@@ -36,8 +50,8 @@ public class EvenementController {
 
             String fileName = null;
 
+            // upload image
             if (photo != null && !photo.isEmpty()) {
-
                 fileName = System.currentTimeMillis() + "_" + photo.getOriginalFilename();
 
                 Path uploadPath = Paths.get("uploads/events/");
@@ -50,20 +64,53 @@ public class EvenementController {
                 );
             }
 
-            Evenement evenement = new Evenement();
-            evenement.setTitre(titre);
-            evenement.setLieu(lieu);
-            evenement.setDescription(description);
-            evenement.setDateDebut(java.time.LocalDate.parse(dateDebut));
-            evenement.setDateFin(java.time.LocalDate.parse(dateFin));
-            evenement.setNbPlaces(nbPlaces);
-            evenement.setPrix(prix);
-            evenement.setPhoto(fileName);
+            Evenement e = new Evenement();
 
-            return evenementService.createEvenement(evenement);
+            e.setTitre(titre);
+            e.setLieu(lieu);
+            e.setDescription(description);
+            e.setPhoto(fileName);
+
+            // 🔥 récupérer type par ID
+            TypeEvenement type = typeEvenementService.findById(typeEvenement);
+            e.setTypeEvenement(type);
+
+            String typeNom = type.getNom().toUpperCase().trim();
+
+            System.out.println("TYPE ID = " + typeEvenement);
+            System.out.println("TYPE NOM = " + typeNom);
+
+            // 🔥 LOGIQUE MÉTIER CORRIGÉE
+            switch (typeNom) {
+
+                case "CONVENTION":
+                    e.setSociete(societe);
+                    break;
+
+                case "OMRA & HAJ":
+                    e.setAgence(agence);
+                    if (nbPlaces != null) e.setNbPlaces(nbPlaces);
+                    if (prix != null) e.setPrix(prix);
+                    if (dateDebut != null) e.setDateDebut(LocalDate.parse(dateDebut));
+                    if (dateFin != null) e.setDateFin(LocalDate.parse(dateFin));
+                    break;
+
+                case "VOYAGE":
+                    e.setDestination(destination);
+                    if (nbPlaces != null) e.setNbPlaces(nbPlaces);
+                    if (prix != null) e.setPrix(prix);
+                    if (dateDebut != null) e.setDateDebut(LocalDate.parse(dateDebut));
+                    if (dateFin != null) e.setDateFin(LocalDate.parse(dateFin));
+                    break;
+
+                default:
+                    throw new RuntimeException("Type invalide: " + typeNom);
+            }
+
+            return evenementService.createEvenement(e);
 
         } catch (Exception e) {
-            throw new RuntimeException("Erreur upload image", e);
+            throw new RuntimeException("Erreur création événement", e);
         }
     }
 
