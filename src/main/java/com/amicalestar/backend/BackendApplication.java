@@ -9,7 +9,7 @@ public class BackendApplication {
 
 	public static void main(String[] args) {
 		SpringApplication.run(BackendApplication.class, args);
-		System.out.println(new BCryptPasswordEncoder().encode("123456"));
+		System.out.println("Backend is running");
 	}
 
 }

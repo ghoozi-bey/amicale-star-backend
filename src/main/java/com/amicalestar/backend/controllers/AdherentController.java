@@ -60,4 +60,6 @@ public class AdherentController {
     public ResponseEntity<List<Adherent>> getAll() {
         return ResponseEntity.ok(adherentService.getAllAdherents());
     }
+
+
 }

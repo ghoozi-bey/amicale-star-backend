@@ -6,6 +6,8 @@ import com.amicalestar.backend.services.TypeEvenementService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
+
 @Service
 @RequiredArgsConstructor
 public class TypeEvenementServiceImpl implements TypeEvenementService {
@@ -24,5 +26,10 @@ public class TypeEvenementServiceImpl implements TypeEvenementService {
     public TypeEvenement findById(Long id) {
         return typeEvenementRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("TypeEvenement introuvable avec id: " + id));
+    }
+
+    @Override
+    public List<TypeEvenement> getAll() {
+        return typeEvenementRepository.findAll();
     }
 }

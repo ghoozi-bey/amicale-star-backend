@@ -71,7 +71,7 @@ public class EvenementController {
             e.setDescription(description);
             e.setPhoto(fileName);
 
-            // 🔥 récupérer type par ID
+            // récupérer type par ID
             TypeEvenement type = typeEvenementService.findById(typeEvenement);
             e.setTypeEvenement(type);
 
@@ -80,7 +80,7 @@ public class EvenementController {
             System.out.println("TYPE ID = " + typeEvenement);
             System.out.println("TYPE NOM = " + typeNom);
 
-            // 🔥 LOGIQUE MÉTIER CORRIGÉE
+            // LOGIQUE MÉTIER CORRIGÉE
             switch (typeNom) {
 
                 case "CONVENTION":
@@ -137,5 +137,10 @@ public class EvenementController {
     @PatchMapping("/{id}")
     public Evenement updatePrix(@PathVariable Long id, @RequestBody Evenement evenement) {
         return evenementService.updateEvenement(id, evenement);
+    }
+
+    @GetMapping("/types")
+    public List<TypeEvenement> getTypes() {
+        return typeEvenementService.getAll();
     }
 }

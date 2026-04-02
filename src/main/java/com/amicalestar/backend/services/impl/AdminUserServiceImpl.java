@@ -1,6 +1,7 @@
 package com.amicalestar.backend.services.impl;
 
 import com.amicalestar.backend.dto.CreateUserRequest;
+import com.amicalestar.backend.dto.UpdateUserRequest;
 import com.amicalestar.backend.entities.Adherent;
 import com.amicalestar.backend.entities.TypeEvenement;
 import com.amicalestar.backend.enums.TypeAdherent;
@@ -13,6 +14,8 @@ import com.amicalestar.backend.services.AdherentService;
 import com.amicalestar.backend.repositories.TypeEvenementRepository;
 
 import java.util.List;
+
+
 
 @Service
 @RequiredArgsConstructor
@@ -71,5 +74,57 @@ public class AdminUserServiceImpl implements AdminUserService {
     public Adherent getUserByMatricule(String matricule) {
         return adherentRepository.findByMatricule(matricule)
                 .orElseThrow(() -> new RuntimeException("Utilisateur non trouvé"));
+    }
+
+    @Override
+    public Adherent updateUser(String matricule, UpdateUserRequest request){
+
+        Adherent user = adherentRepository.findByMatricule(matricule)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        // ===== DUPLICATE CHECKS =====
+        if (request.getEmail() != null &&
+                adherentRepository.existsByEmail(request.getEmail()) &&
+                !user.getEmail().equals(request.getEmail())) {
+            throw new RuntimeException("Email already exists");
+        }
+
+        if (request.getCin() != null &&
+                adherentRepository.existsByCin(request.getCin()) &&
+                !user.getCin().equals(request.getCin())) {
+            throw new RuntimeException("CIN already exists");
+        }
+
+        if (request.getTelephone() != null &&
+                adherentRepository.existsByTelephone(request.getTelephone()) &&
+                !user.getTelephone().equals(request.getTelephone())) {
+            throw new RuntimeException("Telephone already exists");
+        }
+
+        // ===== SIMPLE FIELDS =====
+        if (request.getNom() != null) user.setNom(request.getNom());
+        if (request.getPrenom() != null) user.setPrenom(request.getPrenom());
+        if (request.getEmail() != null) user.setEmail(request.getEmail());
+        if (request.getTelephone() != null) user.setTelephone(request.getTelephone());
+        if (request.getDepartement() != null) user.setDepartement(request.getDepartement());
+        if (request.getDateNaissance() != null) user.setDateNaissance(request.getDateNaissance());
+        if (request.getPhotoProfil() != null) user.setPhotoProfil(request.getPhotoProfil());
+        if (request.getTypeAdherent() != null) user.setTypeAdherent(request.getTypeAdherent());
+        if (request.getActif() != null) user.setActif(request.getActif());
+        if (request.getCin() != null) user.setCin(request.getCin());
+
+        // ===== PASSWORD =====
+        if (request.getPassword() != null && !request.getPassword().isEmpty()) {
+            user.setPassword(passwordEncoder.encode(request.getPassword()));
+        }
+
+        // ===== TYPE EVENEMENT =====
+        if (request.getTypeEvenementId() != null) {
+            TypeEvenement type = typeEvenementRepository.findById(request.getTypeEvenementId())
+                    .orElseThrow(() -> new RuntimeException("TypeEvenement not found"));
+            user.setTypeEvenement(type);
+        }
+
+        return adherentRepository.save(user);
     }
 }

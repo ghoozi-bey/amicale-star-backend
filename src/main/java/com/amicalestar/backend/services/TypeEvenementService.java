@@ -2,11 +2,15 @@ package com.amicalestar.backend.services;
 
 import com.amicalestar.backend.entities.TypeEvenement;
 
+import java.util.List;
+
 public interface TypeEvenementService {
 
-    // 🔥 par nom (ancien)
+    // par nom
     TypeEvenement findByNom(String nom);
 
-    // 🔥 par id (nouveau)
+    // par id
     TypeEvenement findById(Long id);
+
+    List<TypeEvenement> getAll();
 }

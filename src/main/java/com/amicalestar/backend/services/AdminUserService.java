@@ -1,6 +1,7 @@
 package com.amicalestar.backend.services;
 
 import com.amicalestar.backend.dto.CreateUserRequest;
+import com.amicalestar.backend.dto.UpdateUserRequest;
 import com.amicalestar.backend.entities.Adherent;
 
 import java.util.List;
@@ -10,4 +11,5 @@ public interface AdminUserService {
     List<Adherent> getAllUsers();
     void deleteUser(String matricule);
     public Adherent getUserByMatricule(String matricule);
+    Adherent updateUser(String matricule, UpdateUserRequest request);
 }
