@@ -26,6 +26,17 @@ public class EvenementServiceImpl implements EvenementService {
         return evenementRepository.findAll();
     }
 
+    // 🔥 événements du membre
+    @Override
+    public List<Evenement> getMesEvenements(String matricule) {
+        return evenementRepository.findByAdherent_Matricule(matricule);
+    }
+
+    // 🔥 événements visibles pour adhérent
+    public List<Evenement> getEvenementsActifs() {
+        return evenementRepository.findByStatutNot(StatutEvenement.ARCHIVE);
+    }
+
     @Override
     public Evenement archiverEvenement(Long id) {
         Evenement event = evenementRepository.findById(id)

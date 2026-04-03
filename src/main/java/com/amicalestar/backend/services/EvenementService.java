@@ -15,4 +15,9 @@ public interface EvenementService {
     void deleteEvenement(Long id);
 
     Evenement updateEvenement(Long id, Evenement evenement);
+
+    List<Evenement> getMesEvenements(String matricule);
+
+    // 🔥 AJOUT IMPORTANT
+    List<Evenement> getEvenementsActifs();
 }

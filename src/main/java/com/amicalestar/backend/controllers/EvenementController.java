@@ -1,10 +1,15 @@
 package com.amicalestar.backend.controllers;
 
+import com.amicalestar.backend.entities.Adherent;
 import com.amicalestar.backend.entities.Evenement;
 import com.amicalestar.backend.entities.TypeEvenement;
+import com.amicalestar.backend.repositories.AdherentRepository;
 import com.amicalestar.backend.services.EvenementService;
 import com.amicalestar.backend.services.TypeEvenementService;
+
 import lombok.RequiredArgsConstructor;
+
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -23,15 +28,17 @@ public class EvenementController {
 
     private final EvenementService evenementService;
     private final TypeEvenementService typeEvenementService;
+    private final AdherentRepository adherentRepository;
 
+    // ================= CREATE =================
     @PostMapping(consumes = "multipart/form-data")
     public Evenement create(
+
+            Authentication auth,
 
             @RequestParam String titre,
             @RequestParam String lieu,
             @RequestParam String description,
-
-            // 🔥 ON REÇOIT ID
             @RequestParam Long typeEvenement,
 
             @RequestParam(required = false) String dateDebut,
@@ -48,9 +55,15 @@ public class EvenementController {
 
         try {
 
+            // 🔐 récupérer utilisateur connecté
+            String email = auth.getName();
+
+            Adherent adherent = adherentRepository.findByEmail(email)
+                    .orElseThrow(() -> new RuntimeException("Adherent non trouvé"));
+
             String fileName = null;
 
-            // upload image
+            // 📸 upload image
             if (photo != null && !photo.isEmpty()) {
                 fileName = System.currentTimeMillis() + "_" + photo.getOriginalFilename();
 
@@ -71,16 +84,15 @@ public class EvenementController {
             e.setDescription(description);
             e.setPhoto(fileName);
 
-            // récupérer type par ID
+            // 🔥 LIAISON AVEC USER
+            e.setAdherent(adherent);
+
+            // 🔗 TYPE
             TypeEvenement type = typeEvenementService.findById(typeEvenement);
             e.setTypeEvenement(type);
 
             String typeNom = type.getNom().toUpperCase().trim();
 
-            System.out.println("TYPE ID = " + typeEvenement);
-            System.out.println("TYPE NOM = " + typeNom);
-
-            // LOGIQUE MÉTIER CORRIGÉE
             switch (typeNom) {
 
                 case "CONVENTION":
@@ -114,33 +126,56 @@ public class EvenementController {
         }
     }
 
+    // ================= GET ALL =================
     @GetMapping
     public List<Evenement> getAll() {
         return evenementService.getAllEvenements();
     }
 
+    // ================= MES EVENEMENTS =================
+    @GetMapping("/mes-evenements")
+    public List<Evenement> getMesEvenements(Authentication auth) {
+
+        String email = auth.getName();
+
+        Adherent adherent = adherentRepository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("Adherent non trouvé"));
+
+        return evenementService.getMesEvenements(adherent.getMatricule());
+    }
+
+    // ================= ARCHIVER =================
     @PatchMapping("/{id}/archiver")
     public Evenement archiver(@PathVariable Long id) {
         return evenementService.archiverEvenement(id);
     }
 
-    @GetMapping("/test")
-    public String test() {
-        return "Backend Amicale STAR fonctionne 🚀";
-    }
-
+    // ================= DELETE =================
     @DeleteMapping("/{id}")
     public void delete(@PathVariable Long id) {
         evenementService.deleteEvenement(id);
     }
 
+    // ================= UPDATE =================
     @PatchMapping("/{id}")
     public Evenement updatePrix(@PathVariable Long id, @RequestBody Evenement evenement) {
         return evenementService.updateEvenement(id, evenement);
     }
 
+    // ================= TYPES =================
     @GetMapping("/types")
     public List<TypeEvenement> getTypes() {
         return typeEvenementService.getAll();
+    }
+
+    // ================= TEST =================
+    @GetMapping("/test")
+    public String test() {
+        return "Backend Amicale STAR fonctionne 🚀";
+    }
+    // ================= EVENEMENTS ACTIFS (ADHERENT) =================
+    @GetMapping("/actifs")
+    public List<Evenement> getActifs() {
+        return evenementService.getEvenementsActifs();
     }
 }
