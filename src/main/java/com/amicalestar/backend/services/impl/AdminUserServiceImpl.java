@@ -12,8 +12,11 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import com.amicalestar.backend.services.AdherentService;
 import com.amicalestar.backend.repositories.TypeEvenementRepository;
+import com.amicalestar.backend.exceptions.ValidationException;
 
 import java.util.List;
+import java.util.HashMap;
+import java.util.Map;
 
 
 
@@ -82,23 +85,32 @@ public class AdminUserServiceImpl implements AdminUserService {
         Adherent user = adherentRepository.findByMatricule(matricule)
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
+        Map<String, String> errors = new HashMap<>();
+
         // ===== DUPLICATE CHECKS =====
         if (request.getEmail() != null &&
                 adherentRepository.existsByEmail(request.getEmail()) &&
                 !user.getEmail().equals(request.getEmail())) {
-            throw new RuntimeException("Email already exists");
+
+            errors.put("email", "Email déjà utilisé");
         }
 
         if (request.getCin() != null &&
                 adherentRepository.existsByCin(request.getCin()) &&
                 !user.getCin().equals(request.getCin())) {
-            throw new RuntimeException("CIN already exists");
+
+            errors.put("cin", "CIN déjà utilisé");
         }
 
         if (request.getTelephone() != null &&
                 adherentRepository.existsByTelephone(request.getTelephone()) &&
                 !user.getTelephone().equals(request.getTelephone())) {
-            throw new RuntimeException("Telephone already exists");
+
+            errors.put("telephone", "Téléphone déjà utilisé");
+        }
+
+        if (!errors.isEmpty()) {
+            throw new ValidationException(errors);
         }
 
         // ===== SIMPLE FIELDS =====
@@ -119,9 +131,17 @@ public class AdminUserServiceImpl implements AdminUserService {
         }
 
         // ===== TYPE EVENEMENT =====
-        if (request.getTypeEvenementId() != null) {
+        // 🔥 enforce rule
+        if (request.getTypeAdherent() != null &&
+                request.getTypeAdherent() != TypeAdherent.MEMBRE_AMICALE) {
+
+            user.setTypeEvenement(null);
+
+        } else if (request.getTypeEvenementId() != null) {
+
             TypeEvenement type = typeEvenementRepository.findById(request.getTypeEvenementId())
                     .orElseThrow(() -> new RuntimeException("TypeEvenement not found"));
+
             user.setTypeEvenement(type);
         }
 
