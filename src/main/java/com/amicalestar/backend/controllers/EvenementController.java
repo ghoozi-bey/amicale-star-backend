@@ -178,4 +178,14 @@ public class EvenementController {
     public List<Evenement> getActifs() {
         return evenementService.getEvenementsActifs();
     }
+    @GetMapping("/mes-evenements-crees")
+    public List<Evenement> getEventsCreated(Authentication auth) {
+
+        String email = auth.getName();
+
+        Adherent adherent = adherentRepository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("Adherent non trouvé"));
+
+        return evenementService.getEvenementsCrees(adherent.getMatricule());
+    }
 }

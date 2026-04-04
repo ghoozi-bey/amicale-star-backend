@@ -26,13 +26,20 @@ public class EvenementServiceImpl implements EvenementService {
         return evenementRepository.findAll();
     }
 
-    // 🔥 événements du membre
+    // 🔵 PARTICIPATION UNIQUEMENT
     @Override
     public List<Evenement> getMesEvenements(String matricule) {
+        return evenementRepository.findEventsWhereUserParticipates(matricule);
+    }
+
+    // 🟡 EVENEMENTS CREES UNIQUEMENT
+    @Override
+    public List<Evenement> getEvenementsCrees(String matricule) {
         return evenementRepository.findByAdherent_Matricule(matricule);
     }
 
-    // 🔥 événements visibles pour adhérent
+    // 🟢 DASHBOARD
+    @Override
     public List<Evenement> getEvenementsActifs() {
         return evenementRepository.findByStatutNot(StatutEvenement.ARCHIVE);
     }
