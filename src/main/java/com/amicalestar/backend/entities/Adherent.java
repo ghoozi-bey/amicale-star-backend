@@ -80,6 +80,7 @@ public class Adherent {
     public String getRoleName() {
         return "ROLE_" + this.typeAdherent.name();
     }
+
     @JsonIgnore
     @OneToMany(mappedBy = "adherent")
     private List<Evenement> evenements;

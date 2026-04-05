@@ -131,7 +131,7 @@ public class AdminUserServiceImpl implements AdminUserService {
         }
 
         // ===== TYPE EVENEMENT =====
-        // 🔥 enforce rule
+        // enforce rule
         if (request.getTypeAdherent() != null &&
                 request.getTypeAdherent() != TypeAdherent.MEMBRE_AMICALE) {
 

@@ -11,18 +11,18 @@ import java.util.Optional;
 @Repository
 public interface AdherentRepository extends JpaRepository<Adherent, String> {
 
-    // 🔐 LOGIN
+    // LOGIN
     Optional<Adherent> findByEmail(String email);
 
-    // 🔎 FILTRES
+    // FILTRES
     List<Adherent> findByDepartement(Departement departement);
     List<Adherent> findByActif(Boolean actif);
 
-    // 🔍 RECHERCHE
+    // RECHERCHE
     Optional<Adherent> findByCin(String cin);
     Optional<Adherent> findByMatricule(String matricule);
 
-    // ✅ VALIDATIONS
+    // VALIDATIONS
     boolean existsByEmail(String email);
     boolean existsByCin(String cin);
     boolean existsByTelephone(String telephone);
