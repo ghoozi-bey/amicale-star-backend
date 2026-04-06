@@ -26,13 +26,19 @@ public class EvenementServiceImpl implements EvenementService {
         return evenementRepository.findAll();
     }
 
-    // 🔵 PARTICIPATION UNIQUEMENT
+    // 🔵 PARTICIPATION (ancienne méthode - on garde)
     @Override
     public List<Evenement> getMesEvenements(String matricule) {
         return evenementRepository.findEventsWhereUserParticipates(matricule);
     }
 
-    // 🟡 EVENEMENTS CREES UNIQUEMENT
+    // 🟢 🔥 NOUVELLE MÉTHODE PROPRE
+    @Override
+    public List<Evenement> getMesInscriptions(Long matricule) {
+        return evenementRepository.findEvenementsByAdherentInscrit(matricule);
+    }
+
+    // 🟡 EVENEMENTS CREES
     @Override
     public List<Evenement> getEvenementsCrees(String matricule) {
         return evenementRepository.findByAdherent_Matricule(matricule);

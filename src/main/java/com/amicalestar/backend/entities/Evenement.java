@@ -36,17 +36,14 @@ public class Evenement {
     @Enumerated(EnumType.STRING)
     private StatutEvenement statut;
 
-    // 🔥 TYPE
     @ManyToOne
     @JoinColumn(name = "type_evenement_id")
     private TypeEvenement typeEvenement;
 
-    // 🔥 RELATION AVEC ADHERENT (IMPORTANT)
     @ManyToOne
     @JoinColumn(name = "adherent_id", referencedColumnName = "matricule")
     private Adherent adherent;
 
-    // Champs spécifiques
     private String societe;
     private String agence;
     private String destination;
