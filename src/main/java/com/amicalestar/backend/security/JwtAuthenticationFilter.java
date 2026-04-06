@@ -2,6 +2,7 @@ package com.amicalestar.backend.security;
 
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
+import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.security.Keys;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -23,7 +24,7 @@ import java.security.Key;
 @RequiredArgsConstructor
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
-    private final String SECRET = "my-super-secret-key-12345678901234567890";
+    private static final String SECRET = "my-super-secret-key-12345678901234567890";
     private final UserDetailsService userDetailsService;
 
     private Key getSignInKey() {
@@ -38,42 +39,44 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
         String header = request.getHeader("Authorization");
 
-        if (header != null && header.startsWith("Bearer ")) {
+        // 🔥 Si pas de token → continuer
+        if (header == null || !header.startsWith("Bearer ")) {
+            filterChain.doFilter(request, response);
+            return;
+        }
 
-            String token = header.substring(7);
+        String token = header.substring(7);
 
-            try {
-                Claims claims = Jwts.parserBuilder()
-                        .setSigningKey(getSignInKey())
-                        .build()
-                        .parseClaimsJws(token)
-                        .getBody();
+        try {
 
-                String email = claims.getSubject();
+            Claims claims = Jwts.parserBuilder()
+                    .setSigningKey(getSignInKey())
+                    .build()
+                    .parseClaimsJws(token)
+                    .getBody();
 
-                // 🔥 IMPORTANT : éviter double auth
-                if (email != null && SecurityContextHolder.getContext().getAuthentication() == null) {
+            String email = claims.getSubject();
 
-                    UserDetails userDetails = userDetailsService.loadUserByUsername(email);
+            if (email != null && SecurityContextHolder.getContext().getAuthentication() == null) {
 
-                    UsernamePasswordAuthenticationToken auth =
-                            new UsernamePasswordAuthenticationToken(
-                                    userDetails,
-                                    null,
-                                    userDetails.getAuthorities()
-                            );
+                UserDetails userDetails = userDetailsService.loadUserByUsername(email);
 
-                    // 🔥 IMPORTANT
-                    auth.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+                UsernamePasswordAuthenticationToken auth =
+                        new UsernamePasswordAuthenticationToken(
+                                userDetails,
+                                null,
+                                userDetails.getAuthorities()
+                        );
 
-                    SecurityContextHolder.getContext().setAuthentication(auth);
+                auth.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
 
-                    System.out.println("AUTH OK : " + userDetails.getAuthorities());
-                }
-
-            } catch (Exception e) {
-                System.out.println("JWT Error: " + e.getMessage());
+                SecurityContextHolder.getContext().setAuthentication(auth);
             }
+
+        } catch (ExpiredJwtException e) {
+            System.out.println("JWT expired");
+        } catch (Exception e) {
+            System.out.println("JWT invalid: " + e.getMessage());
         }
 
         filterChain.doFilter(request, response);

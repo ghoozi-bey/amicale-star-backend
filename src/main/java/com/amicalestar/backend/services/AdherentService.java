@@ -7,6 +7,7 @@ import java.util.List;
 
 public interface AdherentService {
 
+    // 🔵 EXISTANT (on garde pour compatibilité)
     Adherent createAdherent(Adherent adherent);
 
     List<Adherent> getAllAdherents();
@@ -20,4 +21,9 @@ public interface AdherentService {
     void updateProfile(String matricule, UpdateProfileRequest request);
 
     Adherent getProfile(String matricule);
+
+    // 🔥 NOUVEAU (PRO - basé sur JWT)
+    Adherent getProfileByEmail(String email);
+
+    void updateProfileByEmail(String email, UpdateProfileRequest request);
 }

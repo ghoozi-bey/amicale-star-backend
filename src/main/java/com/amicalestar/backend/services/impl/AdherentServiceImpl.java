@@ -8,13 +8,12 @@ import com.amicalestar.backend.dto.UpdateProfileRequest;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
-
 import org.springframework.security.crypto.password.PasswordEncoder;
 
 import com.amicalestar.backend.exceptions.ValidationException;
+
 import java.util.HashMap;
 import java.util.Map;
-
 import java.util.List;
 
 @Service
@@ -24,11 +23,10 @@ public class AdherentServiceImpl implements AdherentService {
     private final AdherentRepository adherentRepository;
     private final PasswordEncoder passwordEncoder;
 
-
+    // ================= CREATE =================
     @Override
     public Adherent createAdherent(Adherent adherent) {
 
-        // 🔥 collect all errors
         Map<String, String> errors = new HashMap<>();
 
         if (adherentRepository.existsById(adherent.getMatricule())) {
@@ -47,23 +45,20 @@ public class AdherentServiceImpl implements AdherentService {
             errors.put("telephone", "Téléphone déjà utilisé");
         }
 
-        // if any error → stop everything
         if (!errors.isEmpty()) {
             throw new ValidationException(errors);
         }
 
-        // default role
         if (adherent.getTypeAdherent() == null) {
             adherent.setTypeAdherent(TypeAdherent.ADHERENT);
         }
 
-        // encrypt password
         adherent.setPassword(passwordEncoder.encode(adherent.getPassword()));
-        System.out.println("🔥 createAdherent CALLED");
 
         return adherentRepository.save(adherent);
     }
 
+    // ================= READ =================
     @Override
     public List<Adherent> getAllAdherents() {
         return adherentRepository.findAll();
@@ -74,6 +69,7 @@ public class AdherentServiceImpl implements AdherentService {
         return adherentRepository.findById(matricule).orElse(null);
     }
 
+    // ================= UPDATE ADMIN =================
     @Override
     public Adherent updateAdherent(String matricule, Adherent adherent) {
 
@@ -123,17 +119,20 @@ public class AdherentServiceImpl implements AdherentService {
         return null;
     }
 
+    // ================= DELETE =================
     @Override
     public void deleteAdherent(String matricule) {
         adherentRepository.deleteById(matricule);
     }
 
-    // modification profil adhérent
+    // ================= OLD PROFILE (on garde) =================
     @Override
     public void updateProfile(String matricule, UpdateProfileRequest request) {
 
         Adherent adherent = adherentRepository.findById(matricule)
                 .orElse(null);
+
+        if (adherent == null) return;
 
         if(request.getEmail() != null){
             adherent.setEmail(request.getEmail());
@@ -143,7 +142,7 @@ public class AdherentServiceImpl implements AdherentService {
             adherent.setTelephone(request.getTelephone());
         }
 
-        if(request.getPassword() != null){
+        if(request.getPassword() != null && !request.getPassword().isEmpty()){
             adherent.setPassword(passwordEncoder.encode(request.getPassword()));
         }
 
@@ -152,8 +151,36 @@ public class AdherentServiceImpl implements AdherentService {
 
     @Override
     public Adherent getProfile(String matricule) {
-
         return adherentRepository.findById(matricule)
                 .orElseThrow(() -> new RuntimeException("Adherent not found"));
+    }
+
+    // ================= 🔥 NEW PRO VERSION =================
+
+    @Override
+    public Adherent getProfileByEmail(String email) {
+        return adherentRepository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("Utilisateur non trouvé"));
+    }
+
+    @Override
+    public void updateProfileByEmail(String email, UpdateProfileRequest request) {
+
+        Adherent adherent = adherentRepository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("Utilisateur non trouvé"));
+
+        if(request.getEmail() != null){
+            adherent.setEmail(request.getEmail());
+        }
+
+        if(request.getTelephone() != null){
+            adherent.setTelephone(request.getTelephone());
+        }
+
+        if(request.getPassword() != null && !request.getPassword().isEmpty()){
+            adherent.setPassword(passwordEncoder.encode(request.getPassword()));
+        }
+
+        adherentRepository.save(adherent);
     }
 }

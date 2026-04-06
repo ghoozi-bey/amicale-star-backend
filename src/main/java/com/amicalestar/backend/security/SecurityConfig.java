@@ -32,23 +32,26 @@ public class SecurityConfig {
                         session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
                 )
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/api/auth/**").permitAll()
-                        .requestMatchers(org.springframework.http.HttpMethod.OPTIONS, "/**").permitAll()
+                .requestMatchers("/api/auth/**").permitAll()
+                .requestMatchers(org.springframework.http.HttpMethod.OPTIONS, "/**").permitAll()
 
-                        // EVENEMENTS
-                        .requestMatchers("/api/evenements", "/api/evenements/**")
-                        .hasRole("MEMBRE_AMICALE")
+                // 🔥 USER PROFILE
+                .requestMatchers("/api/user/**").authenticated()
 
-                        // SONDAGES
-                        .requestMatchers("/api/sondages", "/api/sondages/**")
-                        .hasRole("MEMBRE_AMICALE")
+                // EVENEMENTS
+                .requestMatchers("/api/evenements", "/api/evenements/**")
+                .hasRole("MEMBRE_AMICALE")
 
-                        // ADMIN
-                        .requestMatchers("/api/admin/**")
-                        .hasRole("ADMIN")
+                // SONDAGES
+                .requestMatchers("/api/sondages", "/api/sondages/**")
+                .hasRole("MEMBRE_AMICALE")
 
-                        .anyRequest().authenticated()
-                )
+                // ADMIN
+                .requestMatchers("/api/admin/**")
+                .hasRole("ADMIN")
+
+                .anyRequest().authenticated()
+        )
                 .addFilterBefore(jwtFilter,
                         org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter.class);
 
