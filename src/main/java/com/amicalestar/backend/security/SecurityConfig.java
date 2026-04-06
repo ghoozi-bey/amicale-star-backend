@@ -35,7 +35,12 @@ public class SecurityConfig {
                         .requestMatchers("/api/auth/**").permitAll()
                         .requestMatchers(org.springframework.http.HttpMethod.OPTIONS, "/**").permitAll()
 
+                        // EVENEMENTS
                         .requestMatchers("/api/evenements", "/api/evenements/**")
+                        .hasRole("MEMBRE_AMICALE")
+
+                        // SONDAGES
+                        .requestMatchers("/api/sondages", "/api/sondages/**")
                         .hasRole("MEMBRE_AMICALE")
 
                         // ADMIN

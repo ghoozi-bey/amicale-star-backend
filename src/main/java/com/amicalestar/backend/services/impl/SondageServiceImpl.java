@@ -11,6 +11,7 @@ import com.amicalestar.backend.services.SondageService;
 import org.springframework.stereotype.Service;
 import org.springframework.security.core.context.SecurityContextHolder;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Service
@@ -62,5 +63,87 @@ public class SondageServiceImpl implements SondageService {
         sondage.setChoix(choixList);
 
         return sondageRepository.save(sondage);
+    }
+
+    @Override
+    public List<Sondage> getActiveSondages() {
+
+        LocalDateTime now = LocalDateTime.now();
+
+        return sondageRepository.findByStatut(StatutSondage.ACTIF)
+                .stream()
+                .filter(s -> !s.getDateDebut().isAfter(now))
+                .filter(s -> !s.getDateFin().isBefore(now))
+                .toList();
+    }
+
+    @Override
+    public Sondage publishSondage(Long id) {
+        Sondage s = sondageRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Sondage not found"));
+
+        if (s.getStatut() != StatutSondage.BROUILLON) {
+            throw new RuntimeException("Sondage already published or closed");
+        }
+        s.setStatut(StatutSondage.ACTIF);
+
+        return sondageRepository.save(s);
+    }
+
+    @Override
+    public List<Sondage> getAllSondages() {
+        return sondageRepository.findAll();
+    }
+
+    @Override
+    public Sondage getSondageById(Long id) {
+        return sondageRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Sondage not found"));
+    }
+
+    @Override
+    public Sondage updateSondage(Long id, CreateSondageRequest request) {
+
+        Sondage s = sondageRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Sondage not found"));
+
+        // 🔥 règle métier
+        if (s.getStatut() != StatutSondage.BROUILLON) {
+            throw new RuntimeException("Impossible de modifier un sondage publié");
+        }
+
+        s.setQuestion(request.getQuestion());
+        s.setDateDebut(request.getDateDebut());
+        s.setDateFin(request.getDateFin());
+
+        // 🔥 remplacer les choix
+        s.getChoix().clear();
+
+        List<Choix> nouveauxChoix = request.getOptions().stream()
+                .map(label -> {
+                    Choix c = new Choix();
+                    c.setLabel(label);
+                    c.setSondage(s);
+                    return c;
+                })
+                .toList();
+
+        s.getChoix().addAll(nouveauxChoix);
+
+        return sondageRepository.save(s);
+    }
+
+    @Override
+    public void deleteSondage(Long id) {
+
+        Sondage s = sondageRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Sondage not found"));
+
+        // 🔒 règle métier
+        if (s.getStatut() != StatutSondage.BROUILLON) {
+            throw new RuntimeException("Impossible de supprimer un sondage publié");
+        }
+
+        sondageRepository.delete(s);
     }
 }
