@@ -1,6 +1,5 @@
 package com.amicalestar.backend.entities;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
@@ -14,12 +13,9 @@ public class Choix {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false)
     private String label;
 
-    @JsonIgnore
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "sondage_id", nullable = false)
-    private Sondage sondage;
-
+    @ManyToOne
+    @JoinColumn(name = "question_id")
+    private Question question;
 }

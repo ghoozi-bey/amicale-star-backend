@@ -35,20 +35,17 @@ public class SecurityConfig {
                 .requestMatchers("/api/auth/**").permitAll()
                 .requestMatchers(org.springframework.http.HttpMethod.OPTIONS, "/**").permitAll()
 
-                // 🔥 USER PROFILE
+                // USER PROFILE
                 .requestMatchers("/api/user/**").authenticated()
 
                 // EVENEMENTS
-                .requestMatchers("/api/evenements", "/api/evenements/**")
-                .hasRole("MEMBRE_AMICALE")
+                .requestMatchers("/api/evenements", "/api/evenements/**").hasRole("MEMBRE_AMICALE")
 
                 // SONDAGES
-                .requestMatchers("/api/sondages", "/api/sondages/**")
-                .hasRole("MEMBRE_AMICALE")
+                .requestMatchers("/api/sondages", "/api/sondages/**").hasRole("MEMBRE_AMICALE")
 
                 // ADMIN
-                .requestMatchers("/api/admin/**")
-                .hasRole("ADMIN")
+                .requestMatchers("/api/admin/**").hasRole("ADMIN")
 
                 .anyRequest().authenticated()
         )
