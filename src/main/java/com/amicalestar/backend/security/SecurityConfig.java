@@ -32,25 +32,33 @@ public class SecurityConfig {
                         session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
                 )
                 .authorizeHttpRequests(auth -> auth
-                .requestMatchers("/api/auth/**").permitAll()
-                .requestMatchers(org.springframework.http.HttpMethod.OPTIONS, "/**").permitAll()
 
-                // USER PROFILE
-                .requestMatchers("/api/user/**").authenticated()
+                        // 🔥 IMPORTANT (FIX IMAGE)
+                        .requestMatchers("/uploads/**").permitAll()
 
-                // EVENEMENTS
-                .requestMatchers("/api/evenements", "/api/evenements/**").hasRole("MEMBRE_AMICALE")
+                        // AUTH
+                        .requestMatchers("/api/auth/**").permitAll()
 
-                // SONDAGES
-                .requestMatchers("/api/sondages", "/api/sondages/**").hasRole("MEMBRE_AMICALE")
+                        // OPTIONS (CORS)
+                        .requestMatchers(org.springframework.http.HttpMethod.OPTIONS, "/**").permitAll()
 
-                // ADMIN
-                .requestMatchers("/api/admin/**").hasRole("ADMIN")
+                        // USER PROFILE
+                        .requestMatchers("/api/user/**").authenticated()
 
-                .anyRequest().authenticated()
-        )
+                        // EVENEMENTS
+                        .requestMatchers("/api/evenements/**").hasRole("MEMBRE_AMICALE")
+
+                        // SONDAGES
+                        .requestMatchers("/api/sondages/**").hasRole("MEMBRE_AMICALE")
+
+                        // ADMIN
+                        .requestMatchers("/api/admin/**").hasRole("ADMIN")
+
+                        .anyRequest().authenticated()
+                )
                 .addFilterBefore(jwtFilter,
-                        org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter.class);
+                        org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter.class
+                );
 
         return http.build();
     }

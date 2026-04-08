@@ -9,6 +9,7 @@ import com.amicalestar.backend.dto.UpdateProfileRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.beans.factory.annotation.Value;
 
 import com.amicalestar.backend.exceptions.ValidationException;
 
@@ -16,12 +17,22 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.List;
 
+// 🔥 IMPORTS PHOTO
+import org.springframework.web.multipart.MultipartFile;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+
 @Service
 @RequiredArgsConstructor
 public class AdherentServiceImpl implements AdherentService {
 
     private final AdherentRepository adherentRepository;
     private final PasswordEncoder passwordEncoder;
+
+    // 🔥 CHEMIN UPLOAD (CONFIG)
+    @Value("${file.upload-dir}")
+    private String uploadDir;
 
     // ================= CREATE =================
     @Override
@@ -125,44 +136,7 @@ public class AdherentServiceImpl implements AdherentService {
         adherentRepository.deleteById(matricule);
     }
 
-    // ================= OLD PROFILE (on garde) =================
-    @Override
-    public void updateProfile(String matricule, UpdateProfileRequest request) {
-
-        Adherent adherent = adherentRepository.findById(matricule)
-                .orElse(null);
-
-        if (adherent == null) return;
-
-        if(request.getEmail() != null){
-            adherent.setEmail(request.getEmail());
-        }
-
-        if(request.getTelephone() != null){
-            adherent.setTelephone(request.getTelephone());
-        }
-
-        if(request.getNewPassword() != null && !request.getNewPassword().isEmpty()){
-
-            if(request.getCurrentPassword() == null ||
-                    !passwordEncoder.matches(request.getCurrentPassword(), adherent.getPassword())){
-
-                throw new RuntimeException("Mot de passe actuel incorrect");
-            }
-
-            adherent.setPassword(passwordEncoder.encode(request.getNewPassword()));
-        }
-
-        adherentRepository.save(adherent);
-    }
-
-    @Override
-    public Adherent getProfile(String matricule) {
-        return adherentRepository.findById(matricule)
-                .orElseThrow(() -> new RuntimeException("Adherent not found"));
-    }
-
-    // ================= 🔥 NEW PRO VERSION =================
+    // ================= PROFILE JWT =================
 
     @Override
     public Adherent getProfileByEmail(String email) {
@@ -193,20 +167,100 @@ public class AdherentServiceImpl implements AdherentService {
             adherent.setTelephone(request.getTelephone());
         }
 
-        // 🔥 SECURITE MOT DE PASSE (IMPORTANT)
+        // 🔥 PHOTO (IMPORTANT)
+        if(request.getPhoto() != null && !request.getPhoto().isEmpty()){
+
+            try {
+                String uploadDir = "C:/star/uploads/";
+
+                String fileName = System.currentTimeMillis() + "_" +
+                        request.getPhoto().getOriginalFilename();
+
+                Path path = Paths.get(uploadDir + fileName);
+
+                Files.createDirectories(path.getParent());
+                Files.write(path, request.getPhoto().getBytes());
+
+                // 🔥 DELETE OLD PHOTO
+                if(adherent.getPhotoProfil() != null){
+                    Path oldPath = Paths.get(uploadDir + adherent.getPhotoProfil());
+                    Files.deleteIfExists(oldPath);
+                }
+
+                // 🔥 SAVE NEW NAME IN DB
+                adherent.setPhotoProfil(fileName);
+
+            } catch (Exception e){
+                throw new RuntimeException("Erreur upload photo");
+            }
+        }
+
+        // 🔐 PASSWORD
         if(request.getNewPassword() != null && !request.getNewPassword().isEmpty()){
 
-            // ❌ si mauvais password actuel
             if(request.getCurrentPassword() == null ||
                     !passwordEncoder.matches(request.getCurrentPassword(), adherent.getPassword())){
 
                 throw new RuntimeException("Mot de passe actuel incorrect");
             }
 
-            // ✅ si ok → update
             adherent.setPassword(passwordEncoder.encode(request.getNewPassword()));
         }
 
         adherentRepository.save(adherent);
+    }
+
+    // ================= OLD METHODS (INTERFACE) =================
+
+    @Override
+    public void updateProfile(String matricule, UpdateProfileRequest request) {
+
+        Adherent adherent = adherentRepository.findById(matricule).orElse(null);
+
+        if (adherent == null) return;
+
+        if(request.getEmail() != null){
+            adherent.setEmail(request.getEmail());
+        }
+
+        if(request.getTelephone() != null){
+            adherent.setTelephone(request.getTelephone());
+        }
+
+        adherentRepository.save(adherent);
+    }
+
+    @Override
+    public Adherent getProfile(String matricule) {
+        return adherentRepository.findById(matricule)
+                .orElseThrow(() -> new RuntimeException("Adherent not found"));
+    }
+
+    // ================= SAVE PHOTO =================
+
+    private String savePhoto(MultipartFile file) {
+
+        try {
+
+            if (!file.getContentType().startsWith("image/")) {
+                throw new RuntimeException("Type fichier invalide");
+            }
+
+            if (file.getSize() > 2 * 1024 * 1024) {
+                throw new RuntimeException("Image trop grande");
+            }
+
+            String fileName = System.currentTimeMillis() + "_" + file.getOriginalFilename();
+
+            Path path = Paths.get(uploadDir + fileName);
+
+            Files.createDirectories(path.getParent());
+            Files.write(path, file.getBytes());
+
+            return fileName;
+
+        } catch (Exception e) {
+            throw new RuntimeException("Erreur upload photo");
+        }
     }
 }

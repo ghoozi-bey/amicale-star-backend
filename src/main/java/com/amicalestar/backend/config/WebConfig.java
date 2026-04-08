@@ -1,25 +1,23 @@
 package com.amicalestar.backend.config;
 
-import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.servlet.config.annotation.*;
 
 @Configuration
-public class WebConfig {
+public class WebConfig implements WebMvcConfigurer {
 
-    @Bean
-    public WebMvcConfigurer corsConfigurer() {
+    @Override
+    public void addCorsMappings(CorsRegistry registry) {
+        registry.addMapping("/**")
+                .allowedOrigins("http://localhost:4200")
+                .allowedMethods("GET","POST","PUT","DELETE","OPTIONS")
+                .allowedHeaders("*");
+    }
 
-        return new WebMvcConfigurer() {
+    @Override
+    public void addResourceHandlers(ResourceHandlerRegistry registry) {
 
-            @Override
-            public void addCorsMappings(CorsRegistry registry) {
-
-                registry.addMapping("/**")
-                        .allowedOrigins("http://localhost:4200")
-                        .allowedMethods("GET","POST","PUT","DELETE","OPTIONS")
-                        .allowedHeaders("*");
-            }
-        };
+        registry.addResourceHandler("/uploads/**")
+                .addResourceLocations("file:///C:/star/uploads/"); // 🔥 IMPORTANT (3 slash)
     }
 }
