@@ -1,5 +1,6 @@
 package com.amicalestar.backend.entities;
 
+import com.amicalestar.backend.enums.StatutSondage;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
@@ -25,9 +26,12 @@ public class Sondage {
     private LocalDateTime dateDebut;
     private LocalDateTime dateFin;
 
+    @Enumerated(EnumType.STRING)
+    private StatutSondage statut;
+
     @ManyToOne
     @JoinColumn(name = "created_by")
-    private Adherent createdByy;
+    private Adherent createdBy;
 
     @OneToMany(mappedBy = "sondage", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Question> questions = new ArrayList<>();
@@ -35,5 +39,6 @@ public class Sondage {
     @PrePersist
     public void prePersist() {
         this.dateCreation = LocalDateTime.now();
+        this.statut = StatutSondage.BROUILLON;
     }
 }

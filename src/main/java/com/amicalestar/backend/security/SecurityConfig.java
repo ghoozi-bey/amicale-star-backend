@@ -44,6 +44,7 @@ public class SecurityConfig {
 
                         // USER PROFILE
                         .requestMatchers("/api/user/**").authenticated()
+                        .requestMatchers("/api/public/sondages/**").authenticated()
 
                         // EVENEMENTS
                         .requestMatchers("/api/evenements/**").hasRole("MEMBRE_AMICALE")
