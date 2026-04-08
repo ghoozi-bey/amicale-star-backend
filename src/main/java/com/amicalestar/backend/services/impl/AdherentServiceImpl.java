@@ -142,8 +142,15 @@ public class AdherentServiceImpl implements AdherentService {
             adherent.setTelephone(request.getTelephone());
         }
 
-        if(request.getPassword() != null && !request.getPassword().isEmpty()){
-            adherent.setPassword(passwordEncoder.encode(request.getPassword()));
+        if(request.getNewPassword() != null && !request.getNewPassword().isEmpty()){
+
+            if(request.getCurrentPassword() == null ||
+                    !passwordEncoder.matches(request.getCurrentPassword(), adherent.getPassword())){
+
+                throw new RuntimeException("Mot de passe actuel incorrect");
+            }
+
+            adherent.setPassword(passwordEncoder.encode(request.getNewPassword()));
         }
 
         adherentRepository.save(adherent);
@@ -169,6 +176,15 @@ public class AdherentServiceImpl implements AdherentService {
         Adherent adherent = adherentRepository.findByEmail(email)
                 .orElseThrow(() -> new RuntimeException("Utilisateur non trouvé"));
 
+        // 🔥 UPDATE INFOS
+        if(request.getNom() != null){
+            adherent.setNom(request.getNom());
+        }
+
+        if(request.getPrenom() != null){
+            adherent.setPrenom(request.getPrenom());
+        }
+
         if(request.getEmail() != null){
             adherent.setEmail(request.getEmail());
         }
@@ -177,8 +193,18 @@ public class AdherentServiceImpl implements AdherentService {
             adherent.setTelephone(request.getTelephone());
         }
 
-        if(request.getPassword() != null && !request.getPassword().isEmpty()){
-            adherent.setPassword(passwordEncoder.encode(request.getPassword()));
+        // 🔥 SECURITE MOT DE PASSE (IMPORTANT)
+        if(request.getNewPassword() != null && !request.getNewPassword().isEmpty()){
+
+            // ❌ si mauvais password actuel
+            if(request.getCurrentPassword() == null ||
+                    !passwordEncoder.matches(request.getCurrentPassword(), adherent.getPassword())){
+
+                throw new RuntimeException("Mot de passe actuel incorrect");
+            }
+
+            // ✅ si ok → update
+            adherent.setPassword(passwordEncoder.encode(request.getNewPassword()));
         }
 
         adherentRepository.save(adherent);

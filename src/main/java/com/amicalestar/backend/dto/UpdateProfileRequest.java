@@ -1,12 +1,18 @@
 package com.amicalestar.backend.dto;
 
-import lombok.Getter;
-import lombok.Setter;
+import lombok.Data;
+import org.springframework.web.multipart.MultipartFile;
 
-@Getter
-@Setter
+@Data
 public class UpdateProfileRequest {
+
+    private String nom;
+    private String prenom;
     private String email;
     private String telephone;
-    private String password;
+
+    private String currentPassword;
+    private String newPassword;
+
+    private MultipartFile photo;
 }

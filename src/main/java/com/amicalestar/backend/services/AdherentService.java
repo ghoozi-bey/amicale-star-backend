@@ -7,23 +7,37 @@ import java.util.List;
 
 public interface AdherentService {
 
-    // 🔵 EXISTANT (on garde pour compatibilité)
+    // ================= CREATE =================
     Adherent createAdherent(Adherent adherent);
 
+    // ================= READ =================
     List<Adherent> getAllAdherents();
 
     Adherent getAdherentById(String matricule);
 
+    // ================= UPDATE ADMIN =================
     Adherent updateAdherent(String matricule, Adherent adherent);
 
+    // ================= DELETE =================
     void deleteAdherent(String matricule);
 
+    // ================= OLD PROFILE (on garde pour compatibilité) =================
     void updateProfile(String matricule, UpdateProfileRequest request);
 
     Adherent getProfile(String matricule);
 
-    // 🔥 NOUVEAU (PRO - basé sur JWT)
+    // ================= 🔥 NEW PRO VERSION (SECURISEE) =================
+
+    /**
+     * Récupérer profil utilisateur connecté via email (JWT)
+     */
     Adherent getProfileByEmail(String email);
 
+    /**
+     * Mettre à jour profil avec :
+     * - nom / prénom
+     * - email / téléphone
+     * - changement mot de passe sécurisé (avec vérification)
+     */
     void updateProfileByEmail(String email, UpdateProfileRequest request);
 }

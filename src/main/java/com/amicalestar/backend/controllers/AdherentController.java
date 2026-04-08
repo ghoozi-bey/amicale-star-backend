@@ -9,7 +9,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
-@RequestMapping("/api/user") // 🔥 IMPORTANT
+@RequestMapping("/api/user")
 @RequiredArgsConstructor
 public class AdherentController {
 
@@ -22,9 +22,15 @@ public class AdherentController {
     }
 
     @PutMapping("/profile")
-    public ResponseEntity<?> updateProfile(@RequestBody UpdateProfileRequest request) {
+    public ResponseEntity<?> updateProfile(@ModelAttribute UpdateProfileRequest request) {
+
         String email = SecurityContextHolder.getContext().getAuthentication().getName();
-        adherentService.updateProfileByEmail(email, request);
-        return ResponseEntity.ok("Profil modifié");
+
+        try {
+            adherentService.updateProfileByEmail(email, request);
+            return ResponseEntity.ok("Profil modifié");
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
     }
 }
