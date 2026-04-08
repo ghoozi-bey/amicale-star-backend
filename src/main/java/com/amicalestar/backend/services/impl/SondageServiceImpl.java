@@ -6,6 +6,7 @@ import com.amicalestar.backend.dto.QuestionResponse;
 import com.amicalestar.backend.dto.SondageResponse;
 import com.amicalestar.backend.entities.*;
 import com.amicalestar.backend.enums.StatutSondage;
+import com.amicalestar.backend.enums.TypeQuestion;
 import com.amicalestar.backend.repositories.AdherentRepository;
 import com.amicalestar.backend.repositories.SondageRepository;
 import com.amicalestar.backend.services.SondageService;
@@ -29,6 +30,11 @@ public class SondageServiceImpl implements SondageService {
         Adherent creator = adherentRepository.findByEmail(matricule)
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
+        // 🔒 validate dates
+        if (request.getDateDebut().isAfter(request.getDateFin())) {
+            throw new RuntimeException("dateDebut must be before dateFin");
+        }
+
         Sondage sondage = new Sondage();
         sondage.setTitle(request.getTitle());
         sondage.setDescription(request.getDescription());
@@ -42,15 +48,32 @@ public class SondageServiceImpl implements SondageService {
 
             Question question = new Question();
             question.setText(qdto.getText());
+            question.setType(qdto.getType()); // ✅ NEW
             question.setSondage(sondage);
 
             List<Choix> choixList = new ArrayList<>();
 
-            for (String label : qdto.getChoix()) {
-                Choix choix = new Choix();
-                choix.setLabel(label);
-                choix.setQuestion(question);
-                choixList.add(choix);
+            // 🔥 Logic based on type
+            if (qdto.getType() == TypeQuestion.TEXTE) {
+
+                // TEXT question should NOT have choices
+                if (qdto.getChoix() != null && !qdto.getChoix().isEmpty()) {
+                    throw new RuntimeException("Text question cannot have choices");
+                }
+
+            } else {
+
+                // CHOIX_UNIQUE or CHOIX_MULTIPLE must have choices
+                if (qdto.getChoix() == null || qdto.getChoix().isEmpty()) {
+                    throw new RuntimeException("Choices required for this question type");
+                }
+
+                for (String label : qdto.getChoix()) {
+                    Choix choix = new Choix();
+                    choix.setLabel(label);
+                    choix.setQuestion(question);
+                    choixList.add(choix);
+                }
             }
 
             question.setChoixList(choixList);
@@ -115,6 +138,7 @@ public class SondageServiceImpl implements SondageService {
         return new QuestionResponse(
                 q.getId(),
                 q.getText(),
+                q.getType(),
                 q.getChoixList() == null ? List.of() : q.getChoixList().stream().map(this::toChoixResponse).toList()
         );
     }

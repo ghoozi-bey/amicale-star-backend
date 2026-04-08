@@ -44,13 +44,13 @@ public class SecurityConfig {
 
                         // USER PROFILE
                         .requestMatchers("/api/user/**").authenticated()
-                        .requestMatchers("/api/public/sondages/**").authenticated()
 
                         // EVENEMENTS
                         .requestMatchers("/api/evenements/**").hasRole("MEMBRE_AMICALE")
 
                         // SONDAGES
                         .requestMatchers("/api/sondages/**").hasRole("MEMBRE_AMICALE")
+                        .requestMatchers("/api/public/sondages/**").authenticated()
 
                         // ADMIN
                         .requestMatchers("/api/admin/**").hasRole("ADMIN")

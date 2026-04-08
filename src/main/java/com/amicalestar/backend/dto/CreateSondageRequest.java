@@ -1,5 +1,8 @@
 package com.amicalestar.backend.dto;
 
+import com.amicalestar.backend.enums.TypeQuestion;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import lombok.Data;
 
 import java.time.LocalDateTime;
@@ -19,6 +22,8 @@ public class CreateSondageRequest {
     @Data
     public static class QuestionRequest {
         private String text;
+        @Enumerated(EnumType.STRING)
+        private TypeQuestion type;
         private List<String> choix;
     }
 }

@@ -1,5 +1,6 @@
 package com.amicalestar.backend.entities;
 
+import com.amicalestar.backend.enums.TypeQuestion;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
@@ -17,6 +18,9 @@ public class Question {
     private Long id;
 
     private String text;
+
+    @Enumerated(EnumType.STRING)
+    private TypeQuestion type;
 
     @ManyToOne
     @JoinColumn(name = "sondage_id")
