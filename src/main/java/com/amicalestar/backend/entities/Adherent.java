@@ -58,8 +58,14 @@ public class Adherent {
 
     private Boolean actif;
 
-    @Column(length = 255)
-    private String photoProfil;
+    // ✅ BLOB IMAGE
+
+    @Column(name = "photo_profil", columnDefinition = "BYTEA")
+    private byte[] photoProfil;
+
+    // ✅ TYPE IMAGE (image/jpeg, image/png…)
+    @Column(name = "photo_type")
+    private String photoType;
 
     @ManyToOne
     @JoinColumn(name = "type_evenement_id")
@@ -68,6 +74,10 @@ public class Adherent {
     @JsonIgnore
     @OneToMany(mappedBy = "adherent")
     private List<Inscription> inscriptions;
+
+    @JsonIgnore
+    @OneToMany(mappedBy = "adherent")
+    private List<Evenement> evenements;
 
     @PrePersist
     public void prePersist() {
@@ -80,8 +90,4 @@ public class Adherent {
     public String getRoleName() {
         return "ROLE_" + this.typeAdherent.name();
     }
-
-    @JsonIgnore
-    @OneToMany(mappedBy = "adherent")
-    private List<Evenement> evenements;
 }

@@ -23,13 +23,13 @@ public class JwtService {
 
         Map<String, Object> claims = new HashMap<>();
 
-        // ✅ ROLE
-        claims.put("role", "ROLE_" + user.getTypeAdherent().name());
+        // ✅ FIX ROLE (SANS ROLE_)
+        claims.put("role", user.getTypeAdherent().name());
 
-        // ✅ USERNAME (🔥 IMPORTANT)
-        claims.put("username", user.getMatricule()); // ou getMatricule() si c’est ça chez toi
+        // ✅ USERNAME
+        claims.put("username", user.getMatricule());
 
-        // ✅ INFOS USER (optionnel)
+        // ✅ INFOS USER
         claims.put("prenom", user.getPrenom());
         claims.put("nom", user.getNom());
 

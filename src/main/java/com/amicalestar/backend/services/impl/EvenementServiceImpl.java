@@ -26,13 +26,20 @@ public class EvenementServiceImpl implements EvenementService {
         return evenementRepository.findAll();
     }
 
-    // 🔵 PARTICIPATION (ancienne méthode - on garde)
+    // 🔥 AJOUT IMPORTANT (pour récupérer image)
+    @Override
+    public Evenement getEvenementById(Long id) {
+        return evenementRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Evenement non trouvé"));
+    }
+
+    // 🔵 PARTICIPATION
     @Override
     public List<Evenement> getMesEvenements(String matricule) {
         return evenementRepository.findEventsWhereUserParticipates(matricule);
     }
 
-    // 🟢 🔥 NOUVELLE MÉTHODE PROPRE
+    // 🟢 NOUVELLE MÉTHODE
     @Override
     public List<Evenement> getMesInscriptions(Long matricule) {
         return evenementRepository.findEvenementsByAdherentInscrit(matricule);
@@ -76,6 +83,15 @@ public class EvenementServiceImpl implements EvenementService {
 
         if (evenement.getTitre() != null) {
             existing.setTitre(evenement.getTitre());
+        }
+
+        // 🔥 BONUS (si tu veux modifier image plus tard)
+        if (evenement.getPhoto() != null) {
+            existing.setPhoto(evenement.getPhoto());
+        }
+
+        if (evenement.getPhotoType() != null) {
+            existing.setPhotoType(evenement.getPhotoType());
         }
 
         return evenementRepository.save(existing);

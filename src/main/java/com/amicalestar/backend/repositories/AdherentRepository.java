@@ -2,7 +2,10 @@ package com.amicalestar.backend.repositories;
 
 import com.amicalestar.backend.entities.Adherent;
 import com.amicalestar.backend.enums.Departement;
+import com.amicalestar.backend.dto.AdherentDTO;
+
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
@@ -27,7 +30,21 @@ public interface AdherentRepository extends JpaRepository<Adherent, String> {
     boolean existsByCin(String cin);
     boolean existsByTelephone(String telephone);
 
-    // 🔥 BONUS PRO (utile pour futur)
     boolean existsByEmailAndMatriculeNot(String email, String matricule);
     boolean existsByTelephoneAndMatriculeNot(String telephone, String matricule);
+
+    // 🔥🔥🔥 SOLUTION PROBLÈME
+    @Query("""
+        SELECT new com.amicalestar.backend.dto.AdherentDTO(
+            a.matricule,
+            a.nom,
+            a.prenom,
+            a.email,
+            a.telephone,
+            a.departement,
+            a.typeAdherent
+        )
+        FROM Adherent a
+    """)
+    List<AdherentDTO> findAllDTO();
 }

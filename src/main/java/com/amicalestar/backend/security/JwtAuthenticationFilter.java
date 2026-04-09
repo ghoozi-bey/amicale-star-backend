@@ -2,7 +2,6 @@ package com.amicalestar.backend.security;
 
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.security.Keys;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -25,6 +24,7 @@ import java.security.Key;
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private static final String SECRET = "my-super-secret-key-12345678901234567890";
+
     private final UserDetailsService userDetailsService;
 
     private Key getSignInKey() {
@@ -37,55 +37,61 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                                     FilterChain filterChain)
             throws ServletException, IOException {
 
-        String path = request.getServletPath();
-
-        // 🔥🔥🔥 FIX CRITIQUE
-        // NE PAS FILTRER LES IMAGES
-        if (path.startsWith("/uploads")) {
+        // 🔥 Ignore OPTIONS (CORS)
+        if ("OPTIONS".equalsIgnoreCase(request.getMethod())) {
             filterChain.doFilter(request, response);
             return;
         }
 
-        String header = request.getHeader("Authorization");
+        final String authHeader = request.getHeader("Authorization");
 
-        // Si pas de token → continuer
-        if (header == null || !header.startsWith("Bearer ")) {
+        // 🔥 Pas de token
+        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+            System.out.println("❌ NO TOKEN");
             filterChain.doFilter(request, response);
             return;
         }
 
-        String token = header.substring(7);
+        final String jwt = authHeader.substring(7);
 
         try {
-
             Claims claims = Jwts.parserBuilder()
                     .setSigningKey(getSignInKey())
                     .build()
-                    .parseClaimsJws(token)
+                    .parseClaimsJws(jwt)
                     .getBody();
 
             String email = claims.getSubject();
+            String roleFromToken = claims.get("role", String.class);
+
+            // 🔥 DEBUG
+            System.out.println("========== JWT DEBUG ==========");
+            System.out.println("EMAIL = " + email);
+            System.out.println("ROLE FROM TOKEN = " + roleFromToken);
 
             if (email != null && SecurityContextHolder.getContext().getAuthentication() == null) {
 
                 UserDetails userDetails = userDetailsService.loadUserByUsername(email);
 
-                UsernamePasswordAuthenticationToken auth =
+                System.out.println("ROLE FROM DB = " + userDetails.getAuthorities());
+
+                // 🔥 IMPORTANT : toujours utiliser ROLE_*
+                UsernamePasswordAuthenticationToken authToken =
                         new UsernamePasswordAuthenticationToken(
                                 userDetails,
                                 null,
                                 userDetails.getAuthorities()
                         );
 
-                auth.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+                authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
 
-                SecurityContextHolder.getContext().setAuthentication(auth);
+                SecurityContextHolder.getContext().setAuthentication(authToken);
+
+                System.out.println("AUTH SUCCESS ✅");
             }
 
-        } catch (ExpiredJwtException e) {
-            System.out.println("JWT expired");
         } catch (Exception e) {
-            System.out.println("JWT invalid: " + e.getMessage());
+            System.out.println("❌ JWT ERROR: " + e.getMessage());
         }
 
         filterChain.doFilter(request, response);

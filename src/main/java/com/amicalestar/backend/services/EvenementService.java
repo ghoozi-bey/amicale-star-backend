@@ -9,6 +9,9 @@ public interface EvenementService {
 
     List<Evenement> getAllEvenements();
 
+    // 🔥 AJOUT IMPORTANT (pour image BLOB)
+    Evenement getEvenementById(Long id);
+
     List<Evenement> getEvenementsCrees(String matricule);
 
     Evenement archiverEvenement(Long id);
@@ -17,11 +20,12 @@ public interface EvenementService {
 
     Evenement updateEvenement(Long id, Evenement evenement);
 
-    // 🔥 participation (ancien - tu peux garder ou supprimer après)
+    // 🔵 participation
     List<Evenement> getMesEvenements(String matricule);
 
-    // 🔥 NOUVEAU → événements où l’utilisateur est inscrit
+    // 🟢 inscriptions
     List<Evenement> getMesInscriptions(Long matricule);
 
+    // 🟡 dashboard
     List<Evenement> getEvenementsActifs();
 }

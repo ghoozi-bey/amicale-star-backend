@@ -1,191 +1,72 @@
 package com.amicalestar.backend.controllers;
 
-import com.amicalestar.backend.entities.Adherent;
 import com.amicalestar.backend.entities.Evenement;
 import com.amicalestar.backend.entities.TypeEvenement;
-import com.amicalestar.backend.repositories.AdherentRepository;
-import com.amicalestar.backend.services.EvenementService;
-import com.amicalestar.backend.services.TypeEvenementService;
-
+import com.amicalestar.backend.repositories.EvenementRepository;
+import com.amicalestar.backend.repositories.TypeEvenementRepository;
 import lombok.RequiredArgsConstructor;
-
-import org.springframework.security.core.Authentication;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
-
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.nio.file.StandardCopyOption;
 import java.time.LocalDate;
-import java.util.List;
 
+import java.time.LocalDate;
+
+@RequiredArgsConstructor
 @RestController
 @RequestMapping("/api/evenements")
-@RequiredArgsConstructor
-@CrossOrigin
 public class EvenementController {
 
-    private final EvenementService evenementService;
-    private final TypeEvenementService typeEvenementService;
-    private final AdherentRepository adherentRepository;
+    private final EvenementRepository evenementRepository;
+    private final TypeEvenementRepository typeRepo; // 🔥 AJOUT ICI
 
-    // ================= CREATE =================
+    // ✅ CREATE EVENT (MULTIPART FIX)
     @PostMapping(consumes = "multipart/form-data")
-    public Evenement create(
+    public ResponseEntity<?> createEvenement(
+            @RequestParam("titre") String titre,
+            @RequestParam("description") String description,
+            @RequestParam(value = "lieu", required = false) String lieu,
+            @RequestParam(value = "dateDebut", required = false) String dateDebut,
+            @RequestParam(value = "dateFin", required = false) String dateFin,
+            @RequestParam(value = "prix", required = false) Double prix,
+            @RequestParam(value = "nbPlaces", required = false) Integer nbPlaces,
+            @RequestParam(value = "societe", required = false) String societe,
+            @RequestParam(value = "agence", required = false) String agence,
+            @RequestParam(value = "destination", required = false) String destination,
+            @RequestParam("typeEvenement") Long typeId,
+            @RequestParam(value = "photo", required = false) MultipartFile photo
+    ) throws Exception {
 
-            Authentication auth,
+        Evenement e = new Evenement();
 
-            @RequestParam String titre,
-            @RequestParam String lieu,
-            @RequestParam String description,
-            @RequestParam Long typeEvenement,
+        e.setTitre(titre);
+        e.setDescription(description);
+        e.setLieu(lieu);
 
-            @RequestParam(required = false) String dateDebut,
-            @RequestParam(required = false) String dateFin,
-            @RequestParam(required = false) Integer nbPlaces,
-            @RequestParam(required = false) Double prix,
+        if (dateDebut != null && !dateDebut.isEmpty())
+            e.setDateDebut(LocalDate.parse(dateDebut));
 
-            @RequestParam(required = false) String societe,
-            @RequestParam(required = false) String agence,
-            @RequestParam(required = false) String destination,
+        if (dateFin != null && !dateFin.isEmpty())
+            e.setDateFin(LocalDate.parse(dateFin));
 
-            @RequestParam(required = false) MultipartFile photo
-    ) {
+        e.setPrix(prix);
+        e.setNbPlaces(nbPlaces);
 
-        try {
+        e.setSociete(societe);
+        e.setAgence(agence);
+        e.setDestination(destination);
 
-            // 🔐 récupérer utilisateur connecté
-            String email = auth.getName();
-
-            Adherent adherent = adherentRepository.findByEmail(email)
-                    .orElseThrow(() -> new RuntimeException("Adherent non trouvé"));
-
-            String fileName = null;
-
-            // 📸 upload image
-            if (photo != null && !photo.isEmpty()) {
-                fileName = System.currentTimeMillis() + "_" + photo.getOriginalFilename();
-
-                Path uploadPath = Paths.get("uploads/events/");
-                Files.createDirectories(uploadPath);
-
-                Files.copy(
-                        photo.getInputStream(),
-                        uploadPath.resolve(fileName),
-                        StandardCopyOption.REPLACE_EXISTING
-                );
-            }
-
-            Evenement e = new Evenement();
-
-            e.setTitre(titre);
-            e.setLieu(lieu);
-            e.setDescription(description);
-            e.setPhoto(fileName);
-
-            // 🔥 LIAISON AVEC USER
-            e.setAdherent(adherent);
-
-            // 🔗 TYPE
-            TypeEvenement type = typeEvenementService.findById(typeEvenement);
-            e.setTypeEvenement(type);
-
-            String typeNom = type.getNom().toUpperCase().trim();
-
-            switch (typeNom) {
-
-                case "CONVENTION":
-                    e.setSociete(societe);
-                    break;
-
-                case "OMRA & HAJ":
-                    e.setAgence(agence);
-                    if (nbPlaces != null) e.setNbPlaces(nbPlaces);
-                    if (prix != null) e.setPrix(prix);
-                    if (dateDebut != null) e.setDateDebut(LocalDate.parse(dateDebut));
-                    if (dateFin != null) e.setDateFin(LocalDate.parse(dateFin));
-                    break;
-
-                case "VOYAGE":
-                    e.setDestination(destination);
-                    if (nbPlaces != null) e.setNbPlaces(nbPlaces);
-                    if (prix != null) e.setPrix(prix);
-                    if (dateDebut != null) e.setDateDebut(LocalDate.parse(dateDebut));
-                    if (dateFin != null) e.setDateFin(LocalDate.parse(dateFin));
-                    break;
-
-                default:
-                    throw new RuntimeException("Type invalide: " + typeNom);
-            }
-
-            return evenementService.createEvenement(e);
-
-        } catch (Exception e) {
-            throw new RuntimeException("Erreur création événement", e);
+        // 🔥 FIX PHOTO (IMPORTANT)
+        if (photo != null && !photo.isEmpty()) {
+            e.setPhoto(photo.getBytes());
+            e.setPhotoType(photo.getContentType());
         }
-    }
 
-    // ================= GET ALL =================
-    @GetMapping
-    public List<Evenement> getAll() {
-        return evenementService.getAllEvenements();
-    }
+        TypeEvenement type = typeRepo.findById(typeId)
+                .orElseThrow(() -> new RuntimeException("Type introuvable"));
 
-    // ================= MES EVENEMENTS =================
-    @GetMapping("/mes-evenements")
-    public List<Evenement> getMesEvenements(Authentication auth) {
+        e.setTypeEvenement(type);
 
-        String email = auth.getName();
-
-        Adherent adherent = adherentRepository.findByEmail(email)
-                .orElseThrow(() -> new RuntimeException("Adherent non trouvé"));
-
-        return evenementService.getMesEvenements(adherent.getMatricule());
-    }
-
-    // ================= ARCHIVER =================
-    @PatchMapping("/{id}/archiver")
-    public Evenement archiver(@PathVariable Long id) {
-        return evenementService.archiverEvenement(id);
-    }
-
-    // ================= DELETE =================
-    @DeleteMapping("/{id}")
-    public void delete(@PathVariable Long id) {
-        evenementService.deleteEvenement(id);
-    }
-
-    // ================= UPDATE =================
-    @PatchMapping("/{id}")
-    public Evenement updatePrix(@PathVariable Long id, @RequestBody Evenement evenement) {
-        return evenementService.updateEvenement(id, evenement);
-    }
-
-    // ================= TYPES =================
-    @GetMapping("/types")
-    public List<TypeEvenement> getTypes() {
-        return typeEvenementService.getAll();
-    }
-
-    // ================= TEST =================
-    @GetMapping("/test")
-    public String test() {
-        return "Backend Amicale STAR fonctionne 🚀";
-    }
-    // ================= EVENEMENTS ACTIFS (ADHERENT) =================
-    @GetMapping("/actifs")
-    public List<Evenement> getActifs() {
-        return evenementService.getEvenementsActifs();
-    }
-    @GetMapping("/mes-evenements-crees")
-    public List<Evenement> getEventsCreated(Authentication auth) {
-
-        String email = auth.getName();
-
-        Adherent adherent = adherentRepository.findByEmail(email)
-                .orElseThrow(() -> new RuntimeException("Adherent non trouvé"));
-
-        return evenementService.getEvenementsCrees(adherent.getMatricule());
+        return ResponseEntity.ok(evenementRepository.save(e));
     }
 }

@@ -1,24 +1,23 @@
 package com.amicalestar.backend.services.impl;
 
+import com.amicalestar.backend.dto.AdherentDTO;
 import com.amicalestar.backend.dto.CreateUserRequest;
 import com.amicalestar.backend.dto.UpdateUserRequest;
 import com.amicalestar.backend.entities.Adherent;
 import com.amicalestar.backend.entities.TypeEvenement;
 import com.amicalestar.backend.enums.TypeAdherent;
 import com.amicalestar.backend.repositories.AdherentRepository;
+import com.amicalestar.backend.repositories.TypeEvenementRepository;
 import com.amicalestar.backend.services.AdminUserService;
+import com.amicalestar.backend.services.AdherentService;
+
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
-import com.amicalestar.backend.services.AdherentService;
-import com.amicalestar.backend.repositories.TypeEvenementRepository;
-import com.amicalestar.backend.exceptions.ValidationException;
 
 import java.util.List;
 import java.util.HashMap;
 import java.util.Map;
-
-
 
 @Service
 @RequiredArgsConstructor
@@ -29,10 +28,59 @@ public class AdminUserServiceImpl implements AdminUserService {
     private final AdherentService adherentService;
     private final TypeEvenementRepository typeEvenementRepository;
 
-
+    // ================= CREATE =================
     @Override
     public Adherent createUser(CreateUserRequest request) {
 
+        Map<String, String> errors = new HashMap<>();
+
+        // ===== VALIDATION =====
+        if (request.getMatricule() == null || request.getMatricule().isEmpty()) {
+            errors.put("matricule", "Matricule obligatoire");
+        }
+
+        if (request.getNom() == null || request.getNom().isEmpty()) {
+            errors.put("nom", "Nom obligatoire");
+        }
+
+        if (request.getPrenom() == null || request.getPrenom().isEmpty()) {
+            errors.put("prenom", "Prénom obligatoire");
+        }
+
+        if (request.getEmail() == null || !request.getEmail().contains("@")) {
+            errors.put("email", "Email invalide");
+        }
+
+        if (request.getPassword() == null || request.getPassword().length() < 6) {
+            errors.put("password", "Mot de passe minimum 6 caractères");
+        }
+
+        if (request.getCin() == null || !request.getCin().matches("\\d{8}")) {
+            errors.put("cin", "CIN doit contenir 8 chiffres");
+        }
+
+        if (request.getTelephone() == null || !request.getTelephone().matches("\\d{8}")) {
+            errors.put("telephone", "Téléphone doit contenir 8 chiffres");
+        }
+
+        // ===== DUPLICATES =====
+        if (request.getEmail() != null && adherentRepository.existsByEmail(request.getEmail())) {
+            errors.put("email", "Email déjà utilisé");
+        }
+
+        if (request.getCin() != null && adherentRepository.existsByCin(request.getCin())) {
+            errors.put("cin", "CIN déjà utilisé");
+        }
+
+        if (request.getTelephone() != null && adherentRepository.existsByTelephone(request.getTelephone())) {
+            errors.put("telephone", "Téléphone déjà utilisé");
+        }
+
+        if (!errors.isEmpty()) {
+            throw new RuntimeException(errors.toString()); // 🔥 retour 400
+        }
+
+        // ===== TYPE EVENEMENT =====
         TypeEvenement typeEvenement = null;
 
         if (request.getTypeEvenementId() != null) {
@@ -41,12 +89,13 @@ public class AdminUserServiceImpl implements AdminUserService {
                     .orElse(null);
         }
 
+        // ===== CREATE USER =====
         Adherent adherent = Adherent.builder()
                 .matricule(request.getMatricule())
                 .nom(request.getNom())
                 .prenom(request.getPrenom())
                 .email(request.getEmail())
-                .password(request.getPassword())
+                .password(passwordEncoder.encode(request.getPassword()))
                 .cin(request.getCin())
                 .telephone(request.getTelephone())
                 .dateNaissance(request.getDateNaissance())
@@ -63,14 +112,10 @@ public class AdminUserServiceImpl implements AdminUserService {
         return adherentService.createAdherent(adherent);
     }
 
+    // ================= READ =================
     @Override
-    public List<Adherent> getAllUsers() {
-        return adherentRepository.findAll();
-    }
-
-    @Override
-    public void deleteUser(String matricule) {
-        adherentRepository.deleteById(matricule);
+    public List<AdherentDTO> getAllUsers() {
+        return adherentRepository.findAllDTO();
     }
 
     @Override
@@ -79,6 +124,13 @@ public class AdminUserServiceImpl implements AdminUserService {
                 .orElseThrow(() -> new RuntimeException("Utilisateur non trouvé"));
     }
 
+    // ================= DELETE =================
+    @Override
+    public void deleteUser(String matricule) {
+        adherentRepository.deleteById(matricule);
+    }
+
+    // ================= UPDATE =================
     @Override
     public Adherent updateUser(String matricule, UpdateUserRequest request){
 
@@ -87,62 +139,40 @@ public class AdminUserServiceImpl implements AdminUserService {
 
         Map<String, String> errors = new HashMap<>();
 
-        // ===== DUPLICATE CHECKS =====
         if (request.getEmail() != null &&
                 adherentRepository.existsByEmail(request.getEmail()) &&
                 !user.getEmail().equals(request.getEmail())) {
-
             errors.put("email", "Email déjà utilisé");
         }
 
         if (request.getCin() != null &&
                 adherentRepository.existsByCin(request.getCin()) &&
                 !user.getCin().equals(request.getCin())) {
-
             errors.put("cin", "CIN déjà utilisé");
         }
 
         if (request.getTelephone() != null &&
                 adherentRepository.existsByTelephone(request.getTelephone()) &&
                 !user.getTelephone().equals(request.getTelephone())) {
-
             errors.put("telephone", "Téléphone déjà utilisé");
         }
 
         if (!errors.isEmpty()) {
-            throw new ValidationException(errors);
+            throw new RuntimeException(errors.toString());
         }
 
-        // ===== SIMPLE FIELDS =====
         if (request.getNom() != null) user.setNom(request.getNom());
         if (request.getPrenom() != null) user.setPrenom(request.getPrenom());
         if (request.getEmail() != null) user.setEmail(request.getEmail());
         if (request.getTelephone() != null) user.setTelephone(request.getTelephone());
         if (request.getDepartement() != null) user.setDepartement(request.getDepartement());
         if (request.getDateNaissance() != null) user.setDateNaissance(request.getDateNaissance());
-        if (request.getPhotoProfil() != null) user.setPhotoProfil(request.getPhotoProfil());
         if (request.getTypeAdherent() != null) user.setTypeAdherent(request.getTypeAdherent());
         if (request.getActif() != null) user.setActif(request.getActif());
         if (request.getCin() != null) user.setCin(request.getCin());
 
-        // ===== PASSWORD =====
         if (request.getPassword() != null && !request.getPassword().isEmpty()) {
             user.setPassword(passwordEncoder.encode(request.getPassword()));
-        }
-
-        // ===== TYPE EVENEMENT =====
-        // enforce rule
-        if (request.getTypeAdherent() != null &&
-                request.getTypeAdherent() != TypeAdherent.MEMBRE_AMICALE) {
-
-            user.setTypeEvenement(null);
-
-        } else if (request.getTypeEvenementId() != null) {
-
-            TypeEvenement type = typeEvenementRepository.findById(request.getTypeEvenementId())
-                    .orElseThrow(() -> new RuntimeException("TypeEvenement not found"));
-
-            user.setTypeEvenement(type);
         }
 
         return adherentRepository.save(user);

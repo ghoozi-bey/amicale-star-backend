@@ -1,19 +1,14 @@
 package com.amicalestar.backend.dto;
 
-import com.amicalestar.backend.enums.Departement;
 import com.amicalestar.backend.enums.TypeAdherent;
-import jakarta.validation.constraints.Email;
-import jakarta.validation.constraints.Pattern;
-import jakarta.validation.constraints.Size;
-import lombok.*;
+import com.amicalestar.backend.enums.Departement;
+import jakarta.validation.constraints.*;
+import lombok.Data;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.Date;
 
-@Getter
-@Setter
-@NoArgsConstructor
-@AllArgsConstructor
-@Builder
+@Data
 public class UpdateUserRequest {
 
     private String nom;
@@ -33,9 +28,12 @@ public class UpdateUserRequest {
 
     @Pattern(regexp = "\\d{8}", message = "Le téléphone doit contenir exactement 8 chiffres")
     private String telephone;
+
     private Departement departement;
     private Boolean actif;
-    private String photoProfil;
+
     private Long typeEvenementId;
 
+    // 🔥 VERSION CORRECTE
+    private MultipartFile photoProfil;
 }

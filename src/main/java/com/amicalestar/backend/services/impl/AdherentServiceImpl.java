@@ -9,7 +9,6 @@ import com.amicalestar.backend.dto.UpdateProfileRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.beans.factory.annotation.Value;
 
 import com.amicalestar.backend.exceptions.ValidationException;
 
@@ -17,22 +16,12 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.List;
 
-// 🔥 IMPORTS PHOTO
-import org.springframework.web.multipart.MultipartFile;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-
 @Service
 @RequiredArgsConstructor
 public class AdherentServiceImpl implements AdherentService {
 
     private final AdherentRepository adherentRepository;
     private final PasswordEncoder passwordEncoder;
-
-    // 🔥 CHEMIN UPLOAD (CONFIG)
-    @Value("${file.upload-dir}")
-    private String uploadDir;
 
     // ================= CREATE =================
     @Override
@@ -63,21 +52,26 @@ public class AdherentServiceImpl implements AdherentService {
         if (adherent.getTypeAdherent() == null) {
             adherent.setTypeAdherent(TypeAdherent.ADHERENT);
         }
+        // 🔥 FIX BLOB (IMPORTANT)
+        if (adherent.getPhotoProfil() == null) {
+            adherent.setPhotoProfil(null);
+            adherent.setPhotoType(null);
+        }
 
         adherent.setPassword(passwordEncoder.encode(adherent.getPassword()));
 
         return adherentRepository.save(adherent);
     }
-
-    // ================= READ =================
-    @Override
-    public List<Adherent> getAllAdherents() {
-        return adherentRepository.findAll();
-    }
-
     @Override
     public Adherent getAdherentById(String matricule) {
         return adherentRepository.findById(matricule).orElse(null);
+    }
+
+    // 🔥 IMPORTANT pour controller image
+    @Override
+    public Adherent getByMatricule(String matricule) {
+        return adherentRepository.findById(matricule)
+                .orElseThrow(() -> new RuntimeException("Adherent non trouvé"));
     }
 
     // ================= UPDATE ADMIN =================
@@ -115,8 +109,12 @@ public class AdherentServiceImpl implements AdherentService {
             if (adherent.getActif() != null)
                 existing.setActif(adherent.getActif());
 
+            // ✔ compatible BLOB
             if (adherent.getPhotoProfil() != null)
                 existing.setPhotoProfil(adherent.getPhotoProfil());
+
+            if (adherent.getPhotoType() != null)
+                existing.setPhotoType(adherent.getPhotoType());
 
             if (adherent.getCin() != null)
                 existing.setCin(adherent.getCin());
@@ -137,7 +135,6 @@ public class AdherentServiceImpl implements AdherentService {
     }
 
     // ================= PROFILE JWT =================
-
     @Override
     public Adherent getProfileByEmail(String email) {
         return adherentRepository.findByEmail(email)
@@ -150,7 +147,7 @@ public class AdherentServiceImpl implements AdherentService {
         Adherent adherent = adherentRepository.findByEmail(email)
                 .orElseThrow(() -> new RuntimeException("Utilisateur non trouvé"));
 
-        // 🔥 UPDATE INFOS
+        // ================= INFOS =================
         if(request.getNom() != null){
             adherent.setNom(request.getNom());
         }
@@ -167,35 +164,27 @@ public class AdherentServiceImpl implements AdherentService {
             adherent.setTelephone(request.getTelephone());
         }
 
-        // 🔥 PHOTO (IMPORTANT)
-        if(request.getPhoto() != null && !request.getPhoto().isEmpty()){
-
+        // ================= 🔥 PHOTO (BLOB) =================
+        if(request.getPhotoProfil() != null && !request.getPhotoProfil().isEmpty()){
             try {
-                String uploadDir = "C:/star/uploads/";
 
-                String fileName = System.currentTimeMillis() + "_" +
-                        request.getPhoto().getOriginalFilename();
-
-                Path path = Paths.get(uploadDir + fileName);
-
-                Files.createDirectories(path.getParent());
-                Files.write(path, request.getPhoto().getBytes());
-
-                // 🔥 DELETE OLD PHOTO
-                if(adherent.getPhotoProfil() != null){
-                    Path oldPath = Paths.get(uploadDir + adherent.getPhotoProfil());
-                    Files.deleteIfExists(oldPath);
+                if(!request.getPhotoProfil().getContentType().startsWith("image/")){
+                    throw new RuntimeException("Fichier invalide");
                 }
 
-                // 🔥 SAVE NEW NAME IN DB
-                adherent.setPhotoProfil(fileName);
+                if(request.getPhotoProfil().getSize() > 2 * 1024 * 1024){
+                    throw new RuntimeException("Image trop grande (max 2MB)");
+                }
+
+                adherent.setPhotoProfil(request.getPhotoProfil().getBytes());
+                adherent.setPhotoType(request.getPhotoProfil().getContentType());
 
             } catch (Exception e){
-                throw new RuntimeException("Erreur upload photo");
+                throw new RuntimeException("Erreur traitement image");
             }
         }
 
-        // 🔐 PASSWORD
+        // ================= 🔐 PASSWORD =================
         if(request.getNewPassword() != null && !request.getNewPassword().isEmpty()){
 
             if(request.getCurrentPassword() == null ||
@@ -210,8 +199,7 @@ public class AdherentServiceImpl implements AdherentService {
         adherentRepository.save(adherent);
     }
 
-    // ================= OLD METHODS (INTERFACE) =================
-
+    // ================= OLD METHODS =================
     @Override
     public void updateProfile(String matricule, UpdateProfileRequest request) {
 
@@ -233,34 +221,6 @@ public class AdherentServiceImpl implements AdherentService {
     @Override
     public Adherent getProfile(String matricule) {
         return adherentRepository.findById(matricule)
-                .orElseThrow(() -> new RuntimeException("Adherent not found"));
-    }
-
-    // ================= SAVE PHOTO =================
-
-    private String savePhoto(MultipartFile file) {
-
-        try {
-
-            if (!file.getContentType().startsWith("image/")) {
-                throw new RuntimeException("Type fichier invalide");
-            }
-
-            if (file.getSize() > 2 * 1024 * 1024) {
-                throw new RuntimeException("Image trop grande");
-            }
-
-            String fileName = System.currentTimeMillis() + "_" + file.getOriginalFilename();
-
-            Path path = Paths.get(uploadDir + fileName);
-
-            Files.createDirectories(path.getParent());
-            Files.write(path, file.getBytes());
-
-            return fileName;
-
-        } catch (Exception e) {
-            throw new RuntimeException("Erreur upload photo");
-        }
+                .orElseThrow(() -> new RuntimeException("Adherent non trouvé"));
     }
 }

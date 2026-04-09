@@ -11,6 +11,7 @@ import com.amicalestar.backend.services.TypeEvenementService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
+import com.amicalestar.backend.dto.AdherentDTO;
 
 import java.util.List;
 
@@ -23,25 +24,21 @@ public class AdminUserController {
     private final AdminUserService adminUserService;
     private final TypeEvenementService typeEvenementService;
 
-    // CREATE USER (corrigé)
     @PostMapping("/create-user")
     public Adherent create(@Valid @RequestBody CreateUserRequest request) {
         return adminUserService.createUser(request);
     }
 
-    // READ
     @GetMapping("/users")
-    public List<Adherent> getAll() {
+    public List<AdherentDTO> getAll() {
         return adminUserService.getAllUsers();
     }
 
-    // DELETE
     @DeleteMapping("/users/{matricule}")
     public void delete(@PathVariable String matricule) {
         adminUserService.deleteUser(matricule);
     }
 
-    // READ SINGLE USER
     @GetMapping("/users/{matricule}")
     public Adherent getUser(@PathVariable String matricule) {
         return adminUserService.getUserByMatricule(matricule);

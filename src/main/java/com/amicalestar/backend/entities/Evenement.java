@@ -31,7 +31,13 @@ public class Evenement {
     private Double prix;
     private Integer nbPlaces;
 
-    private String photo;
+    // 🔥 REMPLACEMENT (String -> BLOB)
+    @Lob
+    @Column(name = "photo")
+    private byte[] photo;
+
+    @Column(name = "photo_type")
+    private String photoType;
 
     @Enumerated(EnumType.STRING)
     private StatutEvenement statut;

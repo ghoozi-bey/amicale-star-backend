@@ -3,17 +3,16 @@ package com.amicalestar.backend.services;
 import com.amicalestar.backend.entities.Adherent;
 import com.amicalestar.backend.dto.UpdateProfileRequest;
 
-import java.util.List;
-
 public interface AdherentService {
 
     // ================= CREATE =================
     Adherent createAdherent(Adherent adherent);
 
     // ================= READ =================
-    List<Adherent> getAllAdherents();
-
     Adherent getAdherentById(String matricule);
+
+    // 🔥 utilisé pour image endpoint
+    Adherent getByMatricule(String matricule);
 
     // ================= UPDATE ADMIN =================
     Adherent updateAdherent(String matricule, Adherent adherent);
@@ -21,23 +20,20 @@ public interface AdherentService {
     // ================= DELETE =================
     void deleteAdherent(String matricule);
 
-    // ================= OLD PROFILE (on garde pour compatibilité) =================
+    // ================= OLD PROFILE =================
     void updateProfile(String matricule, UpdateProfileRequest request);
 
     Adherent getProfile(String matricule);
 
-    // ================= 🔥 NEW PRO VERSION (SECURISEE) =================
+    // ================= 🔥 NEW PRO VERSION =================
 
     /**
-     * Récupérer profil utilisateur connecté via email (JWT)
+     * Profil via email (JWT)
      */
     Adherent getProfileByEmail(String email);
 
     /**
-     * Mettre à jour profil avec :
-     * - nom / prénom
-     * - email / téléphone
-     * - changement mot de passe sécurisé (avec vérification)
+     * Update profil + image
      */
     void updateProfileByEmail(String email, UpdateProfileRequest request);
 }
