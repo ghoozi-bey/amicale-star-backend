@@ -14,6 +14,6 @@ public class UpdateProfileRequest {
     private String currentPassword;
     private String newPassword;
 
-    // 🔥 important: même nom que backend (cohérence)
+    // important: même nom que backend (cohérence)
     private MultipartFile photoProfil;
 }

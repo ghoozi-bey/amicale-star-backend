@@ -41,10 +41,11 @@ public class SecurityConfig {
                         // AUTH
                         .requestMatchers("/api/auth/**").permitAll()
 
-                        // 🔥 CORS preflight
+                        // CORS preflight
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
 
                         // USER
+                        .requestMatchers("/api/user/photo/**").permitAll()
                         .requestMatchers("/api/user/**").authenticated()
 
                         // MEMBRE AMICALE
