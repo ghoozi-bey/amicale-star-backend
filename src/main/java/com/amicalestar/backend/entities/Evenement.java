@@ -32,8 +32,7 @@ public class Evenement {
     private Integer nbPlaces;
 
     // 🔥 REMPLACEMENT (String -> BLOB)
-    @Lob
-    @Column(name = "photo")
+    @Column(name = "photo", columnDefinition = "bytea")
     private byte[] photo;
 
     @Column(name = "photo_type")

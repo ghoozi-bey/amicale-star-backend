@@ -67,6 +67,16 @@ public class EvenementController {
 
         e.setTypeEvenement(type);
 
+        System.out.println("==== DEBUG PHOTO ====");
+        System.out.println("Multipart photo null? " + (photo == null));
+        System.out.println("Multipart photo empty? " + (photo != null && photo.isEmpty()));
+
+        if (photo != null) {
+            System.out.println("Multipart size: " + photo.getSize());
+        }
+
+        System.out.println("Entity photo null? " + (e.getPhoto() == null));
+
         return ResponseEntity.ok(evenementRepository.save(e));
     }
 }

@@ -64,16 +64,9 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             String email = claims.getSubject();
             String roleFromToken = claims.get("role", String.class);
 
-            // 🔥 DEBUG
-            System.out.println("========== JWT DEBUG ==========");
-            System.out.println("EMAIL = " + email);
-            System.out.println("ROLE FROM TOKEN = " + roleFromToken);
-
             if (email != null && SecurityContextHolder.getContext().getAuthentication() == null) {
 
                 UserDetails userDetails = userDetailsService.loadUserByUsername(email);
-
-                System.out.println("ROLE FROM DB = " + userDetails.getAuthorities());
 
                 // 🔥 IMPORTANT : toujours utiliser ROLE_*
                 UsernamePasswordAuthenticationToken authToken =
@@ -86,8 +79,6 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
 
                 SecurityContextHolder.getContext().setAuthentication(authToken);
-
-                System.out.println("AUTH SUCCESS ✅");
             }
 
         } catch (Exception e) {

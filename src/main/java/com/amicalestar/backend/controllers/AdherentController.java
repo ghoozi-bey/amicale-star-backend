@@ -55,8 +55,6 @@ public class AdherentController {
         }
 
         String contentType = adherent.getPhotoType();
-        System.out.println("TYPE: " + adherent.getPhotoType());
-        System.out.println("SIZE: " + (adherent.getPhotoProfil() != null ? adherent.getPhotoProfil().length : 0));
 
         return ResponseEntity.ok()
                 .header(HttpHeaders.CONTENT_TYPE,

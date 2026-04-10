@@ -27,7 +27,6 @@ public class AuthController {
                         request.getPassword()
                 )
         );
-        System.out.println("AUTH SUCCESS");
 
         // LOAD USER FROM DB
         Adherent adherent = adherentRepository.findByEmail(request.getEmail())

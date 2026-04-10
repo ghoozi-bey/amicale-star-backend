@@ -59,7 +59,6 @@ public class Adherent {
     private Boolean actif;
 
     // ✅ BLOB IMAGE
-
     @Column(name = "photo_profil", columnDefinition = "BYTEA")
     private byte[] photoProfil;
 
