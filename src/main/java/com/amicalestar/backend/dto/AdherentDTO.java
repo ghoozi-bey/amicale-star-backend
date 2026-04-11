@@ -14,4 +14,7 @@ public class AdherentDTO {
     private String telephone;
     private Object departement;
     private Object typeAdherent;
+
+    private String photo;
+    private String photoType;
 }

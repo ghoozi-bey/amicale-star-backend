@@ -33,18 +33,4 @@ public interface AdherentRepository extends JpaRepository<Adherent, String> {
     boolean existsByEmailAndMatriculeNot(String email, String matricule);
     boolean existsByTelephoneAndMatriculeNot(String telephone, String matricule);
 
-    // 🔥🔥🔥 SOLUTION PROBLÈME
-    @Query("""
-        SELECT new com.amicalestar.backend.dto.AdherentDTO(
-            a.matricule,
-            a.nom,
-            a.prenom,
-            a.email,
-            a.telephone,
-            a.departement,
-            a.typeAdherent
-        )
-        FROM Adherent a
-    """)
-    List<AdherentDTO> findAllDTO();
 }

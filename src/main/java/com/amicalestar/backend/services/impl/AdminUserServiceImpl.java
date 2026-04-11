@@ -15,6 +15,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import java.util.Base64;
 import java.util.List;
 import java.util.HashMap;
 import java.util.Map;
@@ -115,7 +116,35 @@ public class AdminUserServiceImpl implements AdminUserService {
     // ================= READ =================
     @Override
     public List<AdherentDTO> getAllUsers() {
-        return adherentRepository.findAllDTO();
+        return adherentRepository.findAll().stream().map(user -> {
+
+            String base64Photo = null;
+            String photoType = null;
+
+            if (user.getPhotoProfil() != null && user.getPhotoProfil().length > 0) {
+                base64Photo = Base64.getEncoder().encodeToString(user.getPhotoProfil());
+
+                // ensure valid MIME type
+                if (user.getPhotoType() != null && user.getPhotoType().startsWith("image/")) {
+                    photoType = user.getPhotoType();
+                } else {
+                    photoType = "image/jpeg";
+                }
+            }
+
+            return new AdherentDTO(
+                    user.getMatricule(),
+                    user.getNom(),
+                    user.getPrenom(),
+                    user.getEmail(),
+                    user.getTelephone(),
+                    user.getDepartement(),
+                    user.getTypeAdherent(),
+                    base64Photo,
+                    photoType
+            );
+
+        }).toList();
     }
 
     @Override

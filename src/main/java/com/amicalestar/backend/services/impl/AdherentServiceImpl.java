@@ -165,21 +165,29 @@ public class AdherentServiceImpl implements AdherentService {
         }
 
         // ================= 🔥 PHOTO (BLOB) =================
-        if(request.getPhotoProfil() != null && !request.getPhotoProfil().isEmpty()){
+
+        // 🔥 1. DELETE PHOTO
+        if ("true".equals(request.getRemovePhoto())) {
+            adherent.setPhotoProfil(null);
+            adherent.setPhotoType(null);
+        }
+
+        // 🔥 2. UPLOAD NEW PHOTO
+        else if (request.getPhotoProfil() != null && !request.getPhotoProfil().isEmpty()) {
             try {
 
-                if(!request.getPhotoProfil().getContentType().startsWith("image/")){
+                if (!request.getPhotoProfil().getContentType().startsWith("image/")) {
                     throw new RuntimeException("Fichier invalide");
                 }
 
-                if(request.getPhotoProfil().getSize() > 2 * 1024 * 1024){
+                if (request.getPhotoProfil().getSize() > 2 * 1024 * 1024) {
                     throw new RuntimeException("Image trop grande (max 2MB)");
                 }
 
                 adherent.setPhotoProfil(request.getPhotoProfil().getBytes());
                 adherent.setPhotoType(request.getPhotoProfil().getContentType());
 
-            } catch (Exception e){
+            } catch (Exception e) {
                 throw new RuntimeException("Erreur traitement image");
             }
         }

@@ -16,4 +16,6 @@ public class UpdateProfileRequest {
 
     // important: même nom que backend (cohérence)
     private MultipartFile photoProfil;
+
+    private String removePhoto;
 }
