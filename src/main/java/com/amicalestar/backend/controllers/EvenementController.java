@@ -8,9 +8,10 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
-import java.time.LocalDate;
+import com.amicalestar.backend.dto.EvenementDTO;
 
 import java.time.LocalDate;
+import java.util.List;
 
 @RequiredArgsConstructor
 @RestController
@@ -18,9 +19,56 @@ import java.time.LocalDate;
 public class EvenementController {
 
     private final EvenementRepository evenementRepository;
-    private final TypeEvenementRepository typeRepo; // 🔥 AJOUT ICI
+    private final TypeEvenementRepository typeRepo;
 
-    // ✅ CREATE EVENT (MULTIPART FIX)
+    // ✅ EVENEMENTS ACTIFS (SANS PHOTO LOURDE)
+    @GetMapping("/actifs")
+    public ResponseEntity<?> getEvenementsActifs() {
+
+        List<EvenementDTO> list = evenementRepository.findAllLight()
+                .stream()
+                .map(obj -> {
+                    EvenementDTO dto = new EvenementDTO();
+                    dto.id = (Long) obj[0];
+                    dto.titre = (String) obj[1];
+                    dto.description = (String) obj[2];
+                    dto.lieu = (String) obj[3];
+                    dto.dateDebut = (java.time.LocalDate) obj[4];
+                    return dto;
+                })
+                .toList();
+
+        return ResponseEntity.ok(list);
+    }
+
+    // ✅ MES EVENEMENTS
+    @GetMapping("/mes-evenements-crees")
+    public ResponseEntity<?> getMesEvenements() {
+        List<Evenement> events = evenementRepository.findAll();
+
+        // 🔥 SUPPRIMER PHOTO
+        events.forEach(e -> e.setPhoto(null));
+
+        return ResponseEntity.ok(events);
+    }
+
+    // ✅ GET PHOTO SEPARÉ (OPTIMISATION)
+    @GetMapping("/photo/{id}")
+    public ResponseEntity<byte[]> getPhoto(@PathVariable Long id) {
+
+        Evenement e = evenementRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Event introuvable"));
+
+        if (e.getPhoto() == null) {
+            return ResponseEntity.notFound().build();
+        }
+
+        return ResponseEntity.ok()
+                .header("Content-Type", e.getPhotoType())
+                .body(e.getPhoto());
+    }
+
+    // ✅ CREATE EVENT (inchangé)
     @PostMapping(consumes = "multipart/form-data")
     public ResponseEntity<?> createEvenement(
             @RequestParam("titre") String titre,
@@ -56,7 +104,6 @@ public class EvenementController {
         e.setAgence(agence);
         e.setDestination(destination);
 
-        // 🔥 FIX PHOTO (IMPORTANT)
         if (photo != null && !photo.isEmpty()) {
             e.setPhoto(photo.getBytes());
             e.setPhotoType(photo.getContentType());
@@ -66,16 +113,6 @@ public class EvenementController {
                 .orElseThrow(() -> new RuntimeException("Type introuvable"));
 
         e.setTypeEvenement(type);
-
-        System.out.println("==== DEBUG PHOTO ====");
-        System.out.println("Multipart photo null? " + (photo == null));
-        System.out.println("Multipart photo empty? " + (photo != null && photo.isEmpty()));
-
-        if (photo != null) {
-            System.out.println("Multipart size: " + photo.getSize());
-        }
-
-        System.out.println("Entity photo null? " + (e.getPhoto() == null));
 
         return ResponseEntity.ok(evenementRepository.save(e));
     }

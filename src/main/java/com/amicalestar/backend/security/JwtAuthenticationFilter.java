@@ -37,7 +37,6 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                                     FilterChain filterChain)
             throws ServletException, IOException {
 
-        // 🔥 Ignore OPTIONS (CORS)
         if ("OPTIONS".equalsIgnoreCase(request.getMethod())) {
             filterChain.doFilter(request, response);
             return;
@@ -45,9 +44,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
         final String authHeader = request.getHeader("Authorization");
 
-        // 🔥 Pas de token
         if (authHeader == null || !authHeader.startsWith("Bearer ")) {
-            System.out.println("❌ NO TOKEN");
             filterChain.doFilter(request, response);
             return;
         }
@@ -62,23 +59,28 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                     .getBody();
 
             String email = claims.getSubject();
-            String roleFromToken = claims.get("role", String.class);
 
             if (email != null && SecurityContextHolder.getContext().getAuthentication() == null) {
 
                 UserDetails userDetails = userDetailsService.loadUserByUsername(email);
 
-                // 🔥 IMPORTANT : toujours utiliser ROLE_*
+                // ✅ CREATION AUTH TOKEN CORRECT
                 UsernamePasswordAuthenticationToken authToken =
                         new UsernamePasswordAuthenticationToken(
                                 userDetails,
                                 null,
-                                userDetails.getAuthorities()
+                                userDetails.getAuthorities() // 🔥 CRITIQUE
                         );
 
-                authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+                authToken.setDetails(
+                        new WebAuthenticationDetailsSource().buildDetails(request)
+                );
 
+                // ✅ INJECTION DANS SPRING
                 SecurityContextHolder.getContext().setAuthentication(authToken);
+
+                // 🔥 DEBUG (tu peux laisser temporairement)
+                System.out.println("✅ AUTH OK: " + userDetails.getAuthorities());
             }
 
         } catch (Exception e) {

@@ -41,22 +41,27 @@ public class SecurityConfig {
                         // AUTH
                         .requestMatchers("/api/auth/**").permitAll()
 
-                        // CORS preflight
+                        // CORS
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
 
                         // USER
                         .requestMatchers("/api/user/photo/**").permitAll()
                         .requestMatchers("/api/user/**").authenticated()
 
-                        // MEMBRE AMICALE
+                        // 🔥 PHOTO EVENTS (AJOUT ICI)
+                        .requestMatchers("/api/evenements/photo/**").permitAll()
+
+                        // MEMBRE
                         .requestMatchers("/api/evenements/**").hasRole("MEMBRE_AMICALE")
                         .requestMatchers("/api/sondages/**").hasRole("MEMBRE_AMICALE")
 
-                        .requestMatchers("/api/public/sondages/**").authenticated()
+                        // PUBLIC
+                        .requestMatchers("/api/public/**").permitAll()
 
                         // ADMIN
                         .requestMatchers("/api/admin/**").hasRole("ADMIN")
 
+                        // 🔥 TOUJOURS À LA FIN
                         .anyRequest().authenticated()
                 )
 

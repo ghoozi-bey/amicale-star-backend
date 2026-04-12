@@ -25,4 +25,6 @@ public interface EvenementRepository extends JpaRepository<Evenement, Long> {
     List<Evenement> findEventsWhereUserParticipates(@Param("matricule") String matricule);
     @Query("SELECT i.evenement FROM Inscription i WHERE i.adherent.matricule = :matricule")
     List<Evenement> findEvenementsByAdherentInscrit(@Param("matricule") Long matricule);
+    @Query("SELECT e.id, e.titre, e.description, e.lieu, e.dateDebut FROM Evenement e")
+    List<Object[]> findAllLight();
 }
