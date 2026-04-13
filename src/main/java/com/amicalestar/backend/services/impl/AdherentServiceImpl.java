@@ -148,36 +148,44 @@ public class AdherentServiceImpl implements AdherentService {
                 .orElseThrow(() -> new RuntimeException("Utilisateur non trouvé"));
 
         // ================= INFOS =================
-        if(request.getNom() != null){
+        if (request.getNom() != null && !request.getNom().isEmpty()) {
             adherent.setNom(request.getNom());
         }
 
-        if(request.getPrenom() != null){
+        if (request.getPrenom() != null && !request.getPrenom().isEmpty()) {
             adherent.setPrenom(request.getPrenom());
         }
 
-        if(request.getEmail() != null){
+        if (request.getEmail() != null && !request.getEmail().isEmpty()) {
             adherent.setEmail(request.getEmail());
         }
 
-        if(request.getTelephone() != null){
+        if (request.getTelephone() != null && !request.getTelephone().isEmpty()) {
             adherent.setTelephone(request.getTelephone());
         }
 
-        // ================= 🔥 PHOTO (BLOB) =================
+        // ================= 🔥 PHOTO =================
 
-        // 🔥 1. DELETE PHOTO
-        if ("true".equals(request.getRemovePhoto())) {
-            adherent.setPhotoProfil(null);
-            adherent.setPhotoType(null);
-        }
+        try {
 
-        // 🔥 2. UPLOAD NEW PHOTO
-        else if (request.getPhotoProfil() != null && !request.getPhotoProfil().isEmpty()) {
-            try {
+            // 🔥 DELETE PHOTO
+            System.out.println("REMOVE PHOTO VALUE = " + request.getRemovePhoto());
+            if (request.getRemovePhoto() != null &&
+                    request.getRemovePhoto().trim().equalsIgnoreCase("true")) {
 
-                if (!request.getPhotoProfil().getContentType().startsWith("image/")) {
-                    throw new RuntimeException("Fichier invalide");
+                System.out.println("🔥 SUPPRESSION PHOTO DETECTÉE");
+
+                adherent.setPhotoProfil(null);
+                adherent.setPhotoType(null);
+            }
+
+            // 🔥 UPLOAD NEW PHOTO
+            else if (request.getPhotoProfil() != null && !request.getPhotoProfil().isEmpty()) {
+
+                String contentType = request.getPhotoProfil().getContentType();
+
+                if (contentType == null || !contentType.startsWith("image/")) {
+                    throw new RuntimeException("Fichier invalide (image uniquement)");
                 }
 
                 if (request.getPhotoProfil().getSize() > 2 * 1024 * 1024) {
@@ -185,18 +193,20 @@ public class AdherentServiceImpl implements AdherentService {
                 }
 
                 adherent.setPhotoProfil(request.getPhotoProfil().getBytes());
-                adherent.setPhotoType(request.getPhotoProfil().getContentType());
+                adherent.setPhotoType(contentType);
 
-            } catch (Exception e) {
-                throw new RuntimeException("Erreur traitement image");
+                System.out.println("✅ Image bien sauvegardée en BLOB");
             }
+
+        } catch (Exception e) {
+            throw new RuntimeException("Erreur traitement image: " + e.getMessage());
         }
 
-        // ================= 🔐 PASSWORD =================
-        if(request.getNewPassword() != null && !request.getNewPassword().isEmpty()){
+        // ================= PASSWORD =================
+        if (request.getNewPassword() != null && !request.getNewPassword().isEmpty()) {
 
-            if(request.getCurrentPassword() == null ||
-                    !passwordEncoder.matches(request.getCurrentPassword(), adherent.getPassword())){
+            if (request.getCurrentPassword() == null ||
+                    !passwordEncoder.matches(request.getCurrentPassword(), adherent.getPassword())) {
 
                 throw new RuntimeException("Mot de passe actuel incorrect");
             }
@@ -204,6 +214,7 @@ public class AdherentServiceImpl implements AdherentService {
             adherent.setPassword(passwordEncoder.encode(request.getNewPassword()));
         }
 
+        // ================= SAVE =================
         adherentRepository.save(adherent);
     }
 
