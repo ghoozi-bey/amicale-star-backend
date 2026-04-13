@@ -14,6 +14,7 @@ public class InscriptionController {
 
     private final InscriptionService inscriptionService;
 
+    // ✅ INSCRIPTION
     @PostMapping("/{matricule}/{eventId}")
     public Inscription inscrire(
             @PathVariable String matricule,
@@ -22,9 +23,22 @@ public class InscriptionController {
         return inscriptionService.inscrire(matricule, eventId);
     }
 
+    // ✅ ANCIEN (OK)
     @GetMapping("/adherent/{matricule}")
     public List<Inscription> getMesEvenements(@PathVariable String matricule) {
-
         return inscriptionService.getInscriptionsAdherent(matricule);
+    }
+
+    // ✅ 🔥 NOUVEAU (CORRIGÉ)
+    @GetMapping("/mes-inscriptions/{matricule}")
+    public List<?> getMesInscriptions(@PathVariable String matricule) {
+
+        List<Inscription> inscriptions =
+                inscriptionService.getInscriptionsAdherent(matricule);
+
+        // 🔥 retourner seulement les événements
+        return inscriptions.stream()
+                .map(Inscription::getEvenement)
+                .toList();
     }
 }

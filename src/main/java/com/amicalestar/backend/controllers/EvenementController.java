@@ -21,6 +21,19 @@ public class EvenementController {
     private final EvenementRepository evenementRepository;
     private final TypeEvenementRepository typeRepo;
 
+    // ✅ 🔥 AJOUT IMPORTANT (NE TOUCHE PAS LE RESTE)
+    // POUR ANGULAR → /api/evenements
+    @GetMapping
+    public ResponseEntity<?> getAllEvenements() {
+
+        List<Evenement> events = evenementRepository.findAll();
+
+        // éviter problème JSON (photo lourde)
+        events.forEach(e -> e.setPhoto(null));
+
+        return ResponseEntity.ok(events);
+    }
+
     // ✅ EVENEMENTS ACTIFS (SANS PHOTO LOURDE)
     @GetMapping("/actifs")
     public ResponseEntity<?> getEvenementsActifs() {
@@ -46,13 +59,12 @@ public class EvenementController {
     public ResponseEntity<?> getMesEvenements() {
         List<Evenement> events = evenementRepository.findAll();
 
-        // 🔥 SUPPRIMER PHOTO
         events.forEach(e -> e.setPhoto(null));
 
         return ResponseEntity.ok(events);
     }
 
-    // ✅ GET PHOTO SEPARÉ (OPTIMISATION)
+    // ✅ GET PHOTO SEPARÉ
     @GetMapping("/photo/{id}")
     public ResponseEntity<byte[]> getPhoto(@PathVariable Long id) {
 
@@ -68,7 +80,7 @@ public class EvenementController {
                 .body(e.getPhoto());
     }
 
-    // ✅ CREATE EVENT (inchangé)
+    // ✅ CREATE EVENT
     @PostMapping(consumes = "multipart/form-data")
     public ResponseEntity<?> createEvenement(
             @RequestParam("titre") String titre,

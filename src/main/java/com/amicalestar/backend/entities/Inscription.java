@@ -28,7 +28,6 @@ public class Inscription {
 
     @ManyToOne
     @JoinColumn(name = "evenement_id")
-    @JsonIgnore
     private Evenement evenement;
 
     @PrePersist
