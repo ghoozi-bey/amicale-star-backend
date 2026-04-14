@@ -6,7 +6,12 @@ import com.amicalestar.backend.repositories.EvenementRepository;
 import com.amicalestar.backend.services.EvenementService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.core.io.ClassPathResource;
+import java.io.InputStream;
+import java.io.IOException;
 
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.List;
 
 @Service
@@ -17,7 +22,42 @@ public class EvenementServiceImpl implements EvenementService {
 
     @Override
     public Evenement createEvenement(Evenement evenement) {
+
         evenement.setStatut(StatutEvenement.BROUILLON);
+        System.out.println("🔥 CREATE EVENEMENT EXECUTE 🔥");
+
+        // 🔥 IMPORTANT : seulement si aucune image envoyée
+        if (evenement.getPhoto() == null || evenement.getPhoto().length == 0) {
+
+            String type = "";
+
+            if (evenement.getTypeEvenement() != null &&
+                    evenement.getTypeEvenement().getNom() != null) {
+
+                type = evenement.getTypeEvenement().getNom().toUpperCase();
+            }
+
+            try {
+                InputStream is;
+
+                if (type.contains("OMRA") || type.contains("HAJJ")) {
+                    is = new ClassPathResource("static/default/HAJJetOMRA.jpg").getInputStream();
+                }
+                else if (type.contains("VOYAGE")) {
+                    is = new ClassPathResource("static/default/voyage.jpg").getInputStream();
+                }
+                else {
+                    is = new ClassPathResource("static/default/convention.png").getInputStream();
+                }
+
+                evenement.setPhoto(is.readAllBytes());
+                evenement.setPhotoType("image/jpeg");
+
+            } catch (IOException e) {
+                throw new RuntimeException("Erreur image par défaut", e);
+            }
+        }
+
         return evenementRepository.save(evenement);
     }
 
@@ -26,32 +66,27 @@ public class EvenementServiceImpl implements EvenementService {
         return evenementRepository.findAll();
     }
 
-    // 🔥 AJOUT IMPORTANT (pour récupérer image)
     @Override
     public Evenement getEvenementById(Long id) {
         return evenementRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Evenement non trouvé"));
     }
 
-    // 🔵 PARTICIPATION
     @Override
     public List<Evenement> getMesEvenements(String matricule) {
         return evenementRepository.findEventsWhereUserParticipates(matricule);
     }
 
-    // 🟢 NOUVELLE MÉTHODE
     @Override
     public List<Evenement> getMesInscriptions(Long matricule) {
         return evenementRepository.findEvenementsByAdherentInscrit(matricule);
     }
 
-    // 🟡 EVENEMENTS CREES
     @Override
     public List<Evenement> getEvenementsCrees(String matricule) {
         return evenementRepository.findByAdherent_Matricule(matricule);
     }
 
-    // 🟢 DASHBOARD
     @Override
     public List<Evenement> getEvenementsActifs() {
         return evenementRepository.findByStatutNot(StatutEvenement.ARCHIVE);
@@ -85,8 +120,8 @@ public class EvenementServiceImpl implements EvenementService {
             existing.setTitre(evenement.getTitre());
         }
 
-        // 🔥 BONUS (si tu veux modifier image plus tard)
-        if (evenement.getPhoto() != null) {
+        // 🔥 mise à jour image si fournie
+        if (evenement.getPhoto() != null && evenement.getPhoto().length > 0) {
             existing.setPhoto(evenement.getPhoto());
         }
 

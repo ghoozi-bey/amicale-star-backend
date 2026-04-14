@@ -1,5 +1,6 @@
 package com.amicalestar.backend.controllers;
 
+import com.amicalestar.backend.dto.InscriptionDTO;
 import com.amicalestar.backend.entities.Inscription;
 import com.amicalestar.backend.services.InscriptionService;
 import lombok.RequiredArgsConstructor;
@@ -23,22 +24,18 @@ public class InscriptionController {
         return inscriptionService.inscrire(matricule, eventId);
     }
 
-    // ✅ ANCIEN (OK)
-    @GetMapping("/adherent/{matricule}")
-    public List<Inscription> getMesEvenements(@PathVariable String matricule) {
-        return inscriptionService.getInscriptionsAdherent(matricule);
-    }
-
-    // ✅ 🔥 NOUVEAU (CORRIGÉ)
+    // ✅ 🔥 VERSION PRO (DTO)
     @GetMapping("/mes-inscriptions/{matricule}")
-    public List<?> getMesInscriptions(@PathVariable String matricule) {
+    public List<InscriptionDTO> getMesInscriptions(@PathVariable String matricule) {
 
         List<Inscription> inscriptions =
                 inscriptionService.getInscriptionsAdherent(matricule);
 
-        // 🔥 retourner seulement les événements
         return inscriptions.stream()
-                .map(Inscription::getEvenement)
+                .map(i -> InscriptionDTO.builder()
+                        .statut(i.getStatut())
+                        .evenement(i.getEvenement())
+                        .build())
                 .toList();
     }
 }

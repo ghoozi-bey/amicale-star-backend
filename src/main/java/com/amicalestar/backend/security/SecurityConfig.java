@@ -63,6 +63,7 @@ public class SecurityConfig {
 
                         // 🔥 TOUJOURS À LA FIN
                         .anyRequest().authenticated()
+
                 )
 
                 .addFilterBefore(jwtFilter,

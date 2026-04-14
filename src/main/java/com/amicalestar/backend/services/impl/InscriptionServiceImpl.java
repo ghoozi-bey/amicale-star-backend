@@ -39,4 +39,5 @@ public class InscriptionServiceImpl implements InscriptionService {
         return inscriptionRepository.findByAdherentMatricule(matricule);
 
     }
+
 }

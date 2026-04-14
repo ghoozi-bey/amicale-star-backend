@@ -4,11 +4,14 @@ import com.amicalestar.backend.entities.Evenement;
 import com.amicalestar.backend.entities.TypeEvenement;
 import com.amicalestar.backend.repositories.EvenementRepository;
 import com.amicalestar.backend.repositories.TypeEvenementRepository;
+import com.amicalestar.backend.services.EvenementService;
+import com.amicalestar.backend.dto.EvenementDTO;
+
 import lombok.RequiredArgsConstructor;
+
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
-import com.amicalestar.backend.dto.EvenementDTO;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -21,50 +24,43 @@ public class EvenementController {
     private final EvenementRepository evenementRepository;
     private final TypeEvenementRepository typeRepo;
 
-    // ✅ 🔥 AJOUT IMPORTANT (NE TOUCHE PAS LE RESTE)
-    // POUR ANGULAR → /api/evenements
+    // 🔥 AJOUT IMPORTANT
+    private final EvenementService evenementService;
+
+    // ✅ GET ALL (sans photo lourde)
     @GetMapping
     public ResponseEntity<?> getAllEvenements() {
 
         List<Evenement> events = evenementRepository.findAll();
-
-        // éviter problème JSON (photo lourde)
         events.forEach(e -> e.setPhoto(null));
 
         return ResponseEntity.ok(events);
     }
 
-    // ✅ EVENEMENTS ACTIFS (SANS PHOTO LOURDE)
+
+    // ✅ EVENEMENTS ACTIFS (light)
     @GetMapping("/actifs")
     public ResponseEntity<?> getEvenementsActifs() {
 
-        List<EvenementDTO> list = evenementRepository.findAllLight()
-                .stream()
-                .map(obj -> {
-                    EvenementDTO dto = new EvenementDTO();
-                    dto.id = (Long) obj[0];
-                    dto.titre = (String) obj[1];
-                    dto.description = (String) obj[2];
-                    dto.lieu = (String) obj[3];
-                    dto.dateDebut = (java.time.LocalDate) obj[4];
-                    return dto;
-                })
-                .toList();
+        List<Evenement> events = evenementRepository.findAll();
 
-        return ResponseEntity.ok(list);
+        // éviter photo lourde
+        events.forEach(e -> e.setPhoto(null));
+
+        return ResponseEntity.ok(events);
     }
 
     // ✅ MES EVENEMENTS
     @GetMapping("/mes-evenements-crees")
     public ResponseEntity<?> getMesEvenements() {
-        List<Evenement> events = evenementRepository.findAll();
 
+        List<Evenement> events = evenementRepository.findAll();
         events.forEach(e -> e.setPhoto(null));
 
         return ResponseEntity.ok(events);
     }
 
-    // ✅ GET PHOTO SEPARÉ
+    // ✅ GET PHOTO
     @GetMapping("/photo/{id}")
     public ResponseEntity<byte[]> getPhoto(@PathVariable Long id) {
 
@@ -80,7 +76,7 @@ public class EvenementController {
                 .body(e.getPhoto());
     }
 
-    // ✅ CREATE EVENT
+    // ✅ CREATE EVENT (🔥 CORRIGÉ)
     @PostMapping(consumes = "multipart/form-data")
     public ResponseEntity<?> createEvenement(
             @RequestParam("titre") String titre,
@@ -116,16 +112,19 @@ public class EvenementController {
         e.setAgence(agence);
         e.setDestination(destination);
 
+        // ✅ si image envoyée
         if (photo != null && !photo.isEmpty()) {
             e.setPhoto(photo.getBytes());
             e.setPhotoType(photo.getContentType());
         }
 
+        // ✅ type
         TypeEvenement type = typeRepo.findById(typeId)
                 .orElseThrow(() -> new RuntimeException("Type introuvable"));
 
         e.setTypeEvenement(type);
 
-        return ResponseEntity.ok(evenementRepository.save(e));
+        // 🔥🔥🔥 LE FIX FINAL ICI
+        return ResponseEntity.ok(evenementService.createEvenement(e));
     }
 }
