@@ -44,24 +44,29 @@ public class SecurityConfig {
                         // CORS
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
 
+                        // PUBLIC
+                        .requestMatchers("/api/sondages/public/**").authenticated()
+                        .requestMatchers("/api/evenements/public/**").authenticated()
+                        .requestMatchers("/api/elections/public/**").authenticated()
+
                         // USER
                         .requestMatchers("/api/user/photo/**").permitAll()
                         .requestMatchers("/api/user/**").authenticated()
 
-                        // 🔥 PHOTO EVENTS (AJOUT ICI)
+                        // PHOTO EVENTS
                         .requestMatchers("/api/evenements/photo/**").permitAll()
 
-                        // MEMBRE
+                        // MEMBRE AMICALE
                         .requestMatchers("/api/evenements/**").hasRole("MEMBRE_AMICALE")
                         .requestMatchers("/api/sondages/**").hasRole("MEMBRE_AMICALE")
 
-                        // PUBLIC
-                        .requestMatchers("/api/public/**").permitAll()
+                        // RESPONSABLE ELECTION
+                        .requestMatchers("/api/elections/**").hasRole("RESPONSABLE_ELECTION")
 
                         // ADMIN
                         .requestMatchers("/api/admin/**").hasRole("ADMIN")
 
-                        // 🔥 TOUJOURS À LA FIN
+                        // TOUJOURS À LA FIN
                         .anyRequest().authenticated()
 
                 )

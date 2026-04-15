@@ -18,6 +18,18 @@ public class SondageController {
 
     private final SondageService sondageService;
 
+    // Endpoints for all users
+    @GetMapping("/public")
+    public ResponseEntity<List<SondageResponse>> getAllPublic() {
+        return ResponseEntity.ok(sondageService.getAllSondages());
+    }
+
+    @GetMapping("/public/{id}")
+    public ResponseEntity<SondageResponse> getPublicById(@PathVariable Long id) {
+        return ResponseEntity.ok(sondageService.getSondageById(id));
+    }
+
+    // Endpoints for membres amicale
     @PostMapping
     public ResponseEntity<Sondage> createSondage( @RequestBody CreateSondageRequest request, Authentication authentication ) {
 

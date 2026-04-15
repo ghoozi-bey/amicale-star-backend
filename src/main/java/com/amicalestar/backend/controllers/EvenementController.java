@@ -24,8 +24,45 @@ public class EvenementController {
     private final EvenementRepository evenementRepository;
     private final TypeEvenementRepository typeRepo;
 
-    // 🔥 AJOUT IMPORTANT
     private final EvenementService evenementService;
+
+    // 🌍 PUBLIC EVENTS (light)
+    @GetMapping("/public")
+    public ResponseEntity<?> getAllPublicEvents() {
+
+        List<Evenement> events = evenementRepository.findAll();
+        events.forEach(e -> e.setPhoto(null));
+
+        return ResponseEntity.ok(events);
+    }
+
+    // 🌍 PUBLIC ACTIFS
+    @GetMapping("/public/actifs")
+    public ResponseEntity<?> getPublicActifs() {
+
+        List<Evenement> events = evenementRepository.findAll();
+
+        // 👉 later you can filter actifs properly
+        events.forEach(e -> e.setPhoto(null));
+
+        return ResponseEntity.ok(events);
+    }
+
+    // 🌍 PUBLIC PHOTO
+    @GetMapping("/public/photo/{id}")
+    public ResponseEntity<byte[]> getPublicPhoto(@PathVariable Long id) {
+
+        Evenement e = evenementRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Event introuvable"));
+
+        if (e.getPhoto() == null) {
+            return ResponseEntity.notFound().build();
+        }
+
+        return ResponseEntity.ok()
+                .header("Content-Type", e.getPhotoType())
+                .body(e.getPhoto());
+    }
 
     // ✅ GET ALL (sans photo lourde)
     @GetMapping
