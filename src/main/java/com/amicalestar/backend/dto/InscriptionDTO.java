@@ -11,6 +11,8 @@ import lombok.*;
 public class InscriptionDTO {
 
     private String statut;
+    private String modePaiement;      // ✅ AJOUT
+    private String statutPaiement;    // ✅ AJOUT
     private Evenement evenement;
 
 }

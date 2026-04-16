@@ -40,17 +40,18 @@ public class SecurityConfig {
 
                         // 🔐 AUTH
                         .requestMatchers("/api/auth/**").permitAll()
+                        .requestMatchers("/api/inscriptions/**").permitAll()
 
                         // 🔁 OPTIONS (CORS)
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
 
-                        // 🔥 EVENEMENTS (FIX PRINCIPAL)
+                        // EVENEMENTS
                         .requestMatchers(HttpMethod.GET, "/api/evenements/**").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/evenements/**").hasRole("MEMBRE_AMICALE")
                         .requestMatchers(HttpMethod.PUT, "/api/evenements/**").hasRole("MEMBRE_AMICALE")
                         .requestMatchers(HttpMethod.DELETE, "/api/evenements/**").hasRole("MEMBRE_AMICALE")
 
-                        // 🔥 PHOTO EVENTS
+                        // PHOTO
                         .requestMatchers("/api/evenements/photo/**").permitAll()
 
                         // SONDAGES
@@ -68,10 +69,11 @@ public class SecurityConfig {
                         // ADMIN
                         .requestMatchers("/api/admin/**").hasRole("ADMIN")
 
-                        // 🔒 DEFAULT
-                        .anyRequest().authenticated()
+                        // DEFAULT
+                        .anyRequest().permitAll()
                 )
 
+                // ✅ FILTRE JWT CORRECT
                 .addFilterBefore(jwtFilter,
                         org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter.class
                 );
@@ -106,5 +108,4 @@ public class SecurityConfig {
     public AuthenticationManager authenticationManager(AuthenticationConfiguration config) throws Exception {
         return config.getAuthenticationManager();
     }
-
 }

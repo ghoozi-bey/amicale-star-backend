@@ -1,8 +1,17 @@
 package com.amicalestar.backend.entities;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import jakarta.persistence.*;
+import jakarta.persistence.Entity;
+import jakarta.persistence.Id;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.PrePersist;
+import jakarta.persistence.Column;
 import lombok.*;
+import com.amicalestar.backend.entities.Adherent;
+import com.amicalestar.backend.entities.Evenement;
 
 import java.time.LocalDateTime;
 
@@ -22,8 +31,12 @@ public class Inscription {
 
     private String statut;
 
+    private String modePaiement;      // ✅ AJOUT
+    private String statutPaiement;    // ✅ AJOUT
+
     @ManyToOne
     @JoinColumn(name = "adherent_id")
+    @JsonIgnore
     private Adherent adherent;
 
     @ManyToOne
@@ -33,6 +46,12 @@ public class Inscription {
     @PrePersist
     public void prePersist() {
         this.dateInscription = LocalDateTime.now();
-        this.statut = "EN_ATTENTE";
+
+        if (this.statut == null)
+            this.statut = "EN_ATTENTE";
+
+        if (this.statutPaiement == null)
+            this.statutPaiement = "NON_PAYE";
     }
+
 }
