@@ -31,7 +31,7 @@ public class Evenement {
     private Double prix;
     private Integer nbPlaces;
 
-    // 🔥 REMPLACEMENT (String -> BLOB)
+    @JsonIgnore // 🔥 TRÈS IMPORTANT
     @Column(name = "photo", columnDefinition = "bytea")
     private byte[] photo;
 
@@ -41,11 +41,15 @@ public class Evenement {
     @Enumerated(EnumType.STRING)
     private StatutEvenement statut;
 
-    @ManyToOne
+    // 🔥 FIX 1 : empêcher chargement + JSON
+    @JsonIgnore
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "type_evenement_id")
     private TypeEvenement typeEvenement;
 
-    @ManyToOne
+    // 🔥 FIX 2 : empêcher chargement + JSON
+    @JsonIgnore
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "adherent_id", referencedColumnName = "matricule")
     private Adherent adherent;
 
@@ -53,7 +57,8 @@ public class Evenement {
     private String agence;
     private String destination;
 
+    // 🔥 FIX 3 : lazy + déjà ignoré
     @JsonIgnore
-    @OneToMany(mappedBy = "evenement", cascade = CascadeType.ALL)
+    @OneToMany(mappedBy = "evenement", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private List<Inscription> inscriptions;
 }

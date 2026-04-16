@@ -34,7 +34,11 @@ public class AdherentController {
         response.put("email", adherent.getEmail());
         response.put("telephone", adherent.getTelephone());
 
-        // 🔥 sécuriser si pas de photo
+        // 🔥 AJOUT IMPORTANT
+        response.put("matricule", adherent.getMatricule());
+        response.put("cin", adherent.getCin());
+
+        // 🔥 PHOTO
         if (adherent.getPhotoProfil() != null) {
             response.put("photoUrl", "http://localhost:8080/api/user/photo/" + adherent.getMatricule());
         } else {

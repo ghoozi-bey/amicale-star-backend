@@ -29,7 +29,7 @@ public class SecurityConfig {
         http
                 .csrf(csrf -> csrf.disable())
 
-                // 🔥 IMPORTANT FIX CORS
+                // 🔥 CORS
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
 
                 .sessionManagement(session ->
@@ -38,37 +38,38 @@ public class SecurityConfig {
 
                 .authorizeHttpRequests(auth -> auth
 
-                        // AUTH
+                        // 🔐 AUTH
                         .requestMatchers("/api/auth/**").permitAll()
 
-                        // CORS
+                        // 🔁 OPTIONS (CORS)
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
 
-                        // PUBLIC
+                        // 🔥 EVENEMENTS (FIX PRINCIPAL)
+                        .requestMatchers(HttpMethod.GET, "/api/evenements/**").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/evenements/**").hasRole("MEMBRE_AMICALE")
+                        .requestMatchers(HttpMethod.PUT, "/api/evenements/**").hasRole("MEMBRE_AMICALE")
+                        .requestMatchers(HttpMethod.DELETE, "/api/evenements/**").hasRole("MEMBRE_AMICALE")
+
+                        // 🔥 PHOTO EVENTS
+                        .requestMatchers("/api/evenements/photo/**").permitAll()
+
+                        // SONDAGES
                         .requestMatchers("/api/sondages/public/**").authenticated()
-                        .requestMatchers("/api/evenements/public/**").authenticated()
+                        .requestMatchers("/api/sondages/**").hasRole("MEMBRE_AMICALE")
+
+                        // ELECTIONS
                         .requestMatchers("/api/elections/public/**").authenticated()
+                        .requestMatchers("/api/elections/**").hasRole("RESPONSABLE_ELECTION")
 
                         // USER
                         .requestMatchers("/api/user/photo/**").permitAll()
                         .requestMatchers("/api/user/**").authenticated()
 
-                        // PHOTO EVENTS
-                        .requestMatchers("/api/evenements/photo/**").permitAll()
-
-                        // MEMBRE AMICALE
-                        .requestMatchers("/api/evenements/**").hasRole("MEMBRE_AMICALE")
-                        .requestMatchers("/api/sondages/**").hasRole("MEMBRE_AMICALE")
-
-                        // RESPONSABLE ELECTION
-                        .requestMatchers("/api/elections/**").hasRole("RESPONSABLE_ELECTION")
-
                         // ADMIN
                         .requestMatchers("/api/admin/**").hasRole("ADMIN")
 
-                        // TOUJOURS À LA FIN
+                        // 🔒 DEFAULT
                         .anyRequest().authenticated()
-
                 )
 
                 .addFilterBefore(jwtFilter,
@@ -78,20 +79,16 @@ public class SecurityConfig {
         return http.build();
     }
 
-    // 🔥 CORS CONFIG CORRIGÉ
+    // 🔥 CORS CONFIG
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
 
         CorsConfiguration config = new CorsConfiguration();
 
-        // ⚠️ PAS DE *
         config.setAllowedOriginPatterns(List.of("http://localhost:4200"));
-
         config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"));
         config.setAllowedHeaders(List.of("*"));
         config.setAllowCredentials(true);
-
-        // 🔥 IMPORTANT (sinon erreur Angular)
         config.setExposedHeaders(List.of("Authorization"));
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
@@ -109,4 +106,5 @@ public class SecurityConfig {
     public AuthenticationManager authenticationManager(AuthenticationConfiguration config) throws Exception {
         return config.getAuthenticationManager();
     }
+
 }

@@ -1,4 +1,5 @@
 package com.amicalestar.backend.dto;
+
 import java.time.LocalDate;
 
 public class EvenementDTO {
@@ -7,5 +8,16 @@ public class EvenementDTO {
     public String titre;
     public String description;
     public String lieu;
+
     public LocalDate dateDebut;
+    public LocalDate dateFin;
+
+    public Double prix;
+    public Integer nbPlaces;
+
+    public String societe;
+    public String agence;
+    public String destination;
+
+    public String photoUrl;
 }

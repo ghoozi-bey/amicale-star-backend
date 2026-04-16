@@ -19,85 +19,96 @@ import java.util.List;
 @RequiredArgsConstructor
 @RestController
 @RequestMapping("/api/evenements")
+@CrossOrigin("*")
 public class EvenementController {
 
     private final EvenementRepository evenementRepository;
     private final TypeEvenementRepository typeRepo;
-
     private final EvenementService evenementService;
 
-    // 🌍 PUBLIC EVENTS (light)
+    // 🔥 DTO
+    private EvenementDTO toDTO(Evenement e) {
+        EvenementDTO dto = new EvenementDTO();
+
+        dto.id = e.getId();
+        dto.titre = e.getTitre();
+        dto.description = e.getDescription();
+        dto.lieu = e.getLieu();
+
+        dto.dateDebut = e.getDateDebut();
+        dto.dateFin = e.getDateFin();
+
+        dto.prix = e.getPrix();
+        dto.nbPlaces = e.getNbPlaces();
+
+        dto.societe = e.getSociete();
+        dto.agence = e.getAgence();
+        dto.destination = e.getDestination();
+
+        dto.photoUrl = "http://localhost:8080/api/evenements/photo/" + e.getId();
+
+        return dto;
+    }
+
+    // 🌍 PUBLIC (dashboard)
     @GetMapping("/public")
     public ResponseEntity<?> getAllPublicEvents() {
 
-        List<Evenement> events = evenementRepository.findAll();
-        events.forEach(e -> e.setPhoto(null));
+        List<Object[]> events = evenementRepository.findAllLight();
 
-        return ResponseEntity.ok(events);
+        List<EvenementDTO> dtos = events.stream().map(obj -> {
+            EvenementDTO dto = new EvenementDTO();
+
+            dto.id = (Long) obj[0];
+            dto.titre = (String) obj[1];
+            dto.description = (String) obj[2];
+            dto.lieu = (String) obj[3];
+            dto.dateDebut = (LocalDate) obj[4];
+
+            dto.photoUrl = "http://localhost:8080/api/evenements/photo/" + dto.id;
+
+            return dto;
+        }).toList();
+
+        return ResponseEntity.ok(dtos);
     }
 
-    // 🌍 PUBLIC ACTIFS
-    @GetMapping("/public/actifs")
-    public ResponseEntity<?> getPublicActifs() {
-
-        List<Evenement> events = evenementRepository.findAll();
-
-        // 👉 later you can filter actifs properly
-        events.forEach(e -> e.setPhoto(null));
-
-        return ResponseEntity.ok(events);
-    }
-
-    // 🌍 PUBLIC PHOTO
-    @GetMapping("/public/photo/{id}")
-    public ResponseEntity<byte[]> getPublicPhoto(@PathVariable Long id) {
+    // 🔥 DETAILS (TRÈS IMPORTANT)
+    @GetMapping("/{id}")
+    public ResponseEntity<?> getEvenementById(@PathVariable Long id) {
 
         Evenement e = evenementRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Event introuvable"));
+                .orElseThrow(() -> new RuntimeException("Evenement introuvable"));
 
-        if (e.getPhoto() == null) {
-            return ResponseEntity.notFound().build();
-        }
-
-        return ResponseEntity.ok()
-                .header("Content-Type", e.getPhotoType())
-                .body(e.getPhoto());
+        return ResponseEntity.ok(toDTO(e));
     }
 
-    // ✅ GET ALL (sans photo lourde)
+    // ✅ TOUS LES EVENEMENTS (ADMIN / DEBUG)
     @GetMapping
     public ResponseEntity<?> getAllEvenements() {
 
-        List<Evenement> events = evenementRepository.findAll();
-        events.forEach(e -> e.setPhoto(null));
+        List<EvenementDTO> dtos = evenementRepository.findAll()
+                .stream()
+                .map(this::toDTO)
+                .toList();
 
-        return ResponseEntity.ok(events);
+        return ResponseEntity.ok(dtos);
     }
 
-
-    // ✅ EVENEMENTS ACTIFS (light)
-    @GetMapping("/actifs")
-    public ResponseEntity<?> getEvenementsActifs() {
-
-        List<Evenement> events = evenementRepository.findAll();
-
-        // éviter photo lourde
-        events.forEach(e -> e.setPhoto(null));
-
-        return ResponseEntity.ok(events);
-    }
-
-    // ✅ MES EVENEMENTS
+    // ✅ MES EVENEMENTS CREES (IMPORTANT ✔)
     @GetMapping("/mes-evenements-crees")
-    public ResponseEntity<?> getMesEvenements() {
+    public ResponseEntity<?> getMesEvenements(@RequestParam String matricule) {
 
-        List<Evenement> events = evenementRepository.findAll();
-        events.forEach(e -> e.setPhoto(null));
+        List<EvenementDTO> dtos = evenementRepository
+                .findByAdherent_Matricule(matricule)
+                .stream()
+                .map(this::toDTO)
+                .toList();
 
-        return ResponseEntity.ok(events);
+        return ResponseEntity.ok(dtos);
     }
 
-    // ✅ GET PHOTO
+    // ✅ PHOTO
     @GetMapping("/photo/{id}")
     public ResponseEntity<byte[]> getPhoto(@PathVariable Long id) {
 
@@ -113,7 +124,7 @@ public class EvenementController {
                 .body(e.getPhoto());
     }
 
-    // ✅ CREATE EVENT (🔥 CORRIGÉ)
+    // ✅ CREATE
     @PostMapping(consumes = "multipart/form-data")
     public ResponseEntity<?> createEvenement(
             @RequestParam("titre") String titre,
@@ -149,19 +160,16 @@ public class EvenementController {
         e.setAgence(agence);
         e.setDestination(destination);
 
-        // ✅ si image envoyée
         if (photo != null && !photo.isEmpty()) {
             e.setPhoto(photo.getBytes());
             e.setPhotoType(photo.getContentType());
         }
 
-        // ✅ type
         TypeEvenement type = typeRepo.findById(typeId)
                 .orElseThrow(() -> new RuntimeException("Type introuvable"));
 
         e.setTypeEvenement(type);
 
-        // 🔥🔥🔥 LE FIX FINAL ICI
         return ResponseEntity.ok(evenementService.createEvenement(e));
     }
 }
