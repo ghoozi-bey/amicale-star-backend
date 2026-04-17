@@ -10,11 +10,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.List;
-import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -23,10 +19,9 @@ public class InscriptionServiceImpl implements InscriptionService {
     private final InscriptionRepository inscriptionRepository;
     private final AdherentRepository adherentRepository;
     private final EvenementRepository evenementRepository;
-    private final ConjointRepository conjointRepository;   // ✅ AJOUT
-    private final EnfantRepository enfantRepository;       // ✅ AJOUT
+    private final ConjointRepository conjointRepository;
+    private final EnfantRepository enfantRepository;
 
-    // ✅ ANCIEN (on garde)
     @Override
     public Inscription inscrire(String matricule, Long eventId) {
 
@@ -44,21 +39,20 @@ public class InscriptionServiceImpl implements InscriptionService {
         return inscriptionRepository.save(inscription);
     }
 
-    // ✅ NOUVELLE MÉTHODE (🔥 IMPORTANT)
+    // 🔥 VERSION FINALE AVEC BYTE[]
     @Override
     public void createInscription(InscriptionRequest request,
                                   MultipartFile conjointFile,
                                   List<MultipartFile> enfantsFiles) {
 
-        // 🔥 DEBUG
         System.out.println("Matricule reçu: " + request.getMatricule());
         System.out.println("Event ID reçu: " + request.getEvenementId());
 
-        // 1. USER (CORRIGÉ ✅)
+        // 1. USER
         Adherent adherent = adherentRepository.findById(request.getMatricule())
                 .orElseThrow(() -> new RuntimeException("Adherent non trouvé ❌"));
 
-        // 2. EVENT (SAFE ✅)
+        // 2. EVENT
         Evenement evenement = evenementRepository.findById(request.getEvenementId())
                 .orElseThrow(() -> new RuntimeException("Evenement non trouvé ❌"));
 
@@ -73,7 +67,9 @@ public class InscriptionServiceImpl implements InscriptionService {
 
         inscriptionRepository.save(inscription);
 
-        // 4. CONJOINT
+        // =========================
+        // ✅ CONJOINT
+        // =========================
         if (request.getConjoint() != null) {
 
             ConjointDTO dto = request.getConjoint();
@@ -83,20 +79,53 @@ public class InscriptionServiceImpl implements InscriptionService {
             conjoint.setPrenom(dto.getPrenom());
             conjoint.setCin(dto.getCin());
             conjoint.setTelephone(dto.getTelephone());
+            conjoint.setDateNaissance(
+                    dto.getDateNaissance() != null
+                            ? dto.getDateNaissance().toString()
+                            : null
+            ); // ✅ FIX
             conjoint.setInscription(inscription);
 
+            // ✅ PASSEPORT BYTE[]
+            if (conjointFile != null && !conjointFile.isEmpty()) {
+                try {
+                    conjoint.setPassport(conjointFile.getBytes());
+                } catch (Exception e) {
+                    throw new RuntimeException("Erreur lecture fichier conjoint");
+                }
+            }
+            System.out.println("DTO CONJOINT: " + dto);
+            System.out.println("FILE NULL ? " + (conjointFile == null));
             conjointRepository.save(conjoint);
         }
 
-        // 5. ENFANTS
-        if (request.getEnfants() != null) {
+        // =========================
+        // ✅ ENFANTS
+        // =========================
+        if (request.getEnfants() != null && !request.getEnfants().isEmpty()) {
 
-            for (EnfantDTO dto : request.getEnfants()) {
+            for (int i = 0; i < request.getEnfants().size(); i++) {
+
+                EnfantDTO dto = request.getEnfants().get(i);
 
                 Enfant enfant = new Enfant();
                 enfant.setNom(dto.getNom());
                 enfant.setPrenom(dto.getPrenom());
+                enfant.setDateNaissance(dto.getDateNaissance());
                 enfant.setInscription(inscription);
+
+                // ✅ PASSEPORT BYTE[]
+                if (enfantsFiles != null && i < enfantsFiles.size()) {
+                    MultipartFile file = enfantsFiles.get(i);
+
+                    if (file != null && !file.isEmpty()) {
+                        try {
+                            enfant.setPassport(file.getBytes());
+                        } catch (Exception e) {
+                            throw new RuntimeException("Erreur lecture fichier enfant");
+                        }
+                    }
+                }
 
                 enfantRepository.save(enfant);
             }
@@ -105,25 +134,8 @@ public class InscriptionServiceImpl implements InscriptionService {
         System.out.println("✅ INSCRIPTION CRÉÉE AVEC SUCCÈS");
     }
 
-    // ✅ GET
     @Override
     public List<Inscription> getInscriptionsAdherent(String matricule) {
         return inscriptionRepository.findByAdherentMatricule(matricule);
-    }
-
-    // ✅ SAVE FILE
-    private String saveFile(MultipartFile file) {
-        try {
-            String fileName = UUID.randomUUID() + "_" + file.getOriginalFilename();
-            Path path = Paths.get("uploads/" + fileName);
-
-            Files.createDirectories(path.getParent());
-            Files.write(path, file.getBytes());
-
-            return fileName;
-
-        } catch (Exception e) {
-            throw new RuntimeException("Erreur upload fichier");
-        }
     }
 }

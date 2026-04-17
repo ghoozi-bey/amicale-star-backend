@@ -9,21 +9,33 @@ import lombok.*;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
+@Table(name = "conjoint")
 public class Conjoint {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Column(name = "nom")
     private String nom;
+
+    @Column(name = "prenom")
     private String prenom;
+
+    @Column(name = "date_naissance")
     private String dateNaissance;
+
+    @Column(name = "cin")
     private String cin;
+
+    @Column(name = "telephone")
     private String telephone;
 
-    private String passportPath; // 📄 fichier
+    @Lob
+    @Column(name = "passport")
+    private byte[] passport;
 
-    @OneToOne
-    @JoinColumn(name = "inscription_id")
+    @OneToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "inscription_id", unique = true)
     private Inscription inscription;
 }

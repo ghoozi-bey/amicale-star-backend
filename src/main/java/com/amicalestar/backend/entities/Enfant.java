@@ -19,7 +19,9 @@ public class Enfant {
     private String prenom;
     private String dateNaissance;
 
-    private String passportPath; // 📄 fichier enfant
+    @Lob
+    @Column(name = "passport", columnDefinition = "bytea")
+    private byte[] passport;
 
     @ManyToOne
     @JoinColumn(name = "inscription_id")

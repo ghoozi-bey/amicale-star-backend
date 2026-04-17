@@ -4,9 +4,12 @@ import com.amicalestar.backend.dto.InscriptionDTO;
 import com.amicalestar.backend.dto.InscriptionRequest;
 import com.amicalestar.backend.entities.Inscription;
 import com.amicalestar.backend.services.InscriptionService;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 
@@ -18,13 +21,15 @@ public class InscriptionController {
 
     private final InscriptionService inscriptionService;
 
-    // ✅ INSCRIPTION SIMPLE (JSON ONLY)
+    // 🔥 FIX MULTIPART (FINAL)
     @PostMapping("/create")
-    public ResponseEntity<String> create(@RequestBody InscriptionRequest request) {
-
-        inscriptionService.createInscription(request, null, null);
-
-        return ResponseEntity.ok("Inscription créée avec succès ✅");
+    public ResponseEntity<?> create(
+            @RequestPart("data") InscriptionRequest request,
+            @RequestPart(value = "conjointFile", required = false) MultipartFile conjointFile,
+            @RequestPart(value = "enfantsFiles", required = false) List<MultipartFile> enfantsFiles
+    ) {
+        inscriptionService.createInscription(request, conjointFile, enfantsFiles);
+        return ResponseEntity.ok("OK");
     }
 
     // ✅ ANCIEN ENDPOINT (optionnel)
