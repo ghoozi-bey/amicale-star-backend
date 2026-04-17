@@ -60,4 +60,18 @@ public class SondageController {
         return ResponseEntity.ok(sondageService.annulerPublication(id));
     }
 
+    @PutMapping("/{id}/reject")
+    public ResponseEntity<Sondage> reject(@PathVariable Long id) {
+        return ResponseEntity.ok(sondageService.rejeterSondage(id));
+    }
+
+    @PutMapping("/{id}")
+    public ResponseEntity<Sondage> updateSondage(
+            @PathVariable Long id,
+            @RequestBody CreateSondageRequest request
+    ) {
+        Sondage updated = sondageService.updateSondage(id, request);
+        return ResponseEntity.ok(updated);
+    }
+
 }

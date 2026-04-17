@@ -174,6 +174,21 @@ public class SondageServiceImpl implements SondageService {
         return sondageRepository.save(sondage);
     }
 
+    public Sondage rejeterSondage(Long id) {
+
+        Sondage sondage = sondageRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Sondage introuvable"));
+
+        // Business rule: only BROUILLON can be rejected
+        if (sondage.getStatut() != StatutSondage.BROUILLON) {
+            throw new RuntimeException("Seuls les sondages en brouillon peuvent être rejetés");
+        }
+
+        sondage.setStatut(StatutSondage.REJECTED);
+
+        return sondageRepository.save(sondage);
+    }
+
     public void updateStatut(Sondage s) {
 
         // 🔒 Never touch final states
@@ -207,5 +222,43 @@ public class SondageServiceImpl implements SondageService {
 
             s.setStatut(StatutSondage.TERMINE);
         }
+    }
+
+    @Override
+    public Sondage updateSondage(Long id, CreateSondageRequest request) {
+
+        Sondage sondage = sondageRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Sondage not found"));
+
+        // update fields
+        sondage.setTitle(request.getTitle());
+        sondage.setDescription(request.getDescription());
+        sondage.setDateDebut(request.getDateDebut());
+        sondage.setDateFin(request.getDateFin());
+
+        // ⚠️ handle questions (basic version)
+        sondage.getQuestions().clear();
+
+        request.getQuestions().forEach(q -> {
+            Question question = new Question();
+            question.setText(q.getText());
+            question.setType(q.getType());
+            question.setSondage(sondage);
+
+            if (!q.getType().equals("TEXTE")) {
+                List<Choix> choixList = q.getChoix().stream().map(label -> {
+                    Choix c = new Choix();
+                    c.setLabel(label);
+                    c.setQuestion(question);
+                    return c;
+                }).toList();
+
+                question.setChoixList(choixList);
+            }
+
+            sondage.getQuestions().add(question);
+        });
+
+        return sondageRepository.save(sondage);
     }
 }
