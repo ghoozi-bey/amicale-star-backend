@@ -1,5 +1,6 @@
 package com.amicalestar.backend.controllers;
 
+import com.amicalestar.backend.dto.AdherentDTO;
 import com.amicalestar.backend.dto.UpdateProfileRequest;
 import com.amicalestar.backend.entities.Adherent;
 import com.amicalestar.backend.services.AdherentService;
@@ -25,7 +26,8 @@ public class AdherentController {
     public ResponseEntity<?> getProfile() {
 
         String email = SecurityContextHolder.getContext().getAuthentication().getName();
-        Adherent adherent = adherentService.getProfileByEmail(email);
+
+        AdherentDTO adherent = adherentService.getProfileDTOByEmail(email);
 
         Map<String, Object> response = new HashMap<>();
 
@@ -33,17 +35,12 @@ public class AdherentController {
         response.put("prenom", adherent.getPrenom());
         response.put("email", adherent.getEmail());
         response.put("telephone", adherent.getTelephone());
-
-        // 🔥 AJOUT IMPORTANT
         response.put("matricule", adherent.getMatricule());
         response.put("cin", adherent.getCin());
 
-        // 🔥 PHOTO
-        if (adherent.getPhotoProfil() != null) {
-            response.put("photoUrl", "http://localhost:8080/api/user/photo/" + adherent.getMatricule());
-        } else {
-            response.put("photoUrl", null);
-        }
+        // ✅ TOUJOURS construire URL sans charger image
+        response.put("photoUrl",
+                "http://localhost:8080/api/user/photo/" + adherent.getMatricule());
 
         return ResponseEntity.ok(response);
     }

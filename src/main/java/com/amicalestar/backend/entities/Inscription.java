@@ -1,18 +1,8 @@
 package com.amicalestar.backend.entities;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import jakarta.persistence.Entity;
-import jakarta.persistence.Id;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.ManyToOne;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.PrePersist;
-import jakarta.persistence.Column;
-import lombok.*;
 import jakarta.persistence.*;
-import com.amicalestar.backend.entities.Adherent;
-import com.amicalestar.backend.entities.Evenement;
+import lombok.*;
 
 import java.time.LocalDateTime;
 
@@ -32,17 +22,27 @@ public class Inscription {
 
     private String statut;
 
-    private String modePaiement;      // ✅ AJOUT
-    private String statutPaiement;    // ✅ AJOUT
+    private String modePaiement;
+    private String statutPaiement;
 
-    @ManyToOne
+    // ✅ LAZY + IGNORE (IMPORTANT)
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "adherent_id")
     @JsonIgnore
     private Adherent adherent;
 
-    @ManyToOne
+    // ✅ LAZY + IGNORE (TRÈS IMPORTANT)
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "evenement_id")
+    @JsonIgnore
     private Evenement evenement;
+
+    // ✅ PASSEPORT (PARFAIT)
+    @Lob
+    @Basic(fetch = FetchType.LAZY)
+    @JsonIgnore
+    @Column(name = "passport")
+    private byte[] passport;
 
     @PrePersist
     public void prePersist() {
@@ -54,10 +54,4 @@ public class Inscription {
         if (this.statutPaiement == null)
             this.statutPaiement = "NON_PAYE";
     }
-    @Lob
-    @Basic(fetch = FetchType.LAZY)
-    @JsonIgnore
-    @Column(name = "passport")
-    private byte[] passport;
-
 }

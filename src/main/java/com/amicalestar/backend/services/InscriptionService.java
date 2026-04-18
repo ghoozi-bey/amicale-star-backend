@@ -1,6 +1,7 @@
 package com.amicalestar.backend.services;
 
 import com.amicalestar.backend.dto.InscriptionRequest;
+import com.amicalestar.backend.dto.InscriptionDTO;
 import com.amicalestar.backend.entities.Inscription;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -17,6 +18,6 @@ public interface InscriptionService {
                            MultipartFile conjointFile,
                            List<MultipartFile> enfantsFiles);
 
-    // ✅ get
-    List<Inscription> getInscriptionsAdherent(String matricule);
+    // ✅ get (OPTIMISÉ DTO 🔥)
+    List<InscriptionDTO> getInscriptionsAdherent(String matricule);
 }

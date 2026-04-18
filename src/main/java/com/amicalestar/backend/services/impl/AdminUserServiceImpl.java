@@ -138,10 +138,8 @@ public class AdminUserServiceImpl implements AdminUserService {
                     user.getPrenom(),
                     user.getEmail(),
                     user.getTelephone(),
-                    user.getDepartement(),
-                    user.getTypeAdherent(),
-                    base64Photo,
-                    photoType
+                    user.getCin(),
+                    "http://localhost:8080/api/user/photo/" + user.getMatricule()
             );
 
         }).toList();

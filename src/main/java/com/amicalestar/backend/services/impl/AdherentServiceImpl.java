@@ -1,5 +1,6 @@
 package com.amicalestar.backend.services.impl;
 
+import com.amicalestar.backend.dto.AdherentDTO;
 import com.amicalestar.backend.entities.Adherent;
 import com.amicalestar.backend.enums.TypeAdherent;
 import com.amicalestar.backend.repositories.AdherentRepository;
@@ -241,5 +242,21 @@ public class AdherentServiceImpl implements AdherentService {
     public Adherent getProfile(String matricule) {
         return adherentRepository.findById(matricule)
                 .orElseThrow(() -> new RuntimeException("Adherent non trouvé"));
+    }
+    @Override
+    public AdherentDTO getProfileDTOByEmail(String email) {
+
+        Adherent a = adherentRepository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("Utilisateur non trouvé"));
+
+        return new AdherentDTO(
+                a.getMatricule(),
+                a.getNom(),
+                a.getPrenom(),
+                a.getEmail(),
+                a.getTelephone(),
+                a.getCin(),
+                "http://localhost:8080/api/user/photo/" + a.getMatricule()
+        );
     }
 }

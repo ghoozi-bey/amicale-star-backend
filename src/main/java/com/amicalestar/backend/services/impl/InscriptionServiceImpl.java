@@ -9,8 +9,9 @@ import com.amicalestar.backend.services.InscriptionService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
-
+import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
+import com.amicalestar.backend.dto.InscriptionDTO;
 
 @Service
 @RequiredArgsConstructor
@@ -192,7 +193,8 @@ public class InscriptionServiceImpl implements InscriptionService {
     }
 
     @Override
-    public List<Inscription> getInscriptionsAdherent(String matricule) {
-        return inscriptionRepository.findByAdherentMatricule(matricule);
+    @Transactional
+    public List<InscriptionDTO> getInscriptionsAdherent(String matricule) {
+        return inscriptionRepository.findDTOByMatricule(matricule);
     }
 }

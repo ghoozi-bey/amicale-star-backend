@@ -128,16 +128,16 @@ public class EvenementController {
     @GetMapping("/photo/{id}")
     public ResponseEntity<byte[]> getPhoto(@PathVariable Long id) {
 
-        Evenement e = evenementRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Event introuvable"));
+        byte[] photo = evenementRepository.getPhotoById(id);
+        String type = evenementRepository.getPhotoTypeById(id);
 
-        if (e.getPhoto() == null) {
+        if (photo == null) {
             return ResponseEntity.notFound().build();
         }
 
         return ResponseEntity.ok()
-                .header("Content-Type", e.getPhotoType())
-                .body(e.getPhoto());
+                .header("Content-Type", type)
+                .body(photo);
     }
 
     // 🔥 CREATE (CORRIGÉ)

@@ -2,6 +2,8 @@ package com.amicalestar.backend.services;
 
 import com.amicalestar.backend.entities.Adherent;
 import com.amicalestar.backend.dto.UpdateProfileRequest;
+import com.amicalestar.backend.dto.AdherentDTO;
+
 
 public interface AdherentService {
 
@@ -36,4 +38,5 @@ public interface AdherentService {
      * Update profil + image
      */
     void updateProfileByEmail(String email, UpdateProfileRequest request);
+    AdherentDTO getProfileDTOByEmail(String email);
 }
