@@ -11,8 +11,9 @@ public interface InscriptionService {
     // ✅ ancien
     Inscription inscrire(String matricule, Long eventId);
 
-    // ✅ nouveau (OBLIGATOIRE)
+    // ✅ nouveau (AVEC PASSEPORT ADHERENT)
     void createInscription(InscriptionRequest request,
+                           MultipartFile adherentFile,
                            MultipartFile conjointFile,
                            List<MultipartFile> enfantsFiles);
 

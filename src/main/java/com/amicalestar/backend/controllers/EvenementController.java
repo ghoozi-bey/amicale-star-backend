@@ -26,7 +26,7 @@ public class EvenementController {
     private final TypeEvenementRepository typeRepo;
     private final EvenementService evenementService;
 
-    // 🔥 DTO
+    // 🔥 DTO MAPPING (CORRIGÉ)
     private EvenementDTO toDTO(Evenement e) {
         EvenementDTO dto = new EvenementDTO();
 
@@ -47,10 +47,17 @@ public class EvenementController {
 
         dto.photoUrl = "http://localhost:8080/api/evenements/photo/" + e.getId();
 
+        // ✅ FIX PRINCIPAL
+        dto.isInternational = e.getIsInternational();
+
+        dto.typeEvenementId = e.getTypeEvenement() != null
+                ? e.getTypeEvenement().getId()
+                : null;
+
         return dto;
     }
 
-    // 🌍 PUBLIC (dashboard)
+    // 🌍 PUBLIC
     @GetMapping("/public")
     public ResponseEntity<?> getAllPublicEvents() {
 
@@ -73,7 +80,7 @@ public class EvenementController {
         return ResponseEntity.ok(dtos);
     }
 
-    // 🔥 DETAILS (TRÈS IMPORTANT)
+    // 🔥 DETAILS
     @GetMapping("/{id}")
     public ResponseEntity<?> getEvenementById(@PathVariable Long id) {
 
@@ -83,7 +90,7 @@ public class EvenementController {
         return ResponseEntity.ok(toDTO(e));
     }
 
-    // ✅ TOUS LES EVENEMENTS (ADMIN / DEBUG)
+    // ✅ ALL
     @GetMapping
     public ResponseEntity<?> getAllEvenements() {
 
@@ -95,7 +102,7 @@ public class EvenementController {
         return ResponseEntity.ok(dtos);
     }
 
-    // ✅ MES EVENEMENTS CREES (IMPORTANT ✔)
+    // ✅ MES EVENEMENTS
     @GetMapping("/mes-evenements-crees")
     public ResponseEntity<?> getMesEvenements(@RequestParam String matricule) {
 
@@ -106,6 +113,15 @@ public class EvenementController {
                 .toList();
 
         return ResponseEntity.ok(dtos);
+    }
+
+    // ✅ PLACES
+    @GetMapping("/{id}/places")
+    public ResponseEntity<Integer> getNbPlaces(@PathVariable Long id) {
+        Evenement event = evenementRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Evenement non trouvé"));
+
+        return ResponseEntity.ok(event.getNbPlaces());
     }
 
     // ✅ PHOTO
@@ -124,7 +140,7 @@ public class EvenementController {
                 .body(e.getPhoto());
     }
 
-    // ✅ CREATE
+    // 🔥 CREATE (CORRIGÉ)
     @PostMapping(consumes = "multipart/form-data")
     public ResponseEntity<?> createEvenement(
             @RequestParam("titre") String titre,
@@ -138,7 +154,8 @@ public class EvenementController {
             @RequestParam(value = "agence", required = false) String agence,
             @RequestParam(value = "destination", required = false) String destination,
             @RequestParam("typeEvenement") Long typeId,
-            @RequestParam(value = "photo", required = false) MultipartFile photo
+            @RequestParam(value = "photo", required = false) MultipartFile photo,
+            @RequestParam(value = "isInternational", required = false) Boolean isInternational
     ) throws Exception {
 
         Evenement e = new Evenement();
@@ -160,15 +177,24 @@ public class EvenementController {
         e.setAgence(agence);
         e.setDestination(destination);
 
-        if (photo != null && !photo.isEmpty()) {
-            e.setPhoto(photo.getBytes());
-            e.setPhotoType(photo.getContentType());
-        }
-
+        // 🔥 LOGIQUE MÉTIER PRO
         TypeEvenement type = typeRepo.findById(typeId)
                 .orElseThrow(() -> new RuntimeException("Type introuvable"));
 
         e.setTypeEvenement(type);
+
+        String typeNom = type.getNom().toUpperCase();
+
+        if (typeNom.contains("OMRA") || typeNom.contains("HAJJ")) {
+            e.setIsInternational(true); // ✅ FORCÉ
+        } else {
+            e.setIsInternational(isInternational != null ? isInternational : false);
+        }
+
+        if (photo != null && !photo.isEmpty()) {
+            e.setPhoto(photo.getBytes());
+            e.setPhotoType(photo.getContentType());
+        }
 
         return ResponseEntity.ok(evenementService.createEvenement(e));
     }

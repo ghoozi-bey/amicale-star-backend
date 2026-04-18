@@ -10,6 +10,7 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.Column;
 import lombok.*;
+import jakarta.persistence.*;
 import com.amicalestar.backend.entities.Adherent;
 import com.amicalestar.backend.entities.Evenement;
 
@@ -53,5 +54,10 @@ public class Inscription {
         if (this.statutPaiement == null)
             this.statutPaiement = "NON_PAYE";
     }
+    @Lob
+    @Basic(fetch = FetchType.LAZY)
+    @JsonIgnore
+    @Column(name = "passport")
+    private byte[] passport;
 
 }

@@ -20,4 +20,10 @@ public class EvenementDTO {
     public String destination;
 
     public String photoUrl;
+
+    // 🔥 AJOUT OBLIGATOIRE
+    public Boolean isInternational;
+
+    // 🔥 TRÈS IMPORTANT
+    public Long typeEvenementId;
 }

@@ -8,6 +8,9 @@ import java.util.List;
 
 public interface InscriptionRepository extends JpaRepository<Inscription, Long> {
 
-    @Query("SELECT i FROM Inscription i JOIN FETCH i.evenement WHERE i.adherent.matricule = :matricule")
+    @Query("SELECT i FROM Inscription i " +
+            "JOIN FETCH i.evenement e " +
+            "JOIN FETCH i.adherent a " +
+            "WHERE a.matricule = :matricule")
     List<Inscription> findByAdherentMatricule(@Param("matricule") String matricule);
 }

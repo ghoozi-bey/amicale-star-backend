@@ -26,10 +26,10 @@ public class InscriptionServiceImpl implements InscriptionService {
     public Inscription inscrire(String matricule, Long eventId) {
 
         Adherent adherent = adherentRepository.findById(matricule)
-                .orElseThrow();
+                .orElseThrow(() -> new RuntimeException("Adherent non trouvé"));
 
         Evenement evenement = evenementRepository.findById(eventId)
-                .orElseThrow();
+                .orElseThrow(() -> new RuntimeException("Evenement non trouvé"));
 
         Inscription inscription = Inscription.builder()
                 .adherent(adherent)
@@ -39,24 +39,80 @@ public class InscriptionServiceImpl implements InscriptionService {
         return inscriptionRepository.save(inscription);
     }
 
-    // 🔥 VERSION FINALE AVEC BYTE[]
     @Override
     public void createInscription(InscriptionRequest request,
+                                  MultipartFile adherentFile,
                                   MultipartFile conjointFile,
                                   List<MultipartFile> enfantsFiles) {
 
-        System.out.println("Matricule reçu: " + request.getMatricule());
-        System.out.println("Event ID reçu: " + request.getEvenementId());
-
-        // 1. USER
+        // =========================
+        // 1. ADHERENT
+        // =========================
         Adherent adherent = adherentRepository.findById(request.getMatricule())
-                .orElseThrow(() -> new RuntimeException("Adherent non trouvé ❌"));
+                .orElseThrow(() -> new RuntimeException("Adherent non trouvé"));
 
-        // 2. EVENT
+        // =========================
+        // 2. EVENEMENT
+        // =========================
         Evenement evenement = evenementRepository.findById(request.getEvenementId())
-                .orElseThrow(() -> new RuntimeException("Evenement non trouvé ❌"));
+                .orElseThrow(() -> new RuntimeException("Evenement non trouvé"));
 
-        // 3. INSCRIPTION
+        // =========================
+        // 🔥 FIX IMPORTANT : déterminer type
+        // =========================
+        boolean isVoyage = evenement.getTypeEvenement() != null &&
+                evenement.getTypeEvenement().getNom().equalsIgnoreCase("VOYAGE");
+
+        boolean isExterne = Boolean.TRUE.equals(evenement.getIsInternational());
+
+        // =========================
+        // 🔥 VALIDATION AVANT SAVE
+        // =========================
+        if (isVoyage && isExterne) {
+
+            if (adherentFile == null || adherentFile.isEmpty()) {
+                throw new RuntimeException("Passeport obligatoire pour voyage externe ❌");
+            }
+
+            if (request.getConjoint() != null &&
+                    (conjointFile == null || conjointFile.isEmpty())) {
+                throw new RuntimeException("Passeport conjoint obligatoire ❌");
+            }
+
+            if (request.getEnfants() != null && !request.getEnfants().isEmpty()) {
+                if (enfantsFiles == null || enfantsFiles.isEmpty()) {
+                    throw new RuntimeException("Passeports enfants obligatoires ❌");
+                }
+
+                for (MultipartFile file : enfantsFiles) {
+                    if (file == null || file.isEmpty()) {
+                        throw new RuntimeException("Passeport enfant obligatoire ❌");
+                    }
+                }
+            }
+        }
+
+        // =========================
+        // 3. CALCUL NOMBRE PERSONNES
+        // =========================
+        int nombrePersonnes = 1;
+
+        if (request.getConjoint() != null) nombrePersonnes++;
+        if (request.getEnfants() != null) nombrePersonnes += request.getEnfants().size();
+
+        // =========================
+        // 4. PLACES
+        // =========================
+        if (evenement.getNbPlaces() < nombrePersonnes) {
+            throw new RuntimeException("Pas assez de places disponibles ❌");
+        }
+
+        evenement.setNbPlaces(evenement.getNbPlaces() - nombrePersonnes);
+        evenementRepository.save(evenement);
+
+        // =========================
+        // 5. INSCRIPTION
+        // =========================
         Inscription inscription = Inscription.builder()
                 .adherent(adherent)
                 .evenement(evenement)
@@ -65,10 +121,18 @@ public class InscriptionServiceImpl implements InscriptionService {
                 .statutPaiement("NON_PAYE")
                 .build();
 
+        if (adherentFile != null && !adherentFile.isEmpty()) {
+            try {
+                inscription.setPassport(adherentFile.getBytes());
+            } catch (Exception e) {
+                throw new RuntimeException("Erreur lecture fichier adherent", e);
+            }
+        }
+
         inscriptionRepository.save(inscription);
 
         // =========================
-        // ✅ CONJOINT
+        // 6. CONJOINT
         // =========================
         if (request.getConjoint() != null) {
 
@@ -80,27 +144,23 @@ public class InscriptionServiceImpl implements InscriptionService {
             conjoint.setCin(dto.getCin());
             conjoint.setTelephone(dto.getTelephone());
             conjoint.setDateNaissance(
-                    dto.getDateNaissance() != null
-                            ? dto.getDateNaissance().toString()
-                            : null
-            ); // ✅ FIX
+                    dto.getDateNaissance() != null ? dto.getDateNaissance().toString() : null
+            );
             conjoint.setInscription(inscription);
 
-            // ✅ PASSEPORT BYTE[]
             if (conjointFile != null && !conjointFile.isEmpty()) {
                 try {
                     conjoint.setPassport(conjointFile.getBytes());
                 } catch (Exception e) {
-                    throw new RuntimeException("Erreur lecture fichier conjoint");
+                    throw new RuntimeException("Erreur fichier conjoint", e);
                 }
             }
-            System.out.println("DTO CONJOINT: " + dto);
-            System.out.println("FILE NULL ? " + (conjointFile == null));
+
             conjointRepository.save(conjoint);
         }
 
         // =========================
-        // ✅ ENFANTS
+        // 7. ENFANTS
         // =========================
         if (request.getEnfants() != null && !request.getEnfants().isEmpty()) {
 
@@ -114,7 +174,6 @@ public class InscriptionServiceImpl implements InscriptionService {
                 enfant.setDateNaissance(dto.getDateNaissance());
                 enfant.setInscription(inscription);
 
-                // ✅ PASSEPORT BYTE[]
                 if (enfantsFiles != null && i < enfantsFiles.size()) {
                     MultipartFile file = enfantsFiles.get(i);
 
@@ -122,7 +181,7 @@ public class InscriptionServiceImpl implements InscriptionService {
                         try {
                             enfant.setPassport(file.getBytes());
                         } catch (Exception e) {
-                            throw new RuntimeException("Erreur lecture fichier enfant");
+                            throw new RuntimeException("Erreur fichier enfant", e);
                         }
                     }
                 }
@@ -130,8 +189,6 @@ public class InscriptionServiceImpl implements InscriptionService {
                 enfantRepository.save(enfant);
             }
         }
-
-        System.out.println("✅ INSCRIPTION CRÉÉE AVEC SUCCÈS");
     }
 
     @Override

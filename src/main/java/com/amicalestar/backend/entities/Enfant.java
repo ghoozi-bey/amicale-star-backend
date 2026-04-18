@@ -20,7 +20,7 @@ public class Enfant {
     private String dateNaissance;
 
     @Lob
-    @Column(name = "passport", columnDefinition = "bytea")
+    @Column(name = "passport")
     private byte[] passport;
 
     @ManyToOne

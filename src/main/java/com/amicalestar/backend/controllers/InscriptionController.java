@@ -4,7 +4,6 @@ import com.amicalestar.backend.dto.InscriptionDTO;
 import com.amicalestar.backend.dto.InscriptionRequest;
 import com.amicalestar.backend.entities.Inscription;
 import com.amicalestar.backend.services.InscriptionService;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -21,18 +20,38 @@ public class InscriptionController {
 
     private final InscriptionService inscriptionService;
 
-    // 🔥 FIX MULTIPART (FINAL)
-    @PostMapping("/create")
-    public ResponseEntity<?> create(
+    // ✅ VERSION PRO MULTIPART (CORRIGÉE)
+    @PostMapping(value = "/create", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<?> createInscription(
             @RequestPart("data") InscriptionRequest request,
+            @RequestPart(value = "adherentFile", required = false) MultipartFile adherentFile,
             @RequestPart(value = "conjointFile", required = false) MultipartFile conjointFile,
-            @RequestPart(value = "enfantsFiles", required = false) List<MultipartFile> enfantsFiles
+            @RequestPart(value = "enfantsFiles", required = false) MultipartFile[] enfantsFiles
     ) {
-        inscriptionService.createInscription(request, conjointFile, enfantsFiles);
-        return ResponseEntity.ok("OK");
+        try {
+
+            // 🔥 CONVERSION TABLEAU -> LIST
+            List<MultipartFile> enfantsList = null;
+            if (enfantsFiles != null) {
+                enfantsList = List.of(enfantsFiles);
+            }
+
+            inscriptionService.createInscription(
+                    request,
+                    adherentFile,
+                    conjointFile,
+                    enfantsList
+            );
+
+            return ResponseEntity.ok().body("Inscription créée avec succès ✅");
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.badRequest().body("Erreur : " + e.getMessage());
+        }
     }
 
-    // ✅ ANCIEN ENDPOINT (optionnel)
+    // ✅ ANCIEN ENDPOINT (OK)
     @PostMapping("/{matricule}/{eventId}")
     public ResponseEntity<Inscription> inscrire(
             @PathVariable String matricule,
@@ -42,12 +61,16 @@ public class InscriptionController {
         return ResponseEntity.ok(inscription);
     }
 
-    // ✅ MES INSCRIPTIONS
+    // ✅ MES INSCRIPTIONS (OK)
     @GetMapping("/mes-inscriptions/{matricule}")
     public ResponseEntity<List<InscriptionDTO>> getMesInscriptions(@PathVariable String matricule) {
 
+        System.out.println("🔥 MATRICULE RECU = " + matricule);
+
         List<Inscription> inscriptions =
                 inscriptionService.getInscriptionsAdherent(matricule);
+
+        System.out.println("🔥 NB INSCRIPTIONS = " + inscriptions.size());
 
         List<InscriptionDTO> result = inscriptions.stream()
                 .map(i -> InscriptionDTO.builder()

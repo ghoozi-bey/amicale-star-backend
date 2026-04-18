@@ -26,7 +26,33 @@ public class EvenementServiceImpl implements EvenementService {
         evenement.setStatut(StatutEvenement.BROUILLON);
         System.out.println("🔥 CREATE EVENEMENT EXECUTE 🔥");
 
-        // 🔥 IMPORTANT : seulement si aucune image envoyée
+        // =========================
+        // 🔥 LOGIQUE isInternational (FIX FINAL)
+        // =========================
+        if (evenement.getTypeEvenement() != null &&
+                evenement.getTypeEvenement().getId() != null) {
+
+            Long typeId = evenement.getTypeEvenement().getId();
+
+            // ✅ OMRA / HAJ → toujours true
+            if (typeId == 1) {
+                evenement.setIsInternational(true);
+            }
+            // ✅ CONVENTION → toujours false
+            else if (typeId == 3) {
+                evenement.setIsInternational(false);
+            }
+            // ✅ VOYAGE → valeur envoyée par le front
+            else if (typeId == 2) {
+                if (evenement.getIsInternational() == null) {
+                    evenement.setIsInternational(false);
+                }
+            }
+        }
+
+        // =========================
+        // 🔥 IMAGE PAR DÉFAUT
+        // =========================
         if (evenement.getPhoto() == null || evenement.getPhoto().length == 0) {
 
             String type = "";
