@@ -1,7 +1,9 @@
 package com.amicalestar.backend.controllers;
 
+import com.amicalestar.backend.entities.Adherent;
 import com.amicalestar.backend.entities.Evenement;
 import com.amicalestar.backend.entities.TypeEvenement;
+import com.amicalestar.backend.repositories.AdherentRepository;
 import com.amicalestar.backend.repositories.EvenementRepository;
 import com.amicalestar.backend.repositories.TypeEvenementRepository;
 import com.amicalestar.backend.services.EvenementService;
@@ -10,11 +12,13 @@ import com.amicalestar.backend.dto.EvenementDTO;
 import lombok.RequiredArgsConstructor;
 
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.time.LocalDate;
 import java.util.List;
+import org.springframework.security.core.Authentication;
 
 @RequiredArgsConstructor
 @RestController
@@ -25,6 +29,8 @@ public class EvenementController {
     private final EvenementRepository evenementRepository;
     private final TypeEvenementRepository typeRepo;
     private final EvenementService evenementService;
+    private final AdherentRepository adherentRepository;
+
 
     // 🔥 DTO MAPPING (CORRIGÉ)
     private EvenementDTO toDTO(Evenement e) {
@@ -156,6 +162,7 @@ public class EvenementController {
             @RequestParam("typeEvenement") Long typeId,
             @RequestParam(value = "photo", required = false) MultipartFile photo,
             @RequestParam(value = "isInternational", required = false) Boolean isInternational
+
     ) throws Exception {
 
         Evenement e = new Evenement();
@@ -177,7 +184,7 @@ public class EvenementController {
         e.setAgence(agence);
         e.setDestination(destination);
 
-        // 🔥 LOGIQUE MÉTIER PRO
+        // 🔥 TYPE
         TypeEvenement type = typeRepo.findById(typeId)
                 .orElseThrow(() -> new RuntimeException("Type introuvable"));
 
@@ -186,15 +193,24 @@ public class EvenementController {
         String typeNom = type.getNom().toUpperCase();
 
         if (typeNom.contains("OMRA") || typeNom.contains("HAJJ")) {
-            e.setIsInternational(true); // ✅ FORCÉ
+            e.setIsInternational(true);
         } else {
             e.setIsInternational(isInternational != null ? isInternational : false);
         }
 
+        // 🔥 PHOTO
         if (photo != null && !photo.isEmpty()) {
             e.setPhoto(photo.getBytes());
             e.setPhotoType(photo.getContentType());
         }
+
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        String email = authentication.getName();
+
+        Adherent adherent = adherentRepository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("Adhérent non trouvé"));
+
+        e.setAdherent(adherent);
 
         return ResponseEntity.ok(evenementService.createEvenement(e));
     }

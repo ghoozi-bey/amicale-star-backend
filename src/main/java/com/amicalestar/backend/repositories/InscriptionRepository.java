@@ -6,6 +6,7 @@ import org.springframework.data.jpa.repository.*;
 import org.springframework.data.repository.query.Param;
 
 import java.util.List;
+import java.util.Optional;
 
 public interface InscriptionRepository extends JpaRepository<Inscription, Long> {
 
@@ -24,4 +25,16 @@ public interface InscriptionRepository extends JpaRepository<Inscription, Long> 
         WHERE a.matricule = :matricule
     """)
     List<InscriptionDTO> findDTOByMatricule(@Param("matricule") String matricule);
+
+
+    // 🔥 FIX IMPORTANT ICI
+    @Query("""
+        SELECT DISTINCT i FROM Inscription i
+        JOIN FETCH i.adherent
+        LEFT JOIN FETCH i.conjoint
+        LEFT JOIN FETCH i.enfants
+        LEFT JOIN FETCH i.evenement
+        WHERE i.id = :id
+    """)
+    Optional<Inscription> findByIdWithDetails(@Param("id") Long id);
 }

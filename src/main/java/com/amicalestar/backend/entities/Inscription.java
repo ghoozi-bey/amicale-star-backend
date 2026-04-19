@@ -5,6 +5,7 @@ import jakarta.persistence.*;
 import lombok.*;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Entity
 @Getter
@@ -54,4 +55,10 @@ public class Inscription {
         if (this.statutPaiement == null)
             this.statutPaiement = "NON_PAYE";
     }
+
+    @OneToMany(mappedBy = "inscription", fetch = FetchType.LAZY)
+    private List<Enfant> enfants;
+
+    @OneToOne(mappedBy = "inscription", fetch = FetchType.LAZY)
+    private Conjoint conjoint;
 }

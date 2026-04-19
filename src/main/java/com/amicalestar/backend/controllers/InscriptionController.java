@@ -1,6 +1,7 @@
 package com.amicalestar.backend.controllers;
 
 import com.amicalestar.backend.dto.InscriptionDTO;
+import com.amicalestar.backend.dto.InscriptionDetailsDTO;
 import com.amicalestar.backend.dto.InscriptionRequest;
 import com.amicalestar.backend.entities.Inscription;
 import com.amicalestar.backend.services.InscriptionService;
@@ -64,5 +65,18 @@ public class InscriptionController {
         List<InscriptionDTO> result = inscriptionService.getInscriptionsAdherent(matricule);
 
         return ResponseEntity.ok(result);
+    }
+    @GetMapping("/{id}")
+    public ResponseEntity<?> getById(@PathVariable Long id) {
+
+        try {
+            System.out.println("ID reçu = " + id);
+
+            return ResponseEntity.ok(inscriptionService.getById(id));
+
+        } catch (Exception e) {
+            e.printStackTrace(); // 🔥 IMPORTANT
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
     }
 }

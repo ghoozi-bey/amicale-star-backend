@@ -1,8 +1,6 @@
 package com.amicalestar.backend.services.impl;
 
-import com.amicalestar.backend.dto.InscriptionRequest;
-import com.amicalestar.backend.dto.EnfantDTO;
-import com.amicalestar.backend.dto.ConjointDTO;
+import com.amicalestar.backend.dto.*;
 import com.amicalestar.backend.entities.*;
 import com.amicalestar.backend.repositories.*;
 import com.amicalestar.backend.services.InscriptionService;
@@ -11,7 +9,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
-import com.amicalestar.backend.dto.InscriptionDTO;
+
+import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
@@ -104,12 +103,42 @@ public class InscriptionServiceImpl implements InscriptionService {
         // =========================
         // 4. PLACES
         // =========================
-        if (evenement.getNbPlaces() < nombrePersonnes) {
-            throw new RuntimeException("Pas assez de places disponibles ❌");
+        // =========================
+// 4. PLACES (FIX PROPRE)
+// =========================
+
+        Integer nbPlaces = evenement.getNbPlaces();
+
+// =========================
+// 4. PLACES (VERSION PRO AVEC TYPE ID)
+// =========================
+
+// =========================
+// 4. PLACES (VERSION PRO AVEC TYPE ID)
+// =========================
+
+// 🔥 Convention = ID 3 → illimité
+        boolean isConvention = evenement.getTypeEvenement() != null
+                && evenement.getTypeEvenement().getId() == 3;
+
+        if (!isConvention) {
+
+            // ❌ NE PAS remettre Integer ici (déjà déclaré)
+            nbPlaces = evenement.getNbPlaces();
+
+            if (nbPlaces == null) {
+                throw new RuntimeException("Nombre de places non défini ❌");
+            }
+
+            if (nbPlaces < nombrePersonnes) {
+                throw new RuntimeException("Pas assez de places disponibles ❌");
+            }
+
+            evenement.setNbPlaces(nbPlaces - nombrePersonnes);
+            evenementRepository.save(evenement);
         }
 
-        evenement.setNbPlaces(evenement.getNbPlaces() - nombrePersonnes);
-        evenementRepository.save(evenement);
+// ✅ Convention → aucune modification des places
 
         // =========================
         // 5. INSCRIPTION
@@ -196,5 +225,62 @@ public class InscriptionServiceImpl implements InscriptionService {
     @Transactional
     public List<InscriptionDTO> getInscriptionsAdherent(String matricule) {
         return inscriptionRepository.findDTOByMatricule(matricule);
+    }
+    @Override
+    @Transactional
+    public InscriptionDetailsDTO getById(Long id) {
+
+        Inscription i = inscriptionRepository.findByIdWithDetails(id)
+                .orElseThrow(() -> new RuntimeException("Inscription non trouvée"));
+
+        // =========================
+        // 🔥 CALCUL NOMBRE PERSONNES
+        // =========================
+        int nb = 1;
+
+        if (i.getConjoint() != null) nb++;
+        if (i.getEnfants() != null) nb += i.getEnfants().size();
+
+        // =========================
+        // 🔥 CALCUL PRIX
+        // =========================
+        double prixUnitaire = i.getEvenement() != null ? i.getEvenement().getPrix() : 0;
+        double prixTotal = nb * prixUnitaire;
+
+        // =========================
+        // 🔥 BUILD DTO
+        // =========================
+        return InscriptionDetailsDTO.builder()
+                .id(i.getId())
+                .statut(i.getStatut())
+
+                // Adherent
+                .nom(i.getAdherent() != null ? i.getAdherent().getNom() : null)
+                .prenom(i.getAdherent() != null ? i.getAdherent().getPrenom() : null)
+                .email(i.getAdherent() != null ? i.getAdherent().getEmail() : null)
+                .telephone(i.getAdherent() != null ? i.getAdherent().getTelephone() : null)
+
+                // Event
+                .titre(i.getEvenement() != null ? i.getEvenement().getTitre() : null)
+                .prix(prixTotal) // 🔥 PRIX TOTAL
+
+                // Conjoint
+                .conjointNom(
+                        i.getConjoint() != null
+                                ? i.getConjoint().getNom()
+                                : null
+                )
+
+                // Enfants
+                .enfants(
+                        i.getEnfants() != null
+                                ? i.getEnfants()
+                                .stream()
+                                .map(e -> e.getNom())
+                                .toList()
+                                : List.of()
+                )
+
+                .build();
     }
 }

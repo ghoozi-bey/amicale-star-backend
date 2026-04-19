@@ -6,6 +6,7 @@ import com.amicalestar.backend.entities.Inscription;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
+import com.amicalestar.backend.dto.InscriptionDetailsDTO;
 
 public interface InscriptionService {
 
@@ -20,4 +21,5 @@ public interface InscriptionService {
 
     // ✅ get (OPTIMISÉ DTO 🔥)
     List<InscriptionDTO> getInscriptionsAdherent(String matricule);
+    InscriptionDetailsDTO getById(Long id);
 }
