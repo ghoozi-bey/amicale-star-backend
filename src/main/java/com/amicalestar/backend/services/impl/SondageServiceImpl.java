@@ -16,6 +16,7 @@ import org.springframework.stereotype.Service;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -158,6 +159,7 @@ public class SondageServiceImpl implements SondageService {
         sondage.setStatut(StatutSondage.PUBLISHED);
 
         return sondageRepository.save(sondage);
+
     }
 
     public Sondage annulerPublication(Long id) {
@@ -174,19 +176,18 @@ public class SondageServiceImpl implements SondageService {
         return sondageRepository.save(sondage);
     }
 
-    public Sondage rejeterSondage(Long id) {
+    public void rejeterSondage(Long id) {
 
         Sondage sondage = sondageRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Sondage introuvable"));
 
-        // Business rule: only BROUILLON can be rejected
         if (sondage.getStatut() != StatutSondage.BROUILLON) {
             throw new RuntimeException("Seuls les sondages en brouillon peuvent être rejetés");
         }
 
         sondage.setStatut(StatutSondage.REJECTED);
 
-        return sondageRepository.save(sondage);
+        sondageRepository.save(sondage);
     }
 
     public void updateStatut(Sondage s) {
@@ -230,30 +231,37 @@ public class SondageServiceImpl implements SondageService {
         Sondage sondage = sondageRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Sondage not found"));
 
-        // update fields
         sondage.setTitle(request.getTitle());
         sondage.setDescription(request.getDescription());
         sondage.setDateDebut(request.getDateDebut());
         sondage.setDateFin(request.getDateFin());
 
-        // ⚠️ handle questions (basic version)
         sondage.getQuestions().clear();
 
         request.getQuestions().forEach(q -> {
+
             Question question = new Question();
             question.setText(q.getText());
             question.setType(q.getType());
             question.setSondage(sondage);
 
-            if (!q.getType().equals("TEXTE")) {
+            if (q.getType() != TypeQuestion.TEXTE) {
+
+                if (q.getChoix() == null || q.getChoix().isEmpty()) {
+                    throw new RuntimeException("Choices required");
+                }
+
                 List<Choix> choixList = q.getChoix().stream().map(label -> {
                     Choix c = new Choix();
                     c.setLabel(label);
                     c.setQuestion(question);
                     return c;
-                }).toList();
+                }).collect(Collectors.toList());
 
                 question.setChoixList(choixList);
+
+            } else {
+                question.setChoixList(new ArrayList<>());
             }
 
             sondage.getQuestions().add(question);
@@ -261,4 +269,5 @@ public class SondageServiceImpl implements SondageService {
 
         return sondageRepository.save(sondage);
     }
+
 }

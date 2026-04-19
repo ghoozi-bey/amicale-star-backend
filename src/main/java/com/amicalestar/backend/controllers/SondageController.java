@@ -51,27 +51,29 @@ public class SondageController {
     }
 
     @PutMapping("/{id}/publish")
-    public ResponseEntity<?> publish(@PathVariable Long id) {
-        return ResponseEntity.ok(sondageService.publierSondage(id));
+    public ResponseEntity<String> publish(@PathVariable Long id) {
+        sondageService.publierSondage(id);
+        return ResponseEntity.ok("Published");
     }
 
     @PutMapping("/{id}/unpublish")
-    public ResponseEntity<?> unpublish(@PathVariable Long id) {
-        return ResponseEntity.ok(sondageService.annulerPublication(id));
+    public ResponseEntity<String> unpublish(@PathVariable Long id) {
+        sondageService.annulerPublication(id);
+        return ResponseEntity.ok("Unpublished");
     }
 
     @PutMapping("/{id}/reject")
-    public ResponseEntity<Sondage> reject(@PathVariable Long id) {
-        return ResponseEntity.ok(sondageService.rejeterSondage(id));
+    public ResponseEntity<String> reject(@PathVariable Long id) {
+        sondageService.rejeterSondage(id);
+        return ResponseEntity.ok("Rejected");
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<Sondage> updateSondage(
+    public ResponseEntity<?> updateSondage(
             @PathVariable Long id,
             @RequestBody CreateSondageRequest request
     ) {
-        Sondage updated = sondageService.updateSondage(id, request);
-        return ResponseEntity.ok(updated);
+        sondageService.updateSondage(id, request);
+        return ResponseEntity.ok().build();
     }
-
 }
