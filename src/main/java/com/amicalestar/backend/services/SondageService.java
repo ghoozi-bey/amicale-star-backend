@@ -17,5 +17,5 @@ public interface SondageService {
     public Sondage annulerPublication(Long id);
     public void rejeterSondage(Long id);
     Sondage updateSondage(Long id, CreateSondageRequest request);
-
+    public void supprimerSondage(Long id);
 }

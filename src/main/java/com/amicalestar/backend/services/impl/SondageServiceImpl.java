@@ -270,4 +270,17 @@ public class SondageServiceImpl implements SondageService {
         return sondageRepository.save(sondage);
     }
 
+    public void supprimerSondage(Long id) {
+
+        Sondage sondage = sondageRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Sondage introuvable"));
+
+        // 🔥 rule: only rejected can be deleted
+        if (sondage.getStatut() != StatutSondage.REJECTED) {
+            throw new RuntimeException("Seuls les sondages rejetés peuvent être supprimés");
+        }
+
+        sondageRepository.delete(sondage);
+    }
+
 }

@@ -76,4 +76,10 @@ public class SondageController {
         sondageService.updateSondage(id, request);
         return ResponseEntity.ok().build();
     }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<String> delete(@PathVariable Long id) {
+        sondageService.supprimerSondage(id);
+        return ResponseEntity.ok("Deleted");
+    }
 }
