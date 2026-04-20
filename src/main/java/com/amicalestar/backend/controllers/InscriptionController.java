@@ -10,6 +10,7 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.security.core.Authentication;
 
 import java.util.List;
 
@@ -21,6 +22,9 @@ public class InscriptionController {
 
     private final InscriptionService inscriptionService;
 
+    // =========================
+    // CREATE INSCRIPTION
+    // =========================
     @PostMapping(value = "/create", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<?> createInscription(
             @RequestPart("data") InscriptionRequest request,
@@ -42,14 +46,17 @@ public class InscriptionController {
                     enfantsList
             );
 
-            return ResponseEntity.ok().body("Inscription créée avec succès ✅");
+            return ResponseEntity.ok("Inscription créée avec succès ✅");
 
         } catch (Exception e) {
             e.printStackTrace();
-            return ResponseEntity.badRequest().body("Erreur : " + e.getMessage());
+            return ResponseEntity.badRequest().body(e.getMessage());
         }
     }
 
+    // =========================
+    // INSCRIPTION SIMPLE
+    // =========================
     @PostMapping("/{matricule}/{eventId}")
     public ResponseEntity<Inscription> inscrire(
             @PathVariable String matricule,
@@ -59,24 +66,50 @@ public class InscriptionController {
         return ResponseEntity.ok(inscription);
     }
 
-    @GetMapping("/mes-inscriptions/{matricule}")
-    public ResponseEntity<List<InscriptionDTO>> getMesInscriptions(@PathVariable String matricule) {
+    // =========================
+    // MES INSCRIPTIONS (SECURISÉ)
+    // =========================
+    @GetMapping("/mes-inscriptions")
+    public ResponseEntity<List<InscriptionDTO>> getMesInscriptions(Authentication authentication) {
 
-        List<InscriptionDTO> result = inscriptionService.getInscriptionsAdherent(matricule);
+        if (authentication == null) {
+            return ResponseEntity.status(401).body(null);
+        }
+
+        String email = authentication.getName(); // 🔥 JWT = email
+
+        List<InscriptionDTO> result = inscriptionService.getInscriptionsAdherent(email);
 
         return ResponseEntity.ok(result);
     }
+
+    // =========================
+    // DETAILS INSCRIPTION (SECURISÉ)
+    // =========================
     @GetMapping("/{id}")
-    public ResponseEntity<?> getById(@PathVariable Long id) {
+    public ResponseEntity<?> getById(
+            @PathVariable Long id,
+            Authentication authentication) {
 
         try {
-            System.out.println("ID reçu = " + id);
+            if (authentication == null) {
+                return ResponseEntity.status(401).body("Non authentifié ❌");
+            }
 
-            return ResponseEntity.ok(inscriptionService.getById(id));
+            String email = authentication.getName();
+
+            InscriptionDetailsDTO dto =
+                    inscriptionService.getByIdSecure(id, email);
+
+            return ResponseEntity.ok(dto);
+
+        } catch (RuntimeException e) {
+            // 🔐 accès refusé ou introuvable
+            return ResponseEntity.status(403).body(e.getMessage());
 
         } catch (Exception e) {
-            e.printStackTrace(); // 🔥 IMPORTANT
-            return ResponseEntity.badRequest().body(e.getMessage());
+            e.printStackTrace();
+            return ResponseEntity.badRequest().body("Erreur serveur ❌");
         }
     }
 }

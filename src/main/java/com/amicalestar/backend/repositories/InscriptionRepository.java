@@ -10,6 +10,9 @@ import java.util.Optional;
 
 public interface InscriptionRepository extends JpaRepository<Inscription, Long> {
 
+    // =========================
+    // 🔥 LISTE PAR EMAIL
+    // =========================
     @Query("""
         SELECT new com.amicalestar.backend.dto.InscriptionDTO(
             i.id,
@@ -22,12 +25,13 @@ public interface InscriptionRepository extends JpaRepository<Inscription, Long> 
         FROM Inscription i
         JOIN i.evenement e
         JOIN i.adherent a
-        WHERE a.matricule = :matricule
+        WHERE a.email = :email
     """)
-    List<InscriptionDTO> findDTOByMatricule(@Param("matricule") String matricule);
+    List<InscriptionDTO> findDTOByEmail(@Param("email") String email);
 
-
-    // 🔥 FIX IMPORTANT ICI
+    // =========================
+    // 🔥 DETAILS
+    // =========================
     @Query("""
         SELECT DISTINCT i FROM Inscription i
         JOIN FETCH i.adherent

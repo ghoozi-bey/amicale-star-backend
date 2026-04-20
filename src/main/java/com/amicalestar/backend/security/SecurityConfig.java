@@ -40,7 +40,7 @@ public class SecurityConfig {
 
                         // 🔐 AUTH
                         .requestMatchers("/api/auth/**").permitAll()
-                        .requestMatchers("/api/inscriptions/**").permitAll()
+                        .requestMatchers("/api/inscriptions/**").authenticated()
 
                         // 🔁 OPTIONS (CORS)
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()

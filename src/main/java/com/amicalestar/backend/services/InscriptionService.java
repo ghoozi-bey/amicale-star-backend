@@ -20,6 +20,8 @@ public interface InscriptionService {
                            List<MultipartFile> enfantsFiles);
 
     // ✅ get (OPTIMISÉ DTO 🔥)
-    List<InscriptionDTO> getInscriptionsAdherent(String matricule);
+    List<InscriptionDTO> getInscriptionsAdherent(String email);
     InscriptionDetailsDTO getById(Long id);
+    InscriptionDetailsDTO getByIdSecure(Long id, String email);
+
 }
