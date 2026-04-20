@@ -62,6 +62,7 @@ public class Adherent {
     @Column(name = "photo_profil", columnDefinition = "BYTEA")
     private byte[] photoProfil;
 
+
     // ✅ TYPE IMAGE (image/jpeg, image/png…)
     @Column(name = "photo_type")
     private String photoType;

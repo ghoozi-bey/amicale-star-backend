@@ -92,24 +92,18 @@ public class InscriptionController {
             Authentication authentication) {
 
         try {
-            if (authentication == null) {
-                return ResponseEntity.status(401).body("Non authentifié ❌");
-            }
-
             String email = authentication.getName();
 
-            InscriptionDetailsDTO dto =
-                    inscriptionService.getByIdSecure(id, email);
-
-            return ResponseEntity.ok(dto);
-
-        } catch (RuntimeException e) {
-            // 🔐 accès refusé ou introuvable
-            return ResponseEntity.status(403).body(e.getMessage());
+            return ResponseEntity.ok(
+                    inscriptionService.getByIdSecure(id, email)
+            );
 
         } catch (Exception e) {
+
+            // 🔥 AJOUTE ICI
             e.printStackTrace();
-            return ResponseEntity.badRequest().body("Erreur serveur ❌");
+
+            return ResponseEntity.badRequest().body(e.getMessage());
         }
     }
 }

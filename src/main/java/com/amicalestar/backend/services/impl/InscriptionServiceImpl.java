@@ -227,7 +227,7 @@ public class InscriptionServiceImpl implements InscriptionService {
     public List<InscriptionDTO> getInscriptionsAdherent(String email) {
         return inscriptionRepository.findDTOByEmail(email);
     }
-    @Override
+
     @Transactional
     public InscriptionDetailsDTO getById(Long id) {
 
@@ -284,52 +284,29 @@ public class InscriptionServiceImpl implements InscriptionService {
 
                 .build();
     }
-    @Override
+
+
+    @Transactional
     public InscriptionDetailsDTO getByIdSecure(Long id, String email) {
 
-        Inscription i = inscriptionRepository
-                .findByIdWithDetails(id)
+        Inscription i = inscriptionRepository.findByIdWithDetails(id)
                 .orElseThrow(() -> new RuntimeException("Inscription introuvable"));
 
         if (!i.getAdherent().getEmail().equals(email)) {
             throw new RuntimeException("Accès refusé ❌");
         }
 
-        int nb = 1;
-        if (i.getConjoint() != null) nb++;
-        if (i.getEnfants() != null) nb += i.getEnfants().size();
-
-        double prixUnitaire = i.getEvenement() != null ? i.getEvenement().getPrix() : 0;
-        double prixTotal = nb * prixUnitaire;
-
         return InscriptionDetailsDTO.builder()
                 .id(i.getId())
                 .statut(i.getStatut())
-                .modePaiement(i.getModePaiement())
-                .statutPaiement(i.getStatutPaiement())
-
-                // ✅ ADHERENT
                 .nom(i.getAdherent().getNom())
                 .prenom(i.getAdherent().getPrenom())
                 .email(i.getAdherent().getEmail())
                 .telephone(i.getAdherent().getTelephone())
-
-                // ✅ EVENT
                 .titre(i.getEvenement().getTitre())
-                .prix(prixTotal)
-
-                // ✅ CONJOINT
-                .conjointNom(
-                        i.getConjoint() != null ? i.getConjoint().getNom() : null
-                )
-
-                // ✅ ENFANTS
-                .enfants(
-                        i.getEnfants() != null
-                                ? i.getEnfants().stream().map(e -> e.getNom()).toList()
-                                : List.of()
-                )
-
+                .prix(i.getEvenement().getPrix())
+                .modePaiement(i.getModePaiement())
+                .statutPaiement(i.getStatutPaiement())
                 .build();
     }
 
