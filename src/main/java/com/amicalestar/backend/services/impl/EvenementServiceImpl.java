@@ -128,11 +128,6 @@ public class EvenementServiceImpl implements EvenementService {
     }
 
     @Override
-    public void deleteEvenement(Long id) {
-        evenementRepository.deleteById(id);
-    }
-
-    @Override
     public Evenement updateEvenement(Long id, Evenement evenement) {
 
         Evenement existing = evenementRepository.findById(id)
@@ -156,5 +151,17 @@ public class EvenementServiceImpl implements EvenementService {
         }
 
         return evenementRepository.save(existing);
+    }
+    @Override
+    public void deleteEvenement(Long id) {
+
+        Evenement event = evenementRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Evenement non trouvé"));
+
+        if (event.getInscriptions() != null && !event.getInscriptions().isEmpty()) {
+            throw new RuntimeException("Impossible de supprimer : il y a des inscriptions");
+        }
+
+        evenementRepository.delete(event);
     }
 }

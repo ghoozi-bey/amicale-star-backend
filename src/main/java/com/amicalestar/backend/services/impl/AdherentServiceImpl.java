@@ -10,6 +10,9 @@ import com.amicalestar.backend.dto.UpdateProfileRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.core.io.ClassPathResource;
+import java.io.InputStream;
+import java.io.IOException;
 
 import com.amicalestar.backend.exceptions.ValidationException;
 
@@ -54,12 +57,29 @@ public class AdherentServiceImpl implements AdherentService {
             adherent.setTypeAdherent(TypeAdherent.ADHERENT);
         }
         // 🔥 FIX BLOB (IMPORTANT)
-        if (adherent.getPhotoProfil() == null) {
-            adherent.setPhotoProfil(null);
-            adherent.setPhotoType(null);
+        if (adherent.getPhotoProfil() == null || adherent.getPhotoProfil().length == 0) {
+            try {
+                InputStream is = new ClassPathResource("static/default/default-pfp.jpg").getInputStream();
+                adherent.setPhotoProfil(is.readAllBytes());
+                adherent.setPhotoType("image/jpeg");
+            } catch (IOException e) {
+                throw new RuntimeException("Erreur image par défaut", e);
+            }
         }
 
         adherent.setPassword(passwordEncoder.encode(adherent.getPassword()));
+        // ================= 🔥 DEFAULT IMAGE =================
+        if (adherent.getPhotoProfil() == null || adherent.getPhotoProfil().length == 0) {
+            try {
+                InputStream is = new ClassPathResource("static/default/default-pfp.jpg").getInputStream();
+                adherent.setPhotoProfil(is.readAllBytes());
+                adherent.setPhotoType("image/jpeg");
+
+                System.out.println("✅ Image par défaut appliquée");
+            } catch (IOException e) {
+                throw new RuntimeException("Erreur image par défaut profil", e);
+            }
+        }
 
         return adherentRepository.save(adherent);
     }
@@ -259,4 +279,5 @@ public class AdherentServiceImpl implements AdherentService {
                 "http://localhost:8080/api/user/photo/" + a.getMatricule()
         );
     }
+
 }

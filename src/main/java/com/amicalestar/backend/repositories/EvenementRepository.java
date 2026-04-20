@@ -32,4 +32,6 @@ public interface EvenementRepository extends JpaRepository<Evenement, Long> {
 
     @Query("SELECT e.photoType FROM Evenement e WHERE e.id = :id")
     String getPhotoTypeById(@Param("id") Long id);
+    @Query("SELECT COUNT(i) FROM Inscription i WHERE i.evenement.id = :eventId")
+    int countInscriptions(@Param("eventId") Long eventId);
 }

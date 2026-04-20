@@ -46,6 +46,7 @@ public class EvenementController {
 
         dto.prix = e.getPrix();
         dto.nbPlaces = e.getNbPlaces();
+        dto.nbInscriptions = evenementRepository.countInscriptions(e.getId());
 
         dto.societe = e.getSociete();
         dto.agence = e.getAgence();
@@ -110,10 +111,16 @@ public class EvenementController {
 
     // ✅ MES EVENEMENTS
     @GetMapping("/mes-evenements-crees")
-    public ResponseEntity<?> getMesEvenements(@RequestParam String matricule) {
+    public ResponseEntity<?> getMesEvenements() {
+
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        String email = authentication.getName();
+
+        Adherent adherent = adherentRepository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("Adhérent non trouvé"));
 
         List<EvenementDTO> dtos = evenementRepository
-                .findByAdherent_Matricule(matricule)
+                .findByAdherent_Matricule(adherent.getMatricule())
                 .stream()
                 .map(this::toDTO)
                 .toList();
@@ -213,5 +220,10 @@ public class EvenementController {
         e.setAdherent(adherent);
 
         return ResponseEntity.ok(evenementService.createEvenement(e));
+    }
+    @DeleteMapping("/{id}")
+    public ResponseEntity<?> deleteEvenement(@PathVariable Long id) {
+        evenementService.deleteEvenement(id);
+        return ResponseEntity.ok("Evenement supprimé");
     }
 }

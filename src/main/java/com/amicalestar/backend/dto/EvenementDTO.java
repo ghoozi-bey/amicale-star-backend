@@ -18,6 +18,7 @@ public class EvenementDTO {
     public String societe;
     public String agence;
     public String destination;
+    public int nbInscriptions;
 
     public String photoUrl;
 
