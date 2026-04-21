@@ -13,6 +13,8 @@ public class AdherentDTO {
     private String email;
     private String telephone;
     private String cin;
+    private String typeAdherent;
+    private String departement;
 
     private String photoUrl; // ✅ juste URL, pas image
 }

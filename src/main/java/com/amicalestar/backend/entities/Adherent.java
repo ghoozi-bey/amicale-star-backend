@@ -67,6 +67,7 @@ public class Adherent {
     @Column(name = "photo_type")
     private String photoType;
 
+    @JsonIgnore
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "type_evenement_id")
     private TypeEvenement typeEvenement;

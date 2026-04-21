@@ -276,6 +276,8 @@ public class AdherentServiceImpl implements AdherentService {
                 a.getEmail(),
                 a.getTelephone(),
                 a.getCin(),
+                a.getTypeAdherent().name(),
+                a.getDepartement().name(),
                 "http://localhost:8080/api/user/photo/" + a.getMatricule()
         );
     }

@@ -139,6 +139,8 @@ public class AdminUserServiceImpl implements AdminUserService {
                     user.getEmail(),
                     user.getTelephone(),
                     user.getCin(),
+                    user.getTypeAdherent().name(),
+                    user.getDepartement().name(),
                     "http://localhost:8080/api/user/photo/" + user.getMatricule()
             );
 
