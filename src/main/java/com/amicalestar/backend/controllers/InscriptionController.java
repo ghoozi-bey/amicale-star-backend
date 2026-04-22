@@ -1,8 +1,6 @@
 package com.amicalestar.backend.controllers;
 
-import com.amicalestar.backend.dto.InscriptionDTO;
-import com.amicalestar.backend.dto.InscriptionDetailsDTO;
-import com.amicalestar.backend.dto.InscriptionRequest;
+import com.amicalestar.backend.dto.*;
 import com.amicalestar.backend.entities.Inscription;
 import com.amicalestar.backend.services.InscriptionService;
 import lombok.RequiredArgsConstructor;
@@ -103,6 +101,38 @@ public class InscriptionController {
             // 🔥 AJOUTE ICI
             e.printStackTrace();
 
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
+    }
+    @GetMapping("/event/{id}")
+    public ResponseEntity<List<InscriptionListDTO>> getByEvent(@PathVariable Long id) {
+        return ResponseEntity.ok(inscriptionService.getInscriptionsByEvent(id));
+    }
+    @GetMapping("/{id}/full")
+    public ResponseEntity<InscriptionFullDTO> getFullDetails(@PathVariable Long id) {
+        return ResponseEntity.ok(inscriptionService.getFullDetails(id));
+    }
+    @PutMapping("/{id}/statut")
+    public ResponseEntity<?> updateStatut(
+            @PathVariable Long id,
+            @RequestParam String statut
+    ) {
+        try {
+            inscriptionService.updateStatut(id, statut);
+            return ResponseEntity.ok("Statut mis à jour");
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
+    }
+    @PostMapping("/{id}/upload-justificatif")
+    public ResponseEntity<?> uploadJustificatif(
+            @PathVariable Long id,
+            @RequestParam("file") MultipartFile file
+    ) {
+        try {
+            inscriptionService.uploadJustificatif(id, file);
+            return ResponseEntity.ok("Justificatif uploadé avec succès");
+        } catch (Exception e) {
             return ResponseEntity.badRequest().body(e.getMessage());
         }
     }

@@ -9,7 +9,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
-
+import java.util.Base64;
 
 import java.util.Optional;
 
@@ -308,6 +308,152 @@ public class InscriptionServiceImpl implements InscriptionService {
                 .modePaiement(i.getModePaiement())
                 .statutPaiement(i.getStatutPaiement())
                 .build();
+    }
+    @Override
+    public List<InscriptionListDTO> getInscriptionsByEvent(Long eventId) {
+        return inscriptionRepository.findDTOByEventId(eventId);
+    }
+    private String toBase64(byte[] file) {
+        if (file == null) return null;
+        return Base64.getEncoder().encodeToString(file);
+    }
+    @Override
+    public InscriptionFullDTO getFullDetails(Long id) {
+
+        Inscription i = inscriptionRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Inscription introuvable"));
+
+        Evenement e = i.getEvenement();
+        Adherent a = i.getAdherent();
+
+        // 🔥 CALCUL PRIX TOTAL
+        int nbPersonnes = 1;
+
+        if (i.getConjoint() != null) nbPersonnes++;
+
+        if (i.getEnfants() != null) nbPersonnes += i.getEnfants().size();
+
+        double prixTotal = (e != null && e.getPrix() != null ? e.getPrix() : 0) * nbPersonnes;
+
+        return InscriptionFullDTO.builder()
+
+                // 🔹 ID
+                .id(i.getId())
+
+                // 🔹 ADHERENT
+                .nom(a != null ? a.getNom() : null)
+                .prenom(a != null ? a.getPrenom() : null)
+                .email(a != null ? a.getEmail() : null)
+                .telephone(a != null ? a.getTelephone() : null)
+                .cin(a != null ? a.getCin() : null)
+
+                // 🔹 EVENT
+                .titre(e != null ? e.getTitre() : null)
+                .prix(e != null ? e.getPrix() : null)
+                .typeEvenement(e != null && e.getTypeEvenement() != null
+                        ? e.getTypeEvenement().getNom()
+                        : null)
+
+                // 🔹 PAIEMENT (✅ STRING → PAS .name())
+                .modePaiement(i.getModePaiement())
+                .statutPaiement(i.getStatutPaiement())
+
+                // 🔹 STATUT (STRING aussi)
+                .statut(i.getStatut())
+
+                // 🔹 FAMILLE
+                .conjoint(mapConjoint(i.getConjoint()))
+                .enfants(mapEnfants(i.getEnfants()))
+
+                // 🔹 PASSEPORT ADHERENT (✅ BON NOM : passport)
+                .passeport(toBase64(i.getPassport()))
+
+                // 🔹 PRIX TOTAL
+                .prixTotal(prixTotal)
+
+                .build();
+    }
+    private ConjointFullDTO mapConjoint(Conjoint c) {
+
+        if (c == null) return null;
+
+        return ConjointFullDTO.builder()
+                .nom(c.getNom())
+                .prenom(c.getPrenom())
+                .dateNaissance(c.getDateNaissance())
+                .cin(c.getCin())
+                .telephone(c.getTelephone())
+                .passeport(
+                        c.getPassport() != null
+                                ? toBase64(c.getPassport())
+                                : null
+                )
+                .build();
+    }
+    private List<EnfantFullDTO> mapEnfants(List<Enfant> enfants) {
+
+        if (enfants == null) return List.of();
+
+        return enfants.stream()
+                .map(enfant -> EnfantFullDTO.builder()
+                        .nom(enfant.getNom())
+                        .prenom(enfant.getPrenom())
+                        .dateNaissance(enfant.getDateNaissance())
+                        .passeport(
+                                enfant.getPassport() != null
+                                        ? toBase64(enfant.getPassport())
+                                        : null
+                        )
+                        .build())
+                .toList();
+    }
+    @Override
+    public void updateStatut(Long id, String statut) {
+        Inscription inscription = inscriptionRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Inscription non trouvée"));
+
+        inscription.setStatut(statut);
+
+        inscriptionRepository.save(inscription);
+    }
+    @Override
+    public void uploadJustificatif(Long id, MultipartFile file) {
+
+        try {
+            Inscription inscription = inscriptionRepository.findById(id)
+                    .orElseThrow(() -> new RuntimeException("Inscription introuvable"));
+
+            // 🔒 Vérifier mode paiement
+            if (inscription.getModePaiement() == null ||
+                    !inscription.getModePaiement().equalsIgnoreCase("VIREMENT")) {
+                throw new RuntimeException("Upload autorisé uniquement pour paiement par virement");
+            }
+
+            // 🔒 Vérifier statut accepté
+            if (inscription.getStatut() == null ||
+                    !inscription.getStatut().equalsIgnoreCase("ACCEPTEE")) {
+                throw new RuntimeException("L'inscription doit être acceptée avant upload");
+            }
+
+            // 🔒 Vérifier fichier
+            if (file == null || file.isEmpty()) {
+                throw new RuntimeException("Fichier vide");
+            }
+
+            // 🔒 Vérifier type PDF
+            if (!"application/pdf".equalsIgnoreCase(file.getContentType())) {
+                throw new RuntimeException("Seuls les fichiers PDF sont autorisés");
+            }
+
+            // 🔥 Enregistrer fichier
+            inscription.setJustificatifVirement(file.getBytes());
+            inscription.setJustificatifType(file.getContentType());
+
+            inscriptionRepository.save(inscription);
+
+        } catch (Exception e) {
+            throw new RuntimeException("Erreur upload justificatif : " + e.getMessage());
+        }
     }
 
 

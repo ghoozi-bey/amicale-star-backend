@@ -61,4 +61,11 @@ public class Inscription {
 
     @OneToOne(mappedBy = "inscription", fetch = FetchType.LAZY)
     private Conjoint conjoint;
+    @Lob
+    @Basic(fetch = FetchType.LAZY)
+    @Column(name = "justificatif_virement")
+    private byte[] justificatifVirement;
+
+    @Column(name = "justificatif_type")
+    private String justificatifType;// ex: application/pdf
 }

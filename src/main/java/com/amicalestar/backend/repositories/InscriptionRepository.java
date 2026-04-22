@@ -1,6 +1,7 @@
 package com.amicalestar.backend.repositories;
 
 import com.amicalestar.backend.dto.InscriptionDTO;
+import com.amicalestar.backend.dto.InscriptionListDTO;
 import com.amicalestar.backend.entities.Inscription;
 import org.springframework.data.jpa.repository.*;
 import org.springframework.data.repository.query.Param;
@@ -41,4 +42,18 @@ public interface InscriptionRepository extends JpaRepository<Inscription, Long> 
         WHERE i.id = :id
     """)
     Optional<Inscription> findByIdWithDetails(@Param("id") Long id);
+    @Query("""
+SELECT new com.amicalestar.backend.dto.InscriptionListDTO(
+    i.id,
+    a.nom,
+    a.email,
+    i.modePaiement,
+    i.statut
+)
+FROM Inscription i
+JOIN i.adherent a
+WHERE i.evenement.id = :eventId
+""")
+    List<InscriptionListDTO> findDTOByEventId(@Param("eventId") Long eventId);
+
 }
