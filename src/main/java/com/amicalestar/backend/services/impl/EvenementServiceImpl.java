@@ -23,6 +23,10 @@ public class EvenementServiceImpl implements EvenementService {
     @Override
     public Evenement createEvenement(Evenement evenement) {
 
+        // 🔥 AJOUT ICI (DEBUG)
+        System.out.println("REM12 ACTIVE = " + evenement.getRemiseEnfant12Active());
+        System.out.println("REM12 % = " + evenement.getRemiseEnfant12Pourcentage());
+
         evenement.setStatut(StatutEvenement.BROUILLON);
         System.out.println("🔥 CREATE EVENEMENT EXECUTE 🔥");
 

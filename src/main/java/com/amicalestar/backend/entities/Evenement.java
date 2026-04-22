@@ -75,4 +75,17 @@ public class Evenement {
     public Boolean getIsInternationalSafe() {
         return isInternational != null ? isInternational : false;
     }
+    // 🔥 REMISES (OPTIONNELLES)
+
+    // enfant -12
+    private Boolean remiseEnfant12Active;
+    private Double remiseEnfant12Pourcentage;
+
+    // enfant -18
+    private Boolean remiseEnfant18Active;
+    private Double remiseEnfant18Pourcentage;
+
+    // couple
+    private Boolean remiseCoupleActive;
+    private Double remiseCouplePourcentage;
 }

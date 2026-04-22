@@ -58,21 +58,18 @@ public class InscriptionServiceImpl implements InscriptionService {
         Evenement evenement = evenementRepository.findById(request.getEvenementId())
                 .orElseThrow(() -> new RuntimeException("Evenement non trouvé"));
 
-        // =========================
-        // 🔥 FIX IMPORTANT : déterminer type
-        // =========================
         boolean isVoyage = evenement.getTypeEvenement() != null &&
                 evenement.getTypeEvenement().getNom().equalsIgnoreCase("VOYAGE");
 
         boolean isExterne = Boolean.TRUE.equals(evenement.getIsInternational());
 
         // =========================
-        // 🔥 VALIDATION AVANT SAVE
+        // 🔥 VALIDATION PASSEPORT
         // =========================
         if (isVoyage && isExterne) {
 
             if (adherentFile == null || adherentFile.isEmpty()) {
-                throw new RuntimeException("Passeport obligatoire pour voyage externe ❌");
+                throw new RuntimeException("Passeport obligatoire ❌");
             }
 
             if (request.getConjoint() != null &&
@@ -81,65 +78,38 @@ public class InscriptionServiceImpl implements InscriptionService {
             }
 
             if (request.getEnfants() != null && !request.getEnfants().isEmpty()) {
+
                 if (enfantsFiles == null || enfantsFiles.isEmpty()) {
                     throw new RuntimeException("Passeports enfants obligatoires ❌");
-                }
-
-                for (MultipartFile file : enfantsFiles) {
-                    if (file == null || file.isEmpty()) {
-                        throw new RuntimeException("Passeport enfant obligatoire ❌");
-                    }
                 }
             }
         }
 
         // =========================
-        // 3. CALCUL NOMBRE PERSONNES
+        // 3. NOMBRE PERSONNES
         // =========================
-        int nombrePersonnes = 1;
+        int nbPersonnes = 1;
 
-        if (request.getConjoint() != null) nombrePersonnes++;
-        if (request.getEnfants() != null) nombrePersonnes += request.getEnfants().size();
+        if (request.getConjoint() != null) nbPersonnes++;
+        if (request.getEnfants() != null) nbPersonnes += request.getEnfants().size();
 
         // =========================
         // 4. PLACES
         // =========================
-        // =========================
-// 4. PLACES (FIX PROPRE)
-// =========================
-
-        Integer nbPlaces = evenement.getNbPlaces();
-
-// =========================
-// 4. PLACES (VERSION PRO AVEC TYPE ID)
-// =========================
-
-// =========================
-// 4. PLACES (VERSION PRO AVEC TYPE ID)
-// =========================
-
-// 🔥 Convention = ID 3 → illimité
         boolean isConvention = evenement.getTypeEvenement() != null
                 && evenement.getTypeEvenement().getId() == 3;
 
         if (!isConvention) {
 
-            // ❌ NE PAS remettre Integer ici (déjà déclaré)
-            nbPlaces = evenement.getNbPlaces();
+            Integer nbPlaces = evenement.getNbPlaces();
 
-            if (nbPlaces == null) {
-                throw new RuntimeException("Nombre de places non défini ❌");
+            if (nbPlaces == null || nbPlaces < nbPersonnes) {
+                throw new RuntimeException("Pas assez de places ❌");
             }
 
-            if (nbPlaces < nombrePersonnes) {
-                throw new RuntimeException("Pas assez de places disponibles ❌");
-            }
-
-            evenement.setNbPlaces(nbPlaces - nombrePersonnes);
+            evenement.setNbPlaces(nbPlaces - nbPersonnes);
             evenementRepository.save(evenement);
         }
-
-// ✅ Convention → aucune modification des places
 
         // =========================
         // 5. INSCRIPTION
@@ -156,7 +126,7 @@ public class InscriptionServiceImpl implements InscriptionService {
             try {
                 inscription.setPassport(adherentFile.getBytes());
             } catch (Exception e) {
-                throw new RuntimeException("Erreur lecture fichier adherent", e);
+                throw new RuntimeException("Erreur fichier adherent");
             }
         }
 
@@ -174,16 +144,14 @@ public class InscriptionServiceImpl implements InscriptionService {
             conjoint.setPrenom(dto.getPrenom());
             conjoint.setCin(dto.getCin());
             conjoint.setTelephone(dto.getTelephone());
-            conjoint.setDateNaissance(
-                    dto.getDateNaissance() != null ? dto.getDateNaissance().toString() : null
-            );
+            conjoint.setDateNaissance(dto.getDateNaissance());
             conjoint.setInscription(inscription);
 
             if (conjointFile != null && !conjointFile.isEmpty()) {
                 try {
                     conjoint.setPassport(conjointFile.getBytes());
                 } catch (Exception e) {
-                    throw new RuntimeException("Erreur fichier conjoint", e);
+                    throw new RuntimeException("Erreur fichier conjoint");
                 }
             }
 
@@ -212,7 +180,7 @@ public class InscriptionServiceImpl implements InscriptionService {
                         try {
                             enfant.setPassport(file.getBytes());
                         } catch (Exception e) {
-                            throw new RuntimeException("Erreur fichier enfant", e);
+                            throw new RuntimeException("Erreur fichier enfant");
                         }
                     }
                 }
@@ -220,6 +188,50 @@ public class InscriptionServiceImpl implements InscriptionService {
                 enfantRepository.save(enfant);
             }
         }
+
+        // =========================
+        // 🔥 8. CALCUL PRIX FINAL
+        // =========================
+
+        double prixBase = evenement.getPrix() != null ? evenement.getPrix() : 0;
+
+        int nbMoins12 = 0;
+        int nbMoins18 = 0;
+
+        if (request.getEnfants() != null) {
+            for (EnfantDTO enfant : request.getEnfants()) {
+
+                int age = calculAge(enfant.getDateNaissance());
+
+                if (age <= 12) nbMoins12++;
+                else if (age <= 18) nbMoins18++;
+            }
+        }
+
+        double total = prixBase * nbPersonnes;
+        double remise = 0;
+
+        if (Boolean.TRUE.equals(evenement.getRemiseEnfant12Active())) {
+            remise += nbMoins12 * (prixBase * evenement.getRemiseEnfant12Pourcentage() / 100);
+        }
+
+        if (Boolean.TRUE.equals(evenement.getRemiseEnfant18Active())) {
+            remise += nbMoins18 * (prixBase * evenement.getRemiseEnfant18Pourcentage() / 100);
+        }
+
+        if (Boolean.TRUE.equals(evenement.getRemiseCoupleActive()) && request.getConjoint() != null) {
+            remise += prixBase * evenement.getRemiseCouplePourcentage() / 100;
+        }
+
+        double prixFinal = total - remise;
+
+        inscription.setPrixTotal(prixFinal);
+        inscription.setRemiseAppliquee(remise);
+        inscription.setNbEnfantsMoins12(nbMoins12);
+        inscription.setNbEnfantsMoins18(nbMoins18);
+        inscription.setEstCouple(request.getConjoint() != null);
+
+        inscriptionRepository.save(inscription);
     }
 
     @Override
@@ -413,8 +425,11 @@ public class InscriptionServiceImpl implements InscriptionService {
                 .orElseThrow(() -> new RuntimeException("Inscription non trouvée"));
 
         inscription.setStatut(statut);
+        // 🔥 CALCUL PRIX FINAL
+        calculerPrixFinal(inscription);
 
         inscriptionRepository.save(inscription);
+
     }
     @Override
     public void uploadJustificatif(Long id, MultipartFile file) {
@@ -454,6 +469,60 @@ public class InscriptionServiceImpl implements InscriptionService {
         } catch (Exception e) {
             throw new RuntimeException("Erreur upload justificatif : " + e.getMessage());
         }
+    }
+
+    private double calculerPrixFinal(Inscription inscription) {
+
+        Evenement event = inscription.getEvenement();
+
+        double prix = event.getPrix();
+        double remiseTotale = 0;
+
+        // 🔥 ENFANT -12
+        if (Boolean.TRUE.equals(event.getRemiseEnfant12Active())
+                && inscription.getNbEnfantsMoins12() != null
+                && inscription.getNbEnfantsMoins12() > 0) {
+
+            remiseTotale += event.getRemiseEnfant12Pourcentage();
+        }
+
+        // 🔥 ENFANT -18
+        if (Boolean.TRUE.equals(event.getRemiseEnfant18Active())
+                && inscription.getNbEnfantsMoins18() != null
+                && inscription.getNbEnfantsMoins18() > 0) {
+
+            remiseTotale += event.getRemiseEnfant18Pourcentage();
+        }
+
+        // 🔥 COUPLE
+        if (Boolean.TRUE.equals(event.getRemiseCoupleActive())
+                && Boolean.TRUE.equals(inscription.getEstCouple())) {
+
+            remiseTotale += event.getRemiseCouplePourcentage();
+        }
+
+        // 🔥 CALCUL FINAL
+        double prixFinal = prix - (prix * remiseTotale / 100);
+
+        // 🔥 STOCKAGE
+        inscription.setRemiseAppliquee(remiseTotale);
+        inscription.setPrixTotal(prixFinal);
+
+        return prixFinal;
+    }
+    private int calculAge(String date) {
+        if (date == null) return 0;
+
+        java.time.LocalDate birth = java.time.LocalDate.parse(date);
+        java.time.LocalDate today = java.time.LocalDate.now();
+
+        int age = today.getYear() - birth.getYear();
+
+        if (today.getDayOfYear() < birth.getDayOfYear()) {
+            age--;
+        }
+
+        return age;
     }
 
 

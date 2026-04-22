@@ -168,7 +168,16 @@ public class EvenementController {
             @RequestParam(value = "destination", required = false) String destination,
             @RequestParam("typeEvenement") Long typeId,
             @RequestParam(value = "photo", required = false) MultipartFile photo,
-            @RequestParam(value = "isInternational", required = false) Boolean isInternational
+            @RequestParam(value = "isInternational", required = false) Boolean isInternational,
+
+            @RequestParam(value = "remiseEnfant12Active", required = false) Boolean remiseEnfant12Active,
+            @RequestParam(value = "remiseEnfant12Pourcentage", required = false) Double remiseEnfant12Pourcentage,
+
+            @RequestParam(value = "remiseEnfant18Active", required = false) Boolean remiseEnfant18Active,
+            @RequestParam(value = "remiseEnfant18Pourcentage", required = false) Double remiseEnfant18Pourcentage,
+
+            @RequestParam(value = "remiseCoupleActive", required = false) Boolean remiseCoupleActive,
+            @RequestParam(value = "remiseCouplePourcentage", required = false) Double remiseCouplePourcentage
 
     ) throws Exception {
 
@@ -211,6 +220,17 @@ public class EvenementController {
             e.setPhotoType(photo.getContentType());
         }
 
+        // 🔥 REMISES (LA PARTIE QUI MANQUAIT)
+        e.setRemiseEnfant12Active(remiseEnfant12Active != null ? remiseEnfant12Active : false);
+        e.setRemiseEnfant12Pourcentage(remiseEnfant12Pourcentage != null ? remiseEnfant12Pourcentage : 0);
+
+        e.setRemiseEnfant18Active(remiseEnfant18Active != null ? remiseEnfant18Active : false);
+        e.setRemiseEnfant18Pourcentage(remiseEnfant18Pourcentage != null ? remiseEnfant18Pourcentage : 0);
+
+        e.setRemiseCoupleActive(remiseCoupleActive != null ? remiseCoupleActive : false);
+        e.setRemiseCouplePourcentage(remiseCouplePourcentage != null ? remiseCouplePourcentage : 0);
+
+        // 🔥 USER
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         String email = authentication.getName();
 

@@ -68,4 +68,11 @@ public class Inscription {
 
     @Column(name = "justificatif_type")
     private String justificatifType;// ex: application/pdf
+
+    private Integer nbEnfantsMoins12;
+    private Integer nbEnfantsMoins18;
+    private Boolean estCouple;
+
+    private Double prixTotal;
+    private Double remiseAppliquee;
 }
