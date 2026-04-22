@@ -26,10 +26,8 @@ public class AdminUserServiceImpl implements AdminUserService {
 
     private final AdherentRepository adherentRepository;
     private final PasswordEncoder passwordEncoder;
-    private final AdherentService adherentService;
     private final TypeEvenementRepository typeEvenementRepository;
 
-    // ================= CREATE =================
     @Override
     public Adherent createUser(CreateUserRequest request) {
 
@@ -78,7 +76,7 @@ public class AdminUserServiceImpl implements AdminUserService {
         }
 
         if (!errors.isEmpty()) {
-            throw new RuntimeException(errors.toString()); // 🔥 retour 400
+            throw new RuntimeException(errors.toString());
         }
 
         // ===== TYPE EVENEMENT =====
@@ -108,43 +106,32 @@ public class AdminUserServiceImpl implements AdminUserService {
                 )
                 .actif(true)
                 .typeEvenement(typeEvenement)
+                .photoProfil(null) // ✅ IMPORTANT
+                .photoType(null)   // ✅ IMPORTANT
                 .build();
 
-        return adherentService.createAdherent(adherent);
+        return adherentRepository.save(adherent);
     }
 
     // ================= READ =================
     @Override
     public List<AdherentDTO> getAllUsers() {
-        return adherentRepository.findAll().stream().map(user -> {
+        return adherentRepository.findAll().stream().map(user ->
 
-            String base64Photo = null;
-            String photoType = null;
+                new AdherentDTO(
+                        user.getMatricule(),
+                        user.getNom(),
+                        user.getPrenom(),
+                        user.getEmail(),
+                        user.getTelephone(),
+                        user.getCin(),
+                        user.getTypeAdherent().name(),
+                        user.getDepartement().name(),
+                        "http://localhost:8080/api/user/photo/" + user.getMatricule(),
+                        user.getPhotoProfil() != null && user.getPhotoProfil().length > 0
+                )
 
-            if (user.getPhotoProfil() != null && user.getPhotoProfil().length > 0) {
-                base64Photo = Base64.getEncoder().encodeToString(user.getPhotoProfil());
-
-                // ensure valid MIME type
-                if (user.getPhotoType() != null && user.getPhotoType().startsWith("image/")) {
-                    photoType = user.getPhotoType();
-                } else {
-                    photoType = "image/jpeg";
-                }
-            }
-
-            return new AdherentDTO(
-                    user.getMatricule(),
-                    user.getNom(),
-                    user.getPrenom(),
-                    user.getEmail(),
-                    user.getTelephone(),
-                    user.getCin(),
-                    user.getTypeAdherent().name(),
-                    user.getDepartement().name(),
-                    "http://localhost:8080/api/user/photo/" + user.getMatricule()
-            );
-
-        }).toList();
+        ).toList();
     }
 
     @Override

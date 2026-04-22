@@ -1,10 +1,8 @@
 package com.amicalestar.backend.dto;
 
-import lombok.AllArgsConstructor;
 import lombok.Data;
 
 @Data
-@AllArgsConstructor
 public class AdherentDTO {
 
     private String matricule;
@@ -16,5 +14,30 @@ public class AdherentDTO {
     private String typeAdherent;
     private String departement;
 
-    private String photoUrl; // ✅ juste URL, pas image
+    private String photoUrl;
+    private boolean hasPhoto;
+
+    public AdherentDTO(
+            String matricule,
+            String nom,
+            String prenom,
+            String email,
+            String telephone,
+            String cin,
+            String typeAdherent,
+            String departement,
+            String photoUrl,
+            boolean hasPhoto
+    ) {
+        this.matricule = matricule;
+        this.nom = nom;
+        this.prenom = prenom;
+        this.email = email;
+        this.telephone = telephone;
+        this.cin = cin;
+        this.typeAdherent = typeAdherent;
+        this.departement = departement;
+        this.photoUrl = photoUrl;
+        this.hasPhoto = hasPhoto;
+    }
 }

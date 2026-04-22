@@ -27,62 +27,6 @@ public class AdherentServiceImpl implements AdherentService {
     private final AdherentRepository adherentRepository;
     private final PasswordEncoder passwordEncoder;
 
-    // ================= CREATE =================
-    @Override
-    public Adherent createAdherent(Adherent adherent) {
-
-        Map<String, String> errors = new HashMap<>();
-
-        if (adherentRepository.existsById(adherent.getMatricule())) {
-            errors.put("matricule", "Matricule déjà utilisé");
-        }
-
-        if (adherentRepository.existsByEmail(adherent.getEmail())) {
-            errors.put("email", "Email déjà utilisé");
-        }
-
-        if (adherentRepository.existsByCin(adherent.getCin())) {
-            errors.put("cin", "CIN déjà utilisé");
-        }
-
-        if (adherentRepository.existsByTelephone(adherent.getTelephone())) {
-            errors.put("telephone", "Téléphone déjà utilisé");
-        }
-
-        if (!errors.isEmpty()) {
-            throw new ValidationException(errors);
-        }
-
-        if (adherent.getTypeAdherent() == null) {
-            adherent.setTypeAdherent(TypeAdherent.ADHERENT);
-        }
-        // 🔥 FIX BLOB (IMPORTANT)
-        if (adherent.getPhotoProfil() == null || adherent.getPhotoProfil().length == 0) {
-            try {
-                InputStream is = new ClassPathResource("static/default/default-pfp.jpg").getInputStream();
-                adherent.setPhotoProfil(is.readAllBytes());
-                adherent.setPhotoType("image/jpeg");
-            } catch (IOException e) {
-                throw new RuntimeException("Erreur image par défaut", e);
-            }
-        }
-
-        adherent.setPassword(passwordEncoder.encode(adherent.getPassword()));
-        // ================= 🔥 DEFAULT IMAGE =================
-        if (adherent.getPhotoProfil() == null || adherent.getPhotoProfil().length == 0) {
-            try {
-                InputStream is = new ClassPathResource("static/default/default-pfp.jpg").getInputStream();
-                adherent.setPhotoProfil(is.readAllBytes());
-                adherent.setPhotoType("image/jpeg");
-
-                System.out.println("✅ Image par défaut appliquée");
-            } catch (IOException e) {
-                throw new RuntimeException("Erreur image par défaut profil", e);
-            }
-        }
-
-        return adherentRepository.save(adherent);
-    }
     @Override
     public Adherent getAdherentById(String matricule) {
         return adherentRepository.findById(matricule).orElse(null);
@@ -278,7 +222,8 @@ public class AdherentServiceImpl implements AdherentService {
                 a.getCin(),
                 a.getTypeAdherent().name(),
                 a.getDepartement().name(),
-                "http://localhost:8080/api/user/photo/" + a.getMatricule()
+                "http://localhost:8080/api/user/photo/" + a.getMatricule(),
+                a.getPhotoProfil() != null && a.getPhotoProfil().length > 0
         );
     }
 

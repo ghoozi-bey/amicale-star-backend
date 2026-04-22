@@ -11,7 +11,6 @@ public interface AdminUserService {
 
     Adherent createUser(CreateUserRequest request);
 
-    // 🔥 IMPORTANT FIX
     List<AdherentDTO> getAllUsers();
 
     Adherent getUserByMatricule(String matricule);

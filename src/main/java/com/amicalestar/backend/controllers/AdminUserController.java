@@ -45,8 +45,7 @@ public class AdminUserController {
     }
 
     @PatchMapping("/users/{matricule}")
-    public Adherent updateUser(
-            @PathVariable String matricule,
+    public Adherent updateUser( @PathVariable String matricule,
             @RequestBody UpdateUserRequest request
     ) {
         return adminUserService.updateUser(matricule, request);

@@ -38,9 +38,8 @@ public class AdherentController {
         response.put("matricule", adherent.getMatricule());
         response.put("cin", adherent.getCin());
 
-        // ✅ TOUJOURS construire URL sans charger image
-        response.put("photoUrl",
-                "http://localhost:8080/api/user/photo/" + adherent.getMatricule());
+        response.put("hasPhoto", adherent.isHasPhoto());
+        response.put("photoUrl", adherent.getPhotoUrl());
 
         return ResponseEntity.ok(response);
     }

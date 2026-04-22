@@ -7,9 +7,6 @@ import com.amicalestar.backend.dto.AdherentDTO;
 
 public interface AdherentService {
 
-    // ================= CREATE =================
-    Adherent createAdherent(Adherent adherent);
-
     // ================= READ =================
     Adherent getAdherentById(String matricule);
 
