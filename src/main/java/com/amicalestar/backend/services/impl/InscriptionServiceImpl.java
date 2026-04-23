@@ -8,6 +8,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Base64;
 
@@ -22,6 +24,7 @@ public class InscriptionServiceImpl implements InscriptionService {
     private final EvenementRepository evenementRepository;
     private final ConjointRepository conjointRepository;
     private final EnfantRepository enfantRepository;
+    private final PaiementRepository paiementRepository;
 
     @Override
     public Inscription inscrire(String matricule, Long eventId) {
@@ -64,7 +67,7 @@ public class InscriptionServiceImpl implements InscriptionService {
         boolean isExterne = Boolean.TRUE.equals(evenement.getIsInternational());
 
         // =========================
-        // 🔥 VALIDATION PASSEPORT
+        // 3. VALIDATION PASSEPORT
         // =========================
         if (isVoyage && isExterne) {
 
@@ -78,7 +81,6 @@ public class InscriptionServiceImpl implements InscriptionService {
             }
 
             if (request.getEnfants() != null && !request.getEnfants().isEmpty()) {
-
                 if (enfantsFiles == null || enfantsFiles.isEmpty()) {
                     throw new RuntimeException("Passeports enfants obligatoires ❌");
                 }
@@ -86,7 +88,7 @@ public class InscriptionServiceImpl implements InscriptionService {
         }
 
         // =========================
-        // 3. NOMBRE PERSONNES
+        // 4. NOMBRE PERSONNES
         // =========================
         int nbPersonnes = 1;
 
@@ -94,7 +96,7 @@ public class InscriptionServiceImpl implements InscriptionService {
         if (request.getEnfants() != null) nbPersonnes += request.getEnfants().size();
 
         // =========================
-        // 4. PLACES
+        // 5. PLACES
         // =========================
         boolean isConvention = evenement.getTypeEvenement() != null
                 && evenement.getTypeEvenement().getId() == 3;
@@ -112,7 +114,7 @@ public class InscriptionServiceImpl implements InscriptionService {
         }
 
         // =========================
-        // 5. INSCRIPTION
+        // 6. CREATE INSCRIPTION
         // =========================
         Inscription inscription = Inscription.builder()
                 .adherent(adherent)
@@ -122,18 +124,18 @@ public class InscriptionServiceImpl implements InscriptionService {
                 .statutPaiement("NON_PAYE")
                 .build();
 
-        if (adherentFile != null && !adherentFile.isEmpty()) {
-            try {
+        try {
+            if (adherentFile != null && !adherentFile.isEmpty()) {
                 inscription.setPassport(adherentFile.getBytes());
-            } catch (Exception e) {
-                throw new RuntimeException("Erreur fichier adherent");
             }
+        } catch (Exception e) {
+            throw new RuntimeException("Erreur fichier adherent");
         }
 
         inscriptionRepository.save(inscription);
 
         // =========================
-        // 6. CONJOINT
+        // 7. CONJOINT
         // =========================
         if (request.getConjoint() != null) {
 
@@ -147,19 +149,19 @@ public class InscriptionServiceImpl implements InscriptionService {
             conjoint.setDateNaissance(dto.getDateNaissance());
             conjoint.setInscription(inscription);
 
-            if (conjointFile != null && !conjointFile.isEmpty()) {
-                try {
+            try {
+                if (conjointFile != null && !conjointFile.isEmpty()) {
                     conjoint.setPassport(conjointFile.getBytes());
-                } catch (Exception e) {
-                    throw new RuntimeException("Erreur fichier conjoint");
                 }
+            } catch (Exception e) {
+                throw new RuntimeException("Erreur fichier conjoint");
             }
 
             conjointRepository.save(conjoint);
         }
 
         // =========================
-        // 7. ENFANTS
+        // 8. ENFANTS
         // =========================
         if (request.getEnfants() != null && !request.getEnfants().isEmpty()) {
 
@@ -173,16 +175,15 @@ public class InscriptionServiceImpl implements InscriptionService {
                 enfant.setDateNaissance(dto.getDateNaissance());
                 enfant.setInscription(inscription);
 
-                if (enfantsFiles != null && i < enfantsFiles.size()) {
-                    MultipartFile file = enfantsFiles.get(i);
-
-                    if (file != null && !file.isEmpty()) {
-                        try {
+                try {
+                    if (enfantsFiles != null && i < enfantsFiles.size()) {
+                        MultipartFile file = enfantsFiles.get(i);
+                        if (file != null && !file.isEmpty()) {
                             enfant.setPassport(file.getBytes());
-                        } catch (Exception e) {
-                            throw new RuntimeException("Erreur fichier enfant");
                         }
                     }
+                } catch (Exception e) {
+                    throw new RuntimeException("Erreur fichier enfant");
                 }
 
                 enfantRepository.save(enfant);
@@ -190,9 +191,8 @@ public class InscriptionServiceImpl implements InscriptionService {
         }
 
         // =========================
-        // 🔥 8. CALCUL PRIX FINAL
+        // 9. CALCUL PRIX
         // =========================
-
         double prixBase = evenement.getPrix() != null ? evenement.getPrix() : 0;
 
         int nbMoins12 = 0;
@@ -212,24 +212,64 @@ public class InscriptionServiceImpl implements InscriptionService {
         double remise = 0;
 
         if (Boolean.TRUE.equals(evenement.getRemiseEnfant12Active())) {
-            remise += nbMoins12 * (prixBase * evenement.getRemiseEnfant12Pourcentage() / 100);
+            remise += nbMoins12 * (prixBase * (evenement.getRemiseEnfant12Pourcentage() != null ? evenement.getRemiseEnfant12Pourcentage() : 0) / 100);
         }
 
         if (Boolean.TRUE.equals(evenement.getRemiseEnfant18Active())) {
-            remise += nbMoins18 * (prixBase * evenement.getRemiseEnfant18Pourcentage() / 100);
+            remise += nbMoins18 * (prixBase * (evenement.getRemiseEnfant18Pourcentage() != null ? evenement.getRemiseEnfant18Pourcentage() : 0) / 100);
         }
 
         if (Boolean.TRUE.equals(evenement.getRemiseCoupleActive()) && request.getConjoint() != null) {
-            remise += prixBase * evenement.getRemiseCouplePourcentage() / 100;
+            remise += prixBase * (evenement.getRemiseCouplePourcentage() != null ? evenement.getRemiseCouplePourcentage() : 0) / 100;
         }
 
         double prixFinal = total - remise;
 
+        // =========================
+        // 10. AVANCE + ECHEANCIER
+        // =========================
+        double avance = request.getAvance() != null ? request.getAvance() : 0;
+        int nombreMois = request.getNombreMois() != null ? request.getNombreMois() : 1;
+
+        if (nombreMois <= 0) nombreMois = 1;
+
+        double reste = prixFinal - avance;
+        double mensualite = reste / nombreMois;
+
+        // 🔥 AVANCE (EN ATTENTE)
+        if (avance > 0) {
+            Paiement p = new Paiement();
+            p.setMontant(avance);
+            p.setStatut("EN_ATTENTE"); // ✅ CORRECT
+            p.setDatePaiement(null);   // ✅ pas encore payé
+            p.setModePaiement(request.getModePaiementAvance());
+            p.setInscription(inscription);
+            paiementRepository.save(p);
+        }
+
+        // 🔥 ECHEANCIER
+        LocalDate dateDebut = LocalDate.parse(request.getDateDebutPaiement());
+
+        for (int i = 1; i <= nombreMois; i++) {
+
+            Paiement p = new Paiement();
+            p.setMontant(mensualite);
+            p.setStatut("EN_ATTENTE"); // ✅
+            p.setDatePaiement(dateDebut.plusMonths(i));
+            p.setInscription(inscription);
+
+            paiementRepository.save(p);
+        }
+
+        // =========================
+        // 11. SAVE FINAL
+        // =========================
         inscription.setPrixTotal(prixFinal);
         inscription.setRemiseAppliquee(remise);
         inscription.setNbEnfantsMoins12(nbMoins12);
         inscription.setNbEnfantsMoins18(nbMoins18);
         inscription.setEstCouple(request.getConjoint() != null);
+        inscription.setResteAPayer(reste);
 
         inscriptionRepository.save(inscription);
     }

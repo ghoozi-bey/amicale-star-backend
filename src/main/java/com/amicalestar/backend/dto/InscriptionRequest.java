@@ -1,7 +1,6 @@
 package com.amicalestar.backend.dto;
 
 import lombok.*;
-
 import java.util.List;
 
 @Getter
@@ -15,7 +14,7 @@ public class InscriptionRequest {
     private String matricule;
     private Long evenementId;
 
-    // 💳 paiement
+    // 💳 paiement principal
     private String modePaiement;
 
     // 👩 conjoint (optionnel)
@@ -23,4 +22,12 @@ public class InscriptionRequest {
 
     // 👶 enfants (optionnel)
     private List<EnfantDTO> enfants;
+
+    // =========================
+    // 🔥 NOUVEAU (AVANCE)
+    // =========================
+    private Double avance;                 // montant payé au début
+    private String modePaiementAvance;// cash / virement / carte
+    private Integer nombreMois;
+    private String dateDebutPaiement;
 }

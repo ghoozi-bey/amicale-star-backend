@@ -75,4 +75,8 @@ public class Inscription {
 
     private Double prixTotal;
     private Double remiseAppliquee;
+    @OneToMany(mappedBy = "inscription", cascade = CascadeType.ALL)
+    private List<Paiement> paiements;
+    private Double resteAPayer;
+
 }

@@ -35,4 +35,5 @@ public class InscriptionDTO {
         this.id = eventId;
         this.titreEvenement = titre;
     }
+
 }
