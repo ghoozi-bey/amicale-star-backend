@@ -9,31 +9,27 @@ import lombok.*;
 @Builder
 public class InscriptionDTO {
 
-    private Long id; // ✅ IMPORTANT
+    private Long id;
 
     private String statut;
-    private String modePaiement;
-    private String statutPaiement;
+
 
     private Long evenementId;
     private String titreEvenement;
     private Integer nbEnfantsMoins12;
     private Integer nbEnfantsMoins18;
     private Boolean estCouple;
+
+    // 🔥 CONSTRUCTEUR CORRIGÉ
     public InscriptionDTO(
             Long id,
             String statut,
-            String modePaiement,
-            String statutPaiement,
-            Long eventId,
+            Long evenementId,
             String titre
     ) {
         this.id = id;
         this.statut = statut;
-        this.modePaiement = modePaiement;
-        this.statutPaiement = statutPaiement;
-        this.id = eventId;
+        this.evenementId = evenementId; // ✅ FIX
         this.titreEvenement = titre;
     }
-
 }

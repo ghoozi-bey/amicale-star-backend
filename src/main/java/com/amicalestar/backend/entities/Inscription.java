@@ -23,8 +23,6 @@ public class Inscription {
 
     private String statut;
 
-    private String modePaiement;
-    private String statutPaiement;
 
     // ✅ LAZY + IGNORE (IMPORTANT)
     @ManyToOne(fetch = FetchType.LAZY)
@@ -51,9 +49,6 @@ public class Inscription {
 
         if (this.statut == null)
             this.statut = "EN_ATTENTE";
-
-        if (this.statutPaiement == null)
-            this.statutPaiement = "NON_PAYE";
     }
 
     @OneToMany(mappedBy = "inscription", fetch = FetchType.LAZY)
@@ -61,14 +56,6 @@ public class Inscription {
 
     @OneToOne(mappedBy = "inscription", fetch = FetchType.LAZY)
     private Conjoint conjoint;
-    @Lob
-    @Basic(fetch = FetchType.LAZY)
-    @Column(name = "justificatif_virement")
-    private byte[] justificatifVirement;
-
-    @Column(name = "justificatif_type")
-    private String justificatifType;// ex: application/pdf
-
     private Integer nbEnfantsMoins12;
     private Integer nbEnfantsMoins18;
     private Boolean estCouple;

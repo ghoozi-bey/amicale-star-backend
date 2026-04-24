@@ -25,10 +25,6 @@ public class InscriptionFullDTO {
     private Double prix;
     private String typeEvenement;
 
-    // 🔹 PAIEMENT
-    private String modePaiement;
-    private String statutPaiement;
-
     // 🔹 STATUT
     private String statut;
 
@@ -41,4 +37,5 @@ public class InscriptionFullDTO {
 
     // 🔹 PRIX TOTAL
     private Double prixTotal;
+    private List<PaiementDTO> paiements;
 }

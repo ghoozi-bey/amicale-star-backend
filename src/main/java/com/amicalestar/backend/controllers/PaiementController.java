@@ -1,5 +1,6 @@
 package com.amicalestar.backend.controllers;
 
+import com.amicalestar.backend.entities.Inscription;
 import com.amicalestar.backend.entities.Paiement;
 import com.amicalestar.backend.repositories.PaiementRepository;
 import lombok.RequiredArgsConstructor;
@@ -42,19 +43,51 @@ public class PaiementController {
     public ResponseEntity<?> uploadJustificatif(
             @PathVariable Long id,
             @RequestParam("file") MultipartFile file
-    ) throws IOException {
+    ) {
+        try {
 
-        Paiement paiement = paiementRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Paiement introuvable"));
+            Paiement paiement = paiementRepository.findById(id)
+                    .orElseThrow(() -> new RuntimeException("Paiement introuvable"));
 
-        paiement.setJustificatifVirement(
-                Base64.getEncoder().encodeToString(file.getBytes())
-        );
+            Inscription inscription = paiement.getInscription();
 
-        paiement.setStatut("EN_ATTENTE_VALIDATION");
+            // 🔒 Vérifier statut inscription
+            if (inscription == null || !"ACCEPTEE".equalsIgnoreCase(inscription.getStatut())) {
+                throw new RuntimeException("L'inscription doit être acceptée");
+            }
 
-        paiementRepository.save(paiement);
+            // 🔒 Vérifier mode paiement
+            if (paiement.getModePaiement() == null ||
+                    !paiement.getModePaiement().equalsIgnoreCase("VIREMENT")) {
+                throw new RuntimeException("Upload autorisé uniquement pour VIREMENT");
+            }
 
-        return ResponseEntity.ok("Justificatif uploadé");
+            // 🔒 Vérifier statut paiement
+            if (!"EN_ATTENTE".equalsIgnoreCase(paiement.getStatut())) {
+                throw new RuntimeException("Paiement déjà traité");
+            }
+
+            // 🔒 Vérifier fichier
+            if (file == null || file.isEmpty()) {
+                throw new RuntimeException("Fichier vide");
+            }
+
+            // 🔒 Vérifier type PDF
+            if (!"application/pdf".equalsIgnoreCase(file.getContentType())) {
+                throw new RuntimeException("Seuls les fichiers PDF sont autorisés");
+            }
+
+            // 🔥 IMPORTANT : IOException gérée ici
+            paiement.setJustificatifVirement(file.getBytes());
+
+            paiement.setStatut("EN_ATTENTE_VALIDATION");
+
+            paiementRepository.save(paiement);
+
+            return ResponseEntity.ok("Justificatif uploadé avec succès");
+
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
     }
 }

@@ -32,5 +32,7 @@ import java.util.List;
 
         // Enfants
         private List<String> enfants;
+        private Long evenementId;
+        private List<PaiementDTO> paiements;
     }
 

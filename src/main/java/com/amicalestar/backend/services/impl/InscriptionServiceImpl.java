@@ -91,7 +91,6 @@ public class InscriptionServiceImpl implements InscriptionService {
         // 4. NOMBRE PERSONNES
         // =========================
         int nbPersonnes = 1;
-
         if (request.getConjoint() != null) nbPersonnes++;
         if (request.getEnfants() != null) nbPersonnes += request.getEnfants().size();
 
@@ -102,7 +101,6 @@ public class InscriptionServiceImpl implements InscriptionService {
                 && evenement.getTypeEvenement().getId() == 3;
 
         if (!isConvention) {
-
             Integer nbPlaces = evenement.getNbPlaces();
 
             if (nbPlaces == null || nbPlaces < nbPersonnes) {
@@ -119,9 +117,7 @@ public class InscriptionServiceImpl implements InscriptionService {
         Inscription inscription = Inscription.builder()
                 .adherent(adherent)
                 .evenement(evenement)
-                .modePaiement(request.getModePaiement())
                 .statut("EN_ATTENTE")
-                .statutPaiement("NON_PAYE")
                 .build();
 
         try {
@@ -236,33 +232,34 @@ public class InscriptionServiceImpl implements InscriptionService {
         double reste = prixFinal - avance;
         double mensualite = reste / nombreMois;
 
-        // 🔥 AVANCE (EN ATTENTE)
+        // 🔥 AVANCE
         if (avance > 0) {
             Paiement p = new Paiement();
             p.setMontant(avance);
-            p.setStatut("EN_ATTENTE"); // ✅ CORRECT
-            p.setDatePaiement(null);   // ✅ pas encore payé
+            p.setStatut("EN_ATTENTE");
+            p.setDatePaiement(null);
             p.setModePaiement(request.getModePaiementAvance());
             p.setInscription(inscription);
             paiementRepository.save(p);
         }
 
-        // 🔥 ECHEANCIER
+        // 🔥 ECHEANCIER (AVEC MODE PAIEMENT)
         LocalDate dateDebut = LocalDate.parse(request.getDateDebutPaiement());
 
         for (int i = 1; i <= nombreMois; i++) {
 
             Paiement p = new Paiement();
             p.setMontant(mensualite);
-            p.setStatut("EN_ATTENTE"); // ✅
+            p.setStatut("EN_ATTENTE");
             p.setDatePaiement(dateDebut.plusMonths(i));
+            p.setModePaiement(request.getModePaiementEcheance()); // 🔥 CORRECTION
             p.setInscription(inscription);
 
             paiementRepository.save(p);
         }
 
         // =========================
-        // 11. SAVE FINAL
+        // 11. FINAL UPDATE
         // =========================
         inscription.setPrixTotal(prixFinal);
         inscription.setRemiseAppliquee(remise);
@@ -348,17 +345,58 @@ public class InscriptionServiceImpl implements InscriptionService {
             throw new RuntimeException("Accès refusé ❌");
         }
 
+        // 🔥 récupérer paiements
+        List<PaiementDTO> paiements = i.getPaiements() != null
+                ? i.getPaiements().stream().map(p -> PaiementDTO.builder()
+                .id(p.getId())
+                .montant(p.getMontant())
+                .statut(p.getStatut())
+                .modePaiement(p.getModePaiement())
+                .datePaiement(
+                        p.getDatePaiement() != null
+                                ? p.getDatePaiement().toString()
+                                : null
+                )
+                .hasJustificatif(p.getJustificatifVirement() != null)
+                .build()
+        ).toList()
+                : List.of();
+
         return InscriptionDetailsDTO.builder()
                 .id(i.getId())
                 .statut(i.getStatut())
+
+                // 👤 Adhérent
                 .nom(i.getAdherent().getNom())
                 .prenom(i.getAdherent().getPrenom())
                 .email(i.getAdherent().getEmail())
                 .telephone(i.getAdherent().getTelephone())
+
+                // 🎉 Event
                 .titre(i.getEvenement().getTitre())
                 .prix(i.getEvenement().getPrix())
-                .modePaiement(i.getModePaiement())
-                .statutPaiement(i.getStatutPaiement())
+
+                // ❌ SUPPRIMÉ (ancienne logique)
+                // .modePaiement(...)
+                // .statutPaiement(...)
+
+                // 👨‍👩‍👧 Famille
+                .conjointNom(
+                        i.getConjoint() != null
+                                ? i.getConjoint().getNom()
+                                : null
+                )
+                .enfants(
+                        i.getEnfants() != null
+                                ? i.getEnfants().stream()
+                                .map(e -> e.getNom())
+                                .toList()
+                                : List.of()
+                )
+
+                // 💰 NOUVEAU
+                .paiements(paiements)
+
                 .build();
     }
     @Override
@@ -370,9 +408,10 @@ public class InscriptionServiceImpl implements InscriptionService {
         return Base64.getEncoder().encodeToString(file);
     }
     @Override
+    @Transactional
     public InscriptionFullDTO getFullDetails(Long id) {
 
-        Inscription i = inscriptionRepository.findById(id)
+        Inscription i = inscriptionRepository.findByIdWithDetails(id)
                 .orElseThrow(() -> new RuntimeException("Inscription introuvable"));
 
         Evenement e = i.getEvenement();
@@ -386,6 +425,23 @@ public class InscriptionServiceImpl implements InscriptionService {
         if (i.getEnfants() != null) nbPersonnes += i.getEnfants().size();
 
         double prixTotal = (e != null && e.getPrix() != null ? e.getPrix() : 0) * nbPersonnes;
+
+        // 🔥 NOUVEAU : récupérer les paiements
+        List<PaiementDTO> paiements = i.getPaiements() != null
+                ? i.getPaiements().stream().map(p -> PaiementDTO.builder()
+                .id(p.getId())
+                .montant(p.getMontant())
+                .statut(p.getStatut())
+                .modePaiement(p.getModePaiement())
+                .datePaiement(
+                        p.getDatePaiement() != null
+                                ? p.getDatePaiement().toString()
+                                : null
+                )
+                .hasJustificatif(p.getJustificatifVirement() != null)
+                .build()
+        ).toList()
+                : List.of();
 
         return InscriptionFullDTO.builder()
 
@@ -406,22 +462,21 @@ public class InscriptionServiceImpl implements InscriptionService {
                         ? e.getTypeEvenement().getNom()
                         : null)
 
-                // 🔹 PAIEMENT (✅ STRING → PAS .name())
-                .modePaiement(i.getModePaiement())
-                .statutPaiement(i.getStatutPaiement())
-
-                // 🔹 STATUT (STRING aussi)
+                // 🔹 STATUT
                 .statut(i.getStatut())
 
                 // 🔹 FAMILLE
                 .conjoint(mapConjoint(i.getConjoint()))
                 .enfants(mapEnfants(i.getEnfants()))
 
-                // 🔹 PASSEPORT ADHERENT (✅ BON NOM : passport)
+                // 🔹 PASSEPORT
                 .passeport(toBase64(i.getPassport()))
 
                 // 🔹 PRIX TOTAL
                 .prixTotal(prixTotal)
+
+                // 🔥 NOUVEAU (IMPORTANT)
+                .paiements(paiements)
 
                 .build();
     }
@@ -472,22 +527,29 @@ public class InscriptionServiceImpl implements InscriptionService {
 
     }
     @Override
-    public void uploadJustificatif(Long id, MultipartFile file) {
+    public void uploadJustificatif(Long paiementId, MultipartFile file) {
 
         try {
-            Inscription inscription = inscriptionRepository.findById(id)
-                    .orElseThrow(() -> new RuntimeException("Inscription introuvable"));
+            Paiement paiement = paiementRepository.findById(paiementId)
+                    .orElseThrow(() -> new RuntimeException("Paiement introuvable"));
 
-            // 🔒 Vérifier mode paiement
-            if (inscription.getModePaiement() == null ||
-                    !inscription.getModePaiement().equalsIgnoreCase("VIREMENT")) {
-                throw new RuntimeException("Upload autorisé uniquement pour paiement par virement");
-            }
+            Inscription inscription = paiement.getInscription();
 
-            // 🔒 Vérifier statut accepté
+            // 🔒 Vérifier statut inscription
             if (inscription.getStatut() == null ||
                     !inscription.getStatut().equalsIgnoreCase("ACCEPTEE")) {
                 throw new RuntimeException("L'inscription doit être acceptée avant upload");
+            }
+
+            // 🔒 Vérifier mode paiement (niveau Paiement maintenant)
+            if (paiement.getModePaiement() == null ||
+                    !paiement.getModePaiement().equalsIgnoreCase("VIREMENT")) {
+                throw new RuntimeException("Upload autorisé uniquement pour paiement par virement");
+            }
+
+            // 🔒 Vérifier statut paiement
+            if (!"EN_ATTENTE".equalsIgnoreCase(paiement.getStatut())) {
+                throw new RuntimeException("Paiement déjà traité");
             }
 
             // 🔒 Vérifier fichier
@@ -495,16 +557,17 @@ public class InscriptionServiceImpl implements InscriptionService {
                 throw new RuntimeException("Fichier vide");
             }
 
-            // 🔒 Vérifier type PDF
+            // 🔒 Vérifier PDF
             if (!"application/pdf".equalsIgnoreCase(file.getContentType())) {
                 throw new RuntimeException("Seuls les fichiers PDF sont autorisés");
             }
 
-            // 🔥 Enregistrer fichier
-            inscription.setJustificatifVirement(file.getBytes());
-            inscription.setJustificatifType(file.getContentType());
+            // 🔥 SAUVEGARDE DANS PAIEMENT (IMPORTANT)
+            paiement.setJustificatifVirement(file.getBytes());
+            paiement.setJustificatifValide(false); // en attente validation admin
+            paiement.setStatut("EN_VERIFICATION");
 
-            inscriptionRepository.save(inscription);
+            paiementRepository.save(paiement);
 
         } catch (Exception e) {
             throw new RuntimeException("Erreur upload justificatif : " + e.getMessage());

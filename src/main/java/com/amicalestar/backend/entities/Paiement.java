@@ -31,6 +31,8 @@ public class Paiement {
     @JoinColumn(name = "inscription_id")
     @JsonIgnore
     private Inscription inscription;
-    private String justificatifVirement; // base64 ou path
+    @Lob
+    private byte[] justificatifVirement; // base64 ou path
     private Boolean justificatifValide = false;
+
 }

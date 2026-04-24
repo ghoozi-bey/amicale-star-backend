@@ -124,16 +124,5 @@ public class InscriptionController {
             return ResponseEntity.badRequest().body(e.getMessage());
         }
     }
-    @PostMapping("/{id}/upload-justificatif")
-    public ResponseEntity<?> uploadJustificatif(
-            @PathVariable Long id,
-            @RequestParam("file") MultipartFile file
-    ) {
-        try {
-            inscriptionService.uploadJustificatif(id, file);
-            return ResponseEntity.ok("Justificatif uploadé avec succès");
-        } catch (Exception e) {
-            return ResponseEntity.badRequest().body(e.getMessage());
-        }
-    }
+
 }

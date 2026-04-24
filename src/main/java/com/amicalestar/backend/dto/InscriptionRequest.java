@@ -30,4 +30,5 @@ public class InscriptionRequest {
     private String modePaiementAvance;// cash / virement / carte
     private Integer nombreMois;
     private String dateDebutPaiement;
+    private String modePaiementEcheance;
 }

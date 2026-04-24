@@ -12,6 +12,9 @@ public class InscriptionListDTO {
     private Long id;
     private String nom;
     private String email;
-    private String modePaiement;
-    private String statut;
+
+    private String modePaiement;   // depuis paiement
+    private String statutPaiement; // depuis paiement
+
+    private String statut;         // inscription
 }

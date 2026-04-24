@@ -18,8 +18,6 @@ public interface InscriptionRepository extends JpaRepository<Inscription, Long> 
         SELECT new com.amicalestar.backend.dto.InscriptionDTO(
             i.id,
             i.statut,
-            i.modePaiement,
-            i.statutPaiement,
             e.id,
             e.titre
         )
@@ -47,13 +45,15 @@ SELECT new com.amicalestar.backend.dto.InscriptionListDTO(
     i.id,
     a.nom,
     a.email,
-    i.modePaiement,
+    p.modePaiement,
+    p.statut,
     i.statut
 )
 FROM Inscription i
 JOIN i.adherent a
+LEFT JOIN i.paiements p
 WHERE i.evenement.id = :eventId
+AND p.statut != 'PAYE'
 """)
     List<InscriptionListDTO> findDTOByEventId(@Param("eventId") Long eventId);
-
 }

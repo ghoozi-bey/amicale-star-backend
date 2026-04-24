@@ -23,6 +23,7 @@ public class Evenement {
     private Long id;
 
     private String titre;
+    @Column(columnDefinition = "TEXT")
     private String description;
     private String lieu;
 
