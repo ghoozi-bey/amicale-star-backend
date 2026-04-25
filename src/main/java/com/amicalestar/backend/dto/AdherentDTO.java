@@ -12,7 +12,9 @@ public class AdherentDTO {
     private String telephone;
     private String cin;
     private String typeAdherent;
+    private Long typeEvenementId;
     private String departement;
+    private Boolean actif;
 
     private String photoUrl;
     private boolean hasPhoto;

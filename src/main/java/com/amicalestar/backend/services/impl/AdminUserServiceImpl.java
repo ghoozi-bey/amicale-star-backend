@@ -68,7 +68,7 @@ public class AdminUserServiceImpl implements AdminUserService {
         }
 
         // ===== DUPLICATES =====
-        if (request.getMatricule() == null && adherentRepository.existsByMatricule(request.getMatricule())) {
+        if (request.getMatricule() != null && adherentRepository.existsByMatricule(request.getMatricule())) {
             errors.put("matricule", "Matricule déjà utilisée");
         }
         if (request.getEmail() != null && adherentRepository.existsByEmail(request.getEmail())) {
@@ -124,28 +124,62 @@ public class AdminUserServiceImpl implements AdminUserService {
     // ================= READ =================
     @Override
     public List<AdherentDTO> getAllUsers() {
-        return adherentRepository.findAll().stream().map(user ->
+        return adherentRepository.findAll().stream().map(user -> {
 
-                new AdherentDTO(
-                        user.getMatricule(),
-                        user.getNom(),
-                        user.getPrenom(),
-                        user.getEmail(),
-                        user.getTelephone(),
-                        user.getCin(),
-                        user.getTypeAdherent().name(),
-                        user.getDepartement().name(),
-                        "http://localhost:8080/api/user/photo/" + user.getMatricule(),
-                        user.getPhotoProfil() != null && user.getPhotoProfil().length > 0
-                )
+            Long typeEvenementId = user.getTypeEvenement() != null
+                    ? user.getTypeEvenement().getId()
+                    : null;
 
-        ).toList();
+            AdherentDTO dto = new AdherentDTO(
+                    user.getMatricule(),
+                    user.getNom(),
+                    user.getPrenom(),
+                    user.getEmail(),
+                    user.getTelephone(),
+                    user.getCin(),
+                    user.getTypeAdherent().name(),
+                    user.getDepartement().name(),
+                    "http://localhost:8080/api/user/photo/" + user.getMatricule(),
+                    user.getPhotoProfil() != null && user.getPhotoProfil().length > 0
+            );
+
+            dto.setTypeEvenementId(typeEvenementId);
+            dto.setActif(user.getActif());
+
+            return dto;
+
+        }).toList();
     }
 
     @Override
-    public Adherent getUserByMatricule(String matricule) {
-        return adherentRepository.findByMatricule(matricule)
+    public AdherentDTO getUserByMatricule(String matricule) {
+
+        Adherent adherent = adherentRepository.findByMatricule(matricule)
                 .orElseThrow(() -> new RuntimeException("Utilisateur non trouvé"));
+
+        Long typeEvenementId = null;
+
+        if (adherent.getTypeEvenement() != null) {
+            typeEvenementId = adherent.getTypeEvenement().getId();
+        }
+
+        AdherentDTO dto = new AdherentDTO(
+                adherent.getMatricule(),
+                adherent.getNom(),
+                adherent.getPrenom(),
+                adherent.getEmail(),
+                adherent.getTelephone(),
+                adherent.getCin(),
+                adherent.getTypeAdherent().name(),
+                adherent.getDepartement().name(),
+                "http://localhost:8080/api/user/photo/" + adherent.getMatricule(),
+                adherent.getPhotoProfil() != null && adherent.getPhotoProfil().length > 0
+        );
+
+        dto.setTypeEvenementId(typeEvenementId);
+        dto.setActif(adherent.getActif());
+
+        return dto;
     }
 
     // ================= DELETE =================
@@ -199,6 +233,17 @@ public class AdminUserServiceImpl implements AdminUserService {
             user.setPassword(passwordEncoder.encode(request.getPassword()));
         }
 
+        if (request.getTypeEvenementId() != null) {
+            TypeEvenement typeEvenement = typeEvenementRepository
+                    .findById(request.getTypeEvenementId())
+                    .orElse(null);
+
+            user.setTypeEvenement(typeEvenement);
+        } else {
+            user.setTypeEvenement(null);
+        }
+
         return adherentRepository.save(user);
     }
+
 }

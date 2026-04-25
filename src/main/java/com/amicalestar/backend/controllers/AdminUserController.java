@@ -40,7 +40,7 @@ public class AdminUserController {
     }
 
     @GetMapping("/users/{matricule}")
-    public Adherent getUser(@PathVariable String matricule) {
+    public AdherentDTO getUser(@PathVariable String matricule) {
         return adminUserService.getUserByMatricule(matricule);
     }
 

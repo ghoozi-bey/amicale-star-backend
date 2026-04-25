@@ -13,7 +13,7 @@ public interface AdminUserService {
 
     List<AdherentDTO> getAllUsers();
 
-    Adherent getUserByMatricule(String matricule);
+    AdherentDTO getUserByMatricule(String matricule);
 
     void deleteUser(String matricule);
 
