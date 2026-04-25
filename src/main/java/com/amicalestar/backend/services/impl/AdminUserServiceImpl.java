@@ -6,6 +6,7 @@ import com.amicalestar.backend.dto.UpdateUserRequest;
 import com.amicalestar.backend.entities.Adherent;
 import com.amicalestar.backend.entities.TypeEvenement;
 import com.amicalestar.backend.enums.TypeAdherent;
+import com.amicalestar.backend.exceptions.ValidationException;
 import com.amicalestar.backend.repositories.AdherentRepository;
 import com.amicalestar.backend.repositories.TypeEvenementRepository;
 import com.amicalestar.backend.services.AdminUserService;
@@ -54,6 +55,10 @@ public class AdminUserServiceImpl implements AdminUserService {
             errors.put("password", "Mot de passe minimum 6 caractères");
         }
 
+        if (request.getDateNaissance() == null) {
+            errors.put("dateNaissance", "Dta de naissance obligatoire");
+        }
+
         if (request.getCin() == null || !request.getCin().matches("\\d{8}")) {
             errors.put("cin", "CIN doit contenir 8 chiffres");
         }
@@ -63,6 +68,9 @@ public class AdminUserServiceImpl implements AdminUserService {
         }
 
         // ===== DUPLICATES =====
+        if (request.getMatricule() == null && adherentRepository.existsByMatricule(request.getMatricule())) {
+            errors.put("matricule", "Matricule déjà utilisée");
+        }
         if (request.getEmail() != null && adherentRepository.existsByEmail(request.getEmail())) {
             errors.put("email", "Email déjà utilisé");
         }
@@ -76,7 +84,7 @@ public class AdminUserServiceImpl implements AdminUserService {
         }
 
         if (!errors.isEmpty()) {
-            throw new RuntimeException(errors.toString());
+            throw new ValidationException(errors);
         }
 
         // ===== TYPE EVENEMENT =====
@@ -106,8 +114,8 @@ public class AdminUserServiceImpl implements AdminUserService {
                 )
                 .actif(true)
                 .typeEvenement(typeEvenement)
-                .photoProfil(null) // ✅ IMPORTANT
-                .photoType(null)   // ✅ IMPORTANT
+                .photoProfil(null)
+                .photoType(null)
                 .build();
 
         return adherentRepository.save(adherent);
