@@ -21,4 +21,5 @@ public interface SondageRepository extends JpaRepository<Sondage, Long> {
 
     @EntityGraph(attributePaths = {"questions", "createdBy"})
     Optional<Sondage> findDetailedById(Long id);
+
 }

@@ -18,4 +18,6 @@ public interface SondageService {
     public void rejeterSondage(Long id);
     Sondage updateSondage(Long id, CreateSondageRequest request);
     public void supprimerSondage(Long id);
+    public List<SondageResponse> getActiveSondages();
+    public SondageResponse getActiveSondageById(Long id);
 }

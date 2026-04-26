@@ -55,7 +55,7 @@ public class SecurityConfig {
                         .requestMatchers("/api/evenements/photo/**").permitAll()
 
                         // SONDAGES
-                        .requestMatchers("/api/sondages/public/**").authenticated()
+                        .requestMatchers("/api/sondages/actifs/**").authenticated()
                         .requestMatchers("/api/sondages/**").hasRole("MEMBRE_AMICALE")
 
                         // ELECTIONS

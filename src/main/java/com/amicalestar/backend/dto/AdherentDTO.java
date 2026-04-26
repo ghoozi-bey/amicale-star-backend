@@ -1,6 +1,9 @@
 package com.amicalestar.backend.dto;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.Data;
+
+import java.time.LocalDate;
 
 @Data
 public class AdherentDTO {
@@ -12,6 +15,7 @@ public class AdherentDTO {
     private String telephone;
     private String cin;
     private String typeAdherent;
+    private String dateNaissance;
     private Long typeEvenementId;
     private String departement;
     private Boolean actif;

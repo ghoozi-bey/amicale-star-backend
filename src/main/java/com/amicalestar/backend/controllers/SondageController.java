@@ -19,14 +19,14 @@ public class SondageController {
     private final SondageService sondageService;
 
     // Endpoints for all users
-    @GetMapping("/public")
+    @GetMapping("/actifs")
     public ResponseEntity<List<SondageResponse>> getAllPublic() {
-        return ResponseEntity.ok(sondageService.getAllSondages());
+        return ResponseEntity.ok(sondageService.getActiveSondages());
     }
 
-    @GetMapping("/public/{id}")
+    @GetMapping("/actifs/{id}")
     public ResponseEntity<SondageResponse> getPublicById(@PathVariable Long id) {
-        return ResponseEntity.ok(sondageService.getSondageById(id));
+        return ResponseEntity.ok(sondageService.getActiveSondageById(id));
     }
 
     // Endpoints for membres amicale

@@ -2,6 +2,7 @@ package com.amicalestar.backend.dto;
 
 import com.amicalestar.backend.enums.TypeAdherent;
 import com.amicalestar.backend.enums.Departement;
+import com.fasterxml.jackson.annotation.JsonFormat;
 import jakarta.validation.constraints.*;
 import lombok.Data;
 import org.springframework.web.multipart.MultipartFile;
@@ -24,6 +25,7 @@ public class UpdateUserRequest {
     private String cin;
 
     private TypeAdherent typeAdherent;
+
     private Date dateNaissance;
 
     @Pattern(regexp = "\\d{8}", message = "Le téléphone doit contenir exactement 8 chiffres")
@@ -34,6 +36,5 @@ public class UpdateUserRequest {
 
     private Long typeEvenementId;
 
-    // 🔥 VERSION CORRECTE
     private MultipartFile photoProfil;
 }

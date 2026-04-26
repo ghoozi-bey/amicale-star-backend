@@ -18,6 +18,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import org.springframework.web.server.ResponseStatusException;
+import org.springframework.http.HttpStatus;
+
 @Service
 @RequiredArgsConstructor
 public class SondageServiceImpl implements SondageService {
@@ -99,6 +102,22 @@ public class SondageServiceImpl implements SondageService {
     }
 
     @Override
+    public List<SondageResponse> getActiveSondages() {
+
+        List<Sondage> sondages = sondageRepository.findAll();
+
+        // update status first
+        sondages.forEach(this::updateStatut);
+        sondageRepository.saveAll(sondages);
+
+        // filter actif
+        return sondages.stream()
+                .filter(s -> s.getStatut() == StatutSondage.ACTIF)
+                .map(this::toResponse)
+                .toList();
+    }
+
+    @Override
     public List<SondageResponse> getSondagesByCreatorEmail(String email) {
 
         List<Sondage> sondages = sondageRepository.findByCreatedBy_Email(email);
@@ -117,6 +136,29 @@ public class SondageServiceImpl implements SondageService {
 
         updateStatut(sondage);
         sondageRepository.save(sondage);
+
+        return toResponse(sondage);
+    }
+
+    @Override
+    public SondageResponse getActiveSondageById(Long id) {
+
+        Sondage sondage = sondageRepository.findDetailedById(id)
+                .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.NOT_FOUND,
+                        "Sondage not found"
+                ));
+
+        updateStatut(sondage);
+
+        // optional optimization
+        if (sondage.getStatut() != StatutSondage.ACTIF) {
+            sondageRepository.save(sondage); // only save if needed
+            throw new ResponseStatusException(
+                    HttpStatus.FORBIDDEN,
+                    "Sondage is not active"
+            );
+        }
 
         return toResponse(sondage);
     }

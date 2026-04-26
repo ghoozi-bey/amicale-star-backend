@@ -145,6 +145,12 @@ public class AdminUserServiceImpl implements AdminUserService {
 
             dto.setTypeEvenementId(typeEvenementId);
             dto.setActif(user.getActif());
+            dto.setDateNaissance(
+                    user.getDateNaissance() != null
+                            ? new java.text.SimpleDateFormat("yyyy-MM-dd")
+                            .format(user.getDateNaissance())
+                            : null
+            );
 
             return dto;
 
@@ -178,6 +184,12 @@ public class AdminUserServiceImpl implements AdminUserService {
 
         dto.setTypeEvenementId(typeEvenementId);
         dto.setActif(adherent.getActif());
+        dto.setDateNaissance(
+                adherent.getDateNaissance() != null
+                        ? new java.text.SimpleDateFormat("yyyy-MM-dd")
+                        .format(adherent.getDateNaissance())
+                        : null
+        );
 
         return dto;
     }
@@ -216,7 +228,7 @@ public class AdminUserServiceImpl implements AdminUserService {
         }
 
         if (!errors.isEmpty()) {
-            throw new RuntimeException(errors.toString());
+            throw new ValidationException(errors);
         }
 
         if (request.getNom() != null) user.setNom(request.getNom());
