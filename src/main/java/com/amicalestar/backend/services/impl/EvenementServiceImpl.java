@@ -27,7 +27,7 @@ public class EvenementServiceImpl implements EvenementService {
         System.out.println("REM12 ACTIVE = " + evenement.getRemiseEnfant12Active());
         System.out.println("REM12 % = " + evenement.getRemiseEnfant12Pourcentage());
 
-        evenement.setStatut(StatutEvenement.BROUILLON);
+        evenement.setStatut(StatutEvenement.ACTIF);
         System.out.println("🔥 CREATE EVENEMENT EXECUTE 🔥");
 
         // =========================

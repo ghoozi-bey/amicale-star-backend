@@ -40,6 +40,7 @@ public class Evenement {
     @Column(name = "photo_type")
     private String photoType;
 
+
     @Enumerated(EnumType.STRING)
     private StatutEvenement statut;
 

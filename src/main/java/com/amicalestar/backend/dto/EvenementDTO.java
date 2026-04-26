@@ -9,8 +9,10 @@ public class EvenementDTO {
     public String description;
     public String lieu;
 
+
     public LocalDate dateDebut;
     public LocalDate dateFin;
+    public String statut;
 
     public Double prix;
     public Integer nbPlaces;

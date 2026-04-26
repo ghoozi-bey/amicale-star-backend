@@ -3,11 +3,13 @@ package com.amicalestar.backend.controllers;
 import com.amicalestar.backend.entities.Adherent;
 import com.amicalestar.backend.entities.Evenement;
 import com.amicalestar.backend.entities.TypeEvenement;
+import com.amicalestar.backend.enums.StatutEvenement;
 import com.amicalestar.backend.repositories.AdherentRepository;
 import com.amicalestar.backend.repositories.EvenementRepository;
 import com.amicalestar.backend.repositories.TypeEvenementRepository;
 import com.amicalestar.backend.services.EvenementService;
 import com.amicalestar.backend.dto.EvenementDTO;
+import com.amicalestar.backend.enums.StatutEvenement;
 
 import lombok.RequiredArgsConstructor;
 
@@ -40,6 +42,7 @@ public class EvenementController {
         dto.titre = e.getTitre();
         dto.description = e.getDescription();
         dto.lieu = e.getLieu();
+        dto.statut = e.getStatut().name();
 
         dto.dateDebut = e.getDateDebut();
         dto.dateFin = e.getDateFin();
@@ -78,6 +81,9 @@ public class EvenementController {
             dto.description = (String) obj[2];
             dto.lieu = (String) obj[3];
             dto.dateDebut = (LocalDate) obj[4];
+
+            // 🔥 AJOUT IMPORTANT
+            dto.statut = obj[5] != null ? obj[5].toString() : "ACTIF";
 
             dto.photoUrl = "http://localhost:8080/api/evenements/photo/" + dto.id;
 
@@ -122,7 +128,22 @@ public class EvenementController {
         List<EvenementDTO> dtos = evenementRepository
                 .findByAdherent_Matricule(adherent.getMatricule())
                 .stream()
-                .map(this::toDTO)
+                .map(e -> {
+
+                    // 🔥 PRIORITÉ : si ARCHIVE → ne rien toucher
+                    if (e.getStatut() == StatutEvenement.ARCHIVE) {
+                        return toDTO(e);
+                    }
+
+                    // 🔥 logique automatique
+                    if (e.getDateFin() != null && e.getDateFin().isBefore(LocalDate.now())) {
+                        e.setStatut(StatutEvenement.TERMINE);
+                    } else {
+                        e.setStatut(StatutEvenement.ACTIF);
+                    }
+
+                    return toDTO(e);
+                })
                 .toList();
 
         return ResponseEntity.ok(dtos);
@@ -238,6 +259,7 @@ public class EvenementController {
                 .orElseThrow(() -> new RuntimeException("Adhérent non trouvé"));
 
         e.setAdherent(adherent);
+        e.setStatut(StatutEvenement.valueOf("ACTIF"));
 
         return ResponseEntity.ok(evenementService.createEvenement(e));
     }
@@ -245,5 +267,40 @@ public class EvenementController {
     public ResponseEntity<?> deleteEvenement(@PathVariable Long id) {
         evenementService.deleteEvenement(id);
         return ResponseEntity.ok("Evenement supprimé");
+    }
+    @PutMapping("/{id}")
+    public ResponseEntity<?> updateEvenement(
+            @PathVariable Long id,
+            @RequestBody Evenement updatedEvent
+    ) {
+
+        Evenement e = evenementRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Evenement introuvable"));
+
+        // 🔥 update champs
+        e.setTitre(updatedEvent.getTitre());
+        e.setDescription(updatedEvent.getDescription());
+        e.setLieu(updatedEvent.getLieu());
+        e.setDateDebut(updatedEvent.getDateDebut());
+        e.setDateFin(updatedEvent.getDateFin());
+        e.setPrix(updatedEvent.getPrix());
+        e.setNbPlaces(updatedEvent.getNbPlaces());
+
+        e.setSociete(updatedEvent.getSociete());
+        e.setAgence(updatedEvent.getAgence());
+        e.setDestination(updatedEvent.getDestination());
+        e.setIsInternational(updatedEvent.getIsInternational());
+
+        return ResponseEntity.ok(evenementRepository.save(e));
+    }
+    @PutMapping("/{id}/archive")
+    public ResponseEntity<?> archiver(@PathVariable Long id) {
+
+        Evenement e = evenementRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Evenement introuvable"));
+
+        e.setStatut(StatutEvenement.ARCHIVE);
+
+        return ResponseEntity.ok(evenementRepository.save(e));
     }
 }
