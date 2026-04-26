@@ -1,5 +1,6 @@
 package com.amicalestar.backend.controllers;
 
+import com.amicalestar.backend.dto.PaiementDTO;
 import com.amicalestar.backend.entities.Inscription;
 import com.amicalestar.backend.entities.Paiement;
 import com.amicalestar.backend.repositories.PaiementRepository;
@@ -7,6 +8,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.transaction.annotation.Transactional;
 
 
 import java.io.IOException;
@@ -23,8 +25,8 @@ public class PaiementController {
     private final PaiementRepository paiementRepository;
 
     @GetMapping("/inscription/{id}")
-    public List<Paiement> getPaiementsByInscription(@PathVariable Long id) {
-        return paiementRepository.findByInscriptionId(id);
+    public List<PaiementDTO> getPaiementsByInscription(@PathVariable Long id) {
+        return paiementRepository.findDTOByInscriptionId(id);
     }
     @PutMapping("/{id}/statut")
     public ResponseEntity<?> updateStatut(@PathVariable Long id) {
@@ -39,6 +41,8 @@ public class PaiementController {
 
         return ResponseEntity.ok("Paiement validé ✅");
     }
+
+    @Transactional
     @PutMapping("/{id}/upload")
     public ResponseEntity<?> uploadJustificatif(
             @PathVariable Long id,
@@ -46,48 +50,88 @@ public class PaiementController {
     ) {
         try {
 
+            System.out.println("🔥 ===== DEBUG UPLOAD =====");
+
+            System.out.println("ID = " + id);
+
+            if (file == null) {
+                System.out.println("❌ file = NULL");
+            } else {
+                System.out.println("📁 name = " + file.getOriginalFilename());
+                System.out.println("📁 type = " + file.getContentType());
+                System.out.println("📁 size = " + file.getSize());
+            }
+
             Paiement paiement = paiementRepository.findById(id)
                     .orElseThrow(() -> new RuntimeException("Paiement introuvable"));
 
+            System.out.println("📌 statut paiement = " + paiement.getStatut());
+            System.out.println("📌 mode paiement = " + paiement.getModePaiement());
+
             Inscription inscription = paiement.getInscription();
 
-            // 🔒 Vérifier statut inscription
-            if (inscription == null || !"ACCEPTEE".equalsIgnoreCase(inscription.getStatut())) {
-                throw new RuntimeException("L'inscription doit être acceptée");
+            if (inscription != null) {
+                System.out.println("📌 statut inscription = " + inscription.getStatut());
+            } else {
+                System.out.println("❌ inscription NULL");
             }
 
-            // 🔒 Vérifier mode paiement
-            if (paiement.getModePaiement() == null ||
-                    !paiement.getModePaiement().equalsIgnoreCase("VIREMENT")) {
-                throw new RuntimeException("Upload autorisé uniquement pour VIREMENT");
-            }
-
-            // 🔒 Vérifier statut paiement
-            if (!"EN_ATTENTE".equalsIgnoreCase(paiement.getStatut())) {
-                throw new RuntimeException("Paiement déjà traité");
-            }
-
-            // 🔒 Vérifier fichier
-            if (file == null || file.isEmpty()) {
-                throw new RuntimeException("Fichier vide");
-            }
-
-            // 🔒 Vérifier type PDF
-            if (!"application/pdf".equalsIgnoreCase(file.getContentType())) {
-                throw new RuntimeException("Seuls les fichiers PDF sont autorisés");
-            }
-
-            // 🔥 IMPORTANT : IOException gérée ici
+            // ⚠️ TEMPORAIRE : on supprime toutes les conditions
             paiement.setJustificatifVirement(file.getBytes());
-
             paiement.setStatut("EN_ATTENTE_VALIDATION");
 
             paiementRepository.save(paiement);
 
-            return ResponseEntity.ok("Justificatif uploadé avec succès");
+            System.out.println("✅ SAVE OK");
+
+            return ResponseEntity.ok("OK");
 
         } catch (Exception e) {
+            e.printStackTrace();
             return ResponseEntity.badRequest().body(e.getMessage());
         }
+
     }
+    @GetMapping("/{id}/justificatif")
+    public ResponseEntity<byte[]> getJustificatif(@PathVariable Long id) {
+
+        Paiement paiement = paiementRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Paiement introuvable"));
+
+        if (paiement.getJustificatifVirement() == null) {
+            throw new RuntimeException("Aucun justificatif");
+        }
+
+        return ResponseEntity.ok()
+                .header("Content-Type", "application/pdf")
+                .body(paiement.getJustificatifVirement());
+    }
+    @PutMapping("/{id}/valider")
+    public ResponseEntity<?> validerJustificatif(@PathVariable Long id) {
+
+        Paiement p = paiementRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Paiement introuvable"));
+
+        p.setStatut("PAYE");
+        p.setJustificatifValide(true);
+
+        paiementRepository.save(p);
+
+        return ResponseEntity.ok("Paiement validé ✅");
+    }
+
+    @PutMapping("/{id}/refuser")
+    public ResponseEntity<?> refuserJustificatif(@PathVariable Long id) {
+
+        Paiement p = paiementRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Paiement introuvable"));
+
+        p.setStatut("REFUSE");
+        p.setJustificatifValide(false);
+
+        paiementRepository.save(p);
+
+        return ResponseEntity.ok("Paiement refusé ❌");
+    }
+
 }

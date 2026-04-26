@@ -2,9 +2,11 @@ package com.amicalestar.backend.dto;
 
 import lombok.*;
 
+import java.time.LocalDate;
+
 @Getter
 @Setter
-@AllArgsConstructor
+
 @NoArgsConstructor
 @Builder
 public class PaiementDTO {
@@ -13,6 +15,14 @@ public class PaiementDTO {
     private Double montant;
     private String modePaiement;
     private String statut;
-    private String datePaiement;
+    private LocalDate datePaiement;
     private boolean hasJustificatif;
+    public PaiementDTO(Long id, Double montant, String modePaiement, String statut, LocalDate datePaiement, boolean hasJustificatif) {
+        this.id = id;
+        this.montant = montant;
+        this.modePaiement = modePaiement;
+        this.statut = statut;
+        this.datePaiement = datePaiement;
+        this.hasJustificatif = hasJustificatif;
+    }
 }

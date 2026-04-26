@@ -45,15 +45,23 @@ SELECT new com.amicalestar.backend.dto.InscriptionListDTO(
     i.id,
     a.nom,
     a.email,
-    p.modePaiement,
-    p.statut,
+    (
+        SELECT p.modePaiement FROM Paiement p
+        WHERE p.inscription.id = i.id
+        ORDER BY p.id ASC LIMIT 1
+    ),
+    (
+        SELECT p.statut FROM Paiement p
+        WHERE p.inscription.id = i.id
+        ORDER BY p.id ASC LIMIT 1
+    ),
     i.statut
 )
 FROM Inscription i
 JOIN i.adherent a
-LEFT JOIN i.paiements p
 WHERE i.evenement.id = :eventId
-AND p.statut != 'PAYE'
 """)
     List<InscriptionListDTO> findDTOByEventId(@Param("eventId") Long eventId);
+
+
 }

@@ -354,7 +354,7 @@ public class InscriptionServiceImpl implements InscriptionService {
                 .modePaiement(p.getModePaiement())
                 .datePaiement(
                         p.getDatePaiement() != null
-                                ? p.getDatePaiement().toString()
+                                ? LocalDate.parse(p.getDatePaiement().toString())
                                 : null
                 )
                 .hasJustificatif(p.getJustificatifVirement() != null)
@@ -435,7 +435,7 @@ public class InscriptionServiceImpl implements InscriptionService {
                 .modePaiement(p.getModePaiement())
                 .datePaiement(
                         p.getDatePaiement() != null
-                                ? p.getDatePaiement().toString()
+                                ? LocalDate.parse(p.getDatePaiement().toString())
                                 : null
                 )
                 .hasJustificatif(p.getJustificatifVirement() != null)

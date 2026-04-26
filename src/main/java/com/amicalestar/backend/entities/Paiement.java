@@ -32,6 +32,10 @@ public class Paiement {
     @JsonIgnore
     private Inscription inscription;
     @Lob
+    @Basic(fetch = FetchType.LAZY)
+    @JsonIgnore
+    @ToString.Exclude
+    @EqualsAndHashCode.Exclude
     private byte[] justificatifVirement; // base64 ou path
     private Boolean justificatifValide = false;
 
