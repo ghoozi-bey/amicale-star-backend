@@ -5,11 +5,16 @@ import com.amicalestar.backend.entities.*;
 import com.amicalestar.backend.repositories.*;
 import com.amicalestar.backend.services.InscriptionService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
+import java.time.Period;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Base64;
 
@@ -88,31 +93,7 @@ public class InscriptionServiceImpl implements InscriptionService {
         }
 
         // =========================
-        // 4. NOMBRE PERSONNES
-        // =========================
-        int nbPersonnes = 1;
-        if (request.getConjoint() != null) nbPersonnes++;
-        if (request.getEnfants() != null) nbPersonnes += request.getEnfants().size();
-
-        // =========================
-        // 5. PLACES
-        // =========================
-        boolean isConvention = evenement.getTypeEvenement() != null
-                && evenement.getTypeEvenement().getId() == 3;
-
-        if (!isConvention) {
-            Integer nbPlaces = evenement.getNbPlaces();
-
-            if (nbPlaces == null || nbPlaces < nbPersonnes) {
-                throw new RuntimeException("Pas assez de places ❌");
-            }
-
-            evenement.setNbPlaces(nbPlaces - nbPersonnes);
-            evenementRepository.save(evenement);
-        }
-
-        // =========================
-        // 6. CREATE INSCRIPTION
+        // 4. CREATE INSCRIPTION
         // =========================
         Inscription inscription = Inscription.builder()
                 .adherent(adherent)
@@ -131,7 +112,7 @@ public class InscriptionServiceImpl implements InscriptionService {
         inscriptionRepository.save(inscription);
 
         // =========================
-        // 7. CONJOINT
+        // 5. CONJOINT
         // =========================
         if (request.getConjoint() != null) {
 
@@ -157,7 +138,7 @@ public class InscriptionServiceImpl implements InscriptionService {
         }
 
         // =========================
-        // 8. ENFANTS
+        // 6. ENFANTS
         // =========================
         if (request.getEnfants() != null && !request.getEnfants().isEmpty()) {
 
@@ -187,42 +168,69 @@ public class InscriptionServiceImpl implements InscriptionService {
         }
 
         // =========================
-        // 9. CALCUL PRIX
+        // 🔥 7. CALCUL PRIX CORRIGÉ
         // =========================
-        double prixBase = evenement.getPrix() != null ? evenement.getPrix() : 0;
 
-        int nbMoins12 = 0;
-        int nbMoins18 = 0;
+        double prix = evenement.getPrix() != null ? evenement.getPrix() : 0;
+
+        // 🔹 ADULTES
+        int nbAdultes = request.getConjoint() != null ? 2 : 1;
+        double totalAdultes = prix * nbAdultes;
+
+        // 🔹 ENFANTS
+        int nb12 = 0;
+        int nb18 = 0;
+        int nbPlus18 = 0;
 
         if (request.getEnfants() != null) {
             for (EnfantDTO enfant : request.getEnfants()) {
 
                 int age = calculAge(enfant.getDateNaissance());
 
-                if (age <= 12) nbMoins12++;
-                else if (age <= 18) nbMoins18++;
+                if (age < 12) nb12++;
+                else if (age < 18) nb18++;
+                else nbPlus18++; // ✅ CORRECTION
             }
         }
 
-        double total = prixBase * nbPersonnes;
-        double remise = 0;
+        double totalEnfants = 0;
+        double remiseEnfants = 0;
 
-        if (Boolean.TRUE.equals(evenement.getRemiseEnfant12Active())) {
-            remise += nbMoins12 * (prixBase * (evenement.getRemiseEnfant12Pourcentage() != null ? evenement.getRemiseEnfant12Pourcentage() : 0) / 100);
+        // -12
+        if (nb12 > 0) {
+            double remise = prix * evenement.getRemiseEnfant12Pourcentage() / 100;
+            totalEnfants += nb12 * (prix - remise);
+            remiseEnfants += nb12 * remise;
         }
 
-        if (Boolean.TRUE.equals(evenement.getRemiseEnfant18Active())) {
-            remise += nbMoins18 * (prixBase * (evenement.getRemiseEnfant18Pourcentage() != null ? evenement.getRemiseEnfant18Pourcentage() : 0) / 100);
+        // -18
+        if (nb18 > 0) {
+            double remise = prix * evenement.getRemiseEnfant18Pourcentage() / 100;
+            totalEnfants += nb18 * (prix - remise);
+            remiseEnfants += nb18 * remise;
         }
 
-        if (Boolean.TRUE.equals(evenement.getRemiseCoupleActive()) && request.getConjoint() != null) {
-            remise += prixBase * (evenement.getRemiseCouplePourcentage() != null ? evenement.getRemiseCouplePourcentage() : 0) / 100;
+        // +18 (AUCUNE REMISE)
+        if (nbPlus18 > 0) {
+            totalEnfants += nbPlus18 * prix;
         }
 
-        double prixFinal = total - remise;
+        // 🔹 REMISE COUPLE
+        double remiseCouple = 0;
+
+        if (Boolean.TRUE.equals(evenement.getRemiseCoupleActive())
+                && request.getConjoint() != null) {
+
+            remiseCouple = totalAdultes * evenement.getRemiseCouplePourcentage() / 100;
+            totalAdultes -= remiseCouple;
+        }
+
+        // 🔹 TOTAL FINAL
+        double prixFinal = totalAdultes + totalEnfants;
+        double remiseTotale = remiseCouple + remiseEnfants;
 
         // =========================
-        // 10. AVANCE + ECHEANCIER
+        // 8. AVANCE
         // =========================
         double avance = request.getAvance() != null ? request.getAvance() : 0;
         int nombreMois = request.getNombreMois() != null ? request.getNombreMois() : 1;
@@ -232,39 +240,35 @@ public class InscriptionServiceImpl implements InscriptionService {
         double reste = prixFinal - avance;
         double mensualite = reste / nombreMois;
 
-        // 🔥 AVANCE
         if (avance > 0) {
             Paiement p = new Paiement();
             p.setMontant(avance);
             p.setStatut("EN_ATTENTE");
-            p.setDatePaiement(null);
             p.setModePaiement(request.getModePaiementAvance());
             p.setInscription(inscription);
             paiementRepository.save(p);
         }
 
-        // 🔥 ECHEANCIER (AVEC MODE PAIEMENT)
         LocalDate dateDebut = LocalDate.parse(request.getDateDebutPaiement());
 
         for (int i = 1; i <= nombreMois; i++) {
-
             Paiement p = new Paiement();
             p.setMontant(mensualite);
             p.setStatut("EN_ATTENTE");
             p.setDatePaiement(dateDebut.plusMonths(i));
-            p.setModePaiement(request.getModePaiementEcheance()); // 🔥 CORRECTION
+            p.setModePaiement(request.getModePaiementEcheance());
             p.setInscription(inscription);
 
             paiementRepository.save(p);
         }
 
         // =========================
-        // 11. FINAL UPDATE
+        // 9. SAVE FINAL
         // =========================
         inscription.setPrixTotal(prixFinal);
-        inscription.setRemiseAppliquee(remise);
-        inscription.setNbEnfantsMoins12(nbMoins12);
-        inscription.setNbEnfantsMoins18(nbMoins18);
+        inscription.setRemiseAppliquee(remiseTotale);
+        inscription.setNbEnfantsMoins12(nb12);
+        inscription.setNbEnfantsMoins18(nb18);
         inscription.setEstCouple(request.getConjoint() != null);
         inscription.setResteAPayer(reste);
 
@@ -577,38 +581,65 @@ public class InscriptionServiceImpl implements InscriptionService {
     private double calculerPrixFinal(Inscription inscription) {
 
         Evenement event = inscription.getEvenement();
+        double prix = event != null && event.getPrix() != null ? event.getPrix() : 0;
 
-        double prix = event.getPrix();
+        // 🔥 ADULTES
+        int nbAdultes = Boolean.TRUE.equals(inscription.getEstCouple()) ? 2 : 1;
+
+        // 🔥 ENFANTS
+        int nb12 = inscription.getNbEnfantsMoins12() != null ? inscription.getNbEnfantsMoins12() : 0;
+        int nb18 = inscription.getNbEnfantsMoins18() != null ? inscription.getNbEnfantsMoins18() : 0;
+
+        // 👉 si tu as une liste enfants → meilleur :
+        int nbTotalEnfants = nb12 + nb18;
+
+        // 🔥 BASE
+        double totalAdultes = prix * nbAdultes;
+        double totalEnfants = prix * nbTotalEnfants;
+
         double remiseTotale = 0;
 
-        // 🔥 ENFANT -12
-        if (Boolean.TRUE.equals(event.getRemiseEnfant12Active())
-                && inscription.getNbEnfantsMoins12() != null
-                && inscription.getNbEnfantsMoins12() > 0) {
-
-            remiseTotale += event.getRemiseEnfant12Pourcentage();
-        }
-
-        // 🔥 ENFANT -18
-        if (Boolean.TRUE.equals(event.getRemiseEnfant18Active())
-                && inscription.getNbEnfantsMoins18() != null
-                && inscription.getNbEnfantsMoins18() > 0) {
-
-            remiseTotale += event.getRemiseEnfant18Pourcentage();
-        }
-
-        // 🔥 COUPLE
+        // =========================
+        // 🔥 REMISE COUPLE
+        // =========================
         if (Boolean.TRUE.equals(event.getRemiseCoupleActive())
                 && Boolean.TRUE.equals(inscription.getEstCouple())) {
 
-            remiseTotale += event.getRemiseCouplePourcentage();
+            double remise = totalAdultes * event.getRemiseCouplePourcentage() / 100;
+            totalAdultes -= remise;
+
+            remiseTotale += remise; // ✅ montant réel
         }
 
-        // 🔥 CALCUL FINAL
-        double prixFinal = prix - (prix * remiseTotale / 100);
+        // =========================
+        // 🔥 REMISE ENFANTS -12
+        // =========================
+        if (Boolean.TRUE.equals(event.getRemiseEnfant12Active()) && nb12 > 0) {
+
+            double remise = (prix * event.getRemiseEnfant12Pourcentage() / 100) * nb12;
+            totalEnfants -= remise;
+
+            remiseTotale += remise;
+        }
+
+        // =========================
+        // 🔥 REMISE ENFANTS -18
+        // =========================
+        if (Boolean.TRUE.equals(event.getRemiseEnfant18Active()) && nb18 > 0) {
+
+            double remise = (prix * event.getRemiseEnfant18Pourcentage() / 100) * nb18;
+            totalEnfants -= remise;
+
+            remiseTotale += remise;
+        }
+
+        // =========================
+        // 🔥 TOTAL FINAL
+        // =========================
+        double prixFinal = totalAdultes + totalEnfants;
 
         // 🔥 STOCKAGE
-        inscription.setRemiseAppliquee(remiseTotale);
+        inscription.setRemiseAppliquee(remiseTotale); // ✅ montant correct
         inscription.setPrixTotal(prixFinal);
 
         return prixFinal;
@@ -627,6 +658,99 @@ public class InscriptionServiceImpl implements InscriptionService {
 
         return age;
     }
+    @Override
+    public FactureDTO calculerFactureDetaillee(Inscription inscription) {
+
+        Evenement event = inscription.getEvenement();
+        double prix = event.getPrix();
+
+        FactureDTO f = new FactureDTO();
+
+        f.prixUnitaire = prix;
+        f.remiseCouple = 0;
+        f.remiseEnfants = 0;
+
+        // =========================
+        // 🔥 ADULTES
+        // =========================
+        f.nbAdultes = Boolean.TRUE.equals(inscription.getEstCouple()) ? 2 : 1;
+        double totalAdultes = prix * f.nbAdultes;
+
+        // =========================
+        // 🔥 ENFANTS (DTO SAFE 🔥)
+        // =========================
+        List<EnfantDTO> enfantsDTO =
+                inscriptionRepository.findEnfantsDTOByInscriptionId(inscription.getId());
+
+        int nb12 = 0;
+        int nb18 = 0;
+
+        for (EnfantDTO e : enfantsDTO) {
+
+            if (e.getDateNaissance() == null) continue;
+
+            try {
+                LocalDate naissance = LocalDate.parse(e.getDateNaissance());
+                int age = Period.between(naissance, LocalDate.now()).getYears();
+
+                if (age < 12) nb12++;
+                else if (age < 18) nb18++;
+
+            } catch (Exception ex) {
+                continue;
+            }
+        }
+
+        int nbTotal = enfantsDTO.size();
+
+        f.nbEnfantsTotal = nbTotal;
+        f.nbEnfantsMoins12 = nb12;
+        f.nbEnfantsMoins18 = nb18;
+        f.enfants = enfantsDTO;
+
+        double totalEnfants = prix * nbTotal;
+
+        // =========================
+        // 🔥 REMISE COUPLE
+        // =========================
+        if (Boolean.TRUE.equals(event.getRemiseCoupleActive())
+                && Boolean.TRUE.equals(inscription.getEstCouple())) {
+
+            double remise = totalAdultes * event.getRemiseCouplePourcentage() / 100;
+            totalAdultes -= remise;
+            f.remiseCouple = remise;
+        }
+
+        // =========================
+        // 🔥 REMISE ENFANTS -12
+        // =========================
+        if (Boolean.TRUE.equals(event.getRemiseEnfant12Active()) && nb12 > 0) {
+
+            double remise = (prix * event.getRemiseEnfant12Pourcentage() / 100) * nb12;
+            totalEnfants -= remise;
+            f.remiseEnfants += remise;
+        }
+
+        // =========================
+        // 🔥 REMISE ENFANTS -18
+        // =========================
+        if (Boolean.TRUE.equals(event.getRemiseEnfant18Active()) && nb18 > 0) {
+
+            double remise = (prix * event.getRemiseEnfant18Pourcentage() / 100) * nb18;
+            totalEnfants -= remise;
+            f.remiseEnfants += remise;
+        }
+
+        // =========================
+        // 🔥 TOTAL FINAL
+        // =========================
+        f.totalAdultes = totalAdultes;
+        f.totalEnfants = totalEnfants;
+        f.totalFinal = totalAdultes + totalEnfants;
+
+        return f;
+    }
+
 
 
 }

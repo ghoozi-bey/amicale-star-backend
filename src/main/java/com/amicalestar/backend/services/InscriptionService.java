@@ -24,5 +24,6 @@ public interface InscriptionService {
     InscriptionFullDTO getFullDetails(Long id);
     void updateStatut(Long id, String statut);
     void uploadJustificatif(Long id, MultipartFile file);
+    FactureDTO calculerFactureDetaillee(Inscription inscription);
 
 }

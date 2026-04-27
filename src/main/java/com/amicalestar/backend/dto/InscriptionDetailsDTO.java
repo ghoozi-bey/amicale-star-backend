@@ -24,6 +24,7 @@ import java.util.List;
         // Event
         private String titre;
         private Double prix;
+        public double prixTotal;
         private String modePaiement;
         private String statutPaiement;
 

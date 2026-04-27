@@ -20,6 +20,7 @@ public class Enfant {
     private String dateNaissance;
 
     @Lob
+    @Basic(fetch = FetchType.LAZY)
     @Column(name = "passport")
     private byte[] passport;
 

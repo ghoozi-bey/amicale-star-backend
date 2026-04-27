@@ -93,6 +93,7 @@ public class EvenementController {
         return ResponseEntity.ok(dtos);
     }
 
+
     // 🔥 DETAILS
     @GetMapping("/{id}")
     public ResponseEntity<?> getEvenementById(@PathVariable Long id) {

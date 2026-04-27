@@ -1,5 +1,6 @@
 package com.amicalestar.backend.repositories;
 
+import com.amicalestar.backend.dto.EnfantDTO;
 import com.amicalestar.backend.dto.InscriptionDTO;
 import com.amicalestar.backend.dto.InscriptionListDTO;
 import com.amicalestar.backend.entities.Inscription;
@@ -63,5 +64,8 @@ WHERE i.evenement.id = :eventId
 """)
     List<InscriptionListDTO> findDTOByEventId(@Param("eventId") Long eventId);
 
+    @Query("SELECT new com.amicalestar.backend.dto.EnfantDTO(e.nom, e.prenom, e.dateNaissance) " +
+            "FROM Enfant e WHERE e.inscription.id = :id")
+    List<EnfantDTO> findEnfantsDTOByInscriptionId(@Param("id") Long id);
 
 }
