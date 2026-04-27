@@ -15,4 +15,5 @@ public class QuestionResponse {
     private String text;
     private TypeQuestion type;
     private List<ChoixResponse> choixList;
+    private Boolean required;
 }

@@ -74,8 +74,6 @@ public class AdherentController {
 
         } catch (RuntimeException e) {
 
-            System.err.println("Erreur update profile: " + e.getMessage());
-
             return ResponseEntity
                     .badRequest()
                     .body(e.getMessage());

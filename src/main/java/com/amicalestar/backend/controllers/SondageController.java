@@ -33,14 +33,17 @@ public class SondageController {
     @PostMapping
     public ResponseEntity<Sondage> createSondage( @RequestBody CreateSondageRequest request, Authentication authentication ) {
 
-        String email = authentication.getName(); // from JWT
+        String email = authentication.getName();
 
         Sondage sondage = sondageService.createSondage(request, email);
 
-        System.out.println("AUTH NAME = " + authentication.getName());
-
         return ResponseEntity.ok(sondage);
 
+    }
+
+    @GetMapping("/{id}")
+    public ResponseEntity<SondageResponse> getById(@PathVariable Long id) {
+        return ResponseEntity.ok(sondageService.getSondageById(id));
     }
 
     @GetMapping("/me")

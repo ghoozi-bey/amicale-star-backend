@@ -41,4 +41,7 @@ public class Sondage {
         this.dateCreation = LocalDateTime.now();
         this.statut = StatutSondage.BROUILLON;
     }
+
+    @OneToMany(mappedBy = "sondage")
+    private List<Participation> participations = new ArrayList<>();
 }

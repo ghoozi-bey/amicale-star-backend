@@ -25,5 +25,6 @@ public class CreateSondageRequest {
         @Enumerated(EnumType.STRING)
         private TypeQuestion type;
         private List<String> choix;
+        private Boolean required;
     }
 }

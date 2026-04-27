@@ -52,12 +52,17 @@ public class SondageServiceImpl implements SondageService {
 
             Question question = new Question();
             question.setText(qdto.getText());
-            question.setType(qdto.getType()); // ✅ NEW
+            question.setType(qdto.getType());
             question.setSondage(sondage);
+            if (qdto.getRequired() == null) {
+                question.setRequired(true);
+            } else {
+                question.setRequired(qdto.getRequired());
+            }
 
             List<Choix> choixList = new ArrayList<>();
 
-            // 🔥 Logic based on type
+            // Logic based on type
             if (qdto.getType() == TypeQuestion.TEXTE) {
 
                 // TEXT question should NOT have choices
@@ -182,7 +187,8 @@ public class SondageServiceImpl implements SondageService {
                 q.getId(),
                 q.getText(),
                 q.getType(),
-                q.getChoixList() == null ? List.of() : q.getChoixList().stream().map(this::toChoixResponse).toList()
+                q.getChoixList() == null ? List.of() : q.getChoixList().stream().map(this::toChoixResponse).toList(),
+                q.getRequired()
         );
     }
 
@@ -286,6 +292,11 @@ public class SondageServiceImpl implements SondageService {
             question.setText(q.getText());
             question.setType(q.getType());
             question.setSondage(sondage);
+            if (q.getRequired() == null) {
+                question.setRequired(true);
+            } else {
+                question.setRequired(q.getRequired());
+            }
 
             if (q.getType() != TypeQuestion.TEXTE) {
 
