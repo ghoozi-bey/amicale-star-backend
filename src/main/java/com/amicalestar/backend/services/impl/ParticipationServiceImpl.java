@@ -1,6 +1,7 @@
 package com.amicalestar.backend.services.impl;
 
 import com.amicalestar.backend.dto.ParticipationRequest;
+import com.amicalestar.backend.dto.ParticipationResponse;
 import com.amicalestar.backend.entities.*;
 import com.amicalestar.backend.enums.StatutSondage;
 import com.amicalestar.backend.enums.TypeQuestion;
@@ -10,10 +11,7 @@ import com.amicalestar.backend.services.SondageService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 @Service
 @RequiredArgsConstructor
@@ -31,21 +29,25 @@ public class ParticipationServiceImpl implements ParticipationService {
 
         // 1. Get user
         Adherent user = adherentRepository.findByEmail(email)
-                .orElseThrow(() -> new RuntimeException("User not found"));
+                .orElseThrow(() -> new RuntimeException("Utilisateur introuvable"));
 
         // 2. Get sondage
         Sondage sondage = sondageRepository.findById(request.getSondageId())
-                .orElseThrow(() -> new RuntimeException("Sondage not found"));
+                .orElseThrow(() -> new RuntimeException("Sondage introuvable"));
 
         // 3. Check status
         sondageService.updateStatut(sondage);
         if (sondage.getStatut() != StatutSondage.ACTIF) {
-            throw new RuntimeException("Sondage not active");
+            throw new RuntimeException("Ce sondage n'est pas actif");
         }
 
         // 4. Prevent duplicate participation
-        if (participationRepository.existsByAdherentAndSondage(user, sondage)) {
-            throw new RuntimeException("User already participated");
+        Participation existing = participationRepository
+                .findByAdherentAndSondage(user, sondage)
+                .orElse(null);
+
+        if (existing != null) {
+            participationRepository.delete(existing);
         }
 
         // 5. Create participation
@@ -57,13 +59,13 @@ public class ParticipationServiceImpl implements ParticipationService {
 
         // 6. Process answers
         if (request.getAnswers() == null || request.getAnswers().isEmpty()) {
-            throw new RuntimeException("No answers provided");
+            throw new RuntimeException("Aucune réponse fournie");
         }
 
         for (ParticipationRequest.QuestionAnswer qa : request.getAnswers()) {
 
             Question question = questionRepository.findById(qa.getQuestionId())
-                    .orElseThrow(() -> new RuntimeException("Question not found"));
+                    .orElseThrow(() -> new RuntimeException("Question introuvable"));
 
             if (question.getRequired()) {
 
@@ -72,13 +74,13 @@ public class ParticipationServiceImpl implements ParticipationService {
                                 (qa.getTexte() != null && !qa.getTexte().isBlank());
 
                 if (!answered) {
-                    throw new RuntimeException("Question '" + question.getText() + "' is required");
+                    throw new RuntimeException("La question \"" + question.getText() + "\" est obligatoire");
                 }
             }
 
             // Validate belongs to sondage
             if (!question.getSondage().getId().equals(sondage.getId())) {
-                throw new RuntimeException("Invalid question for this sondage");
+                throw new RuntimeException("Question invalide pour ce sondage");
             }
 
             switch (question.getType()) {
@@ -86,18 +88,18 @@ public class ParticipationServiceImpl implements ParticipationService {
                 case CHOIX_UNIQUE -> {
 
                     if (qa.getChoixIds() == null || qa.getChoixIds().size() != 1) {
-                        throw new RuntimeException("Invalid single choice");
+                        throw new RuntimeException("Choix unique invalide");
                     }
 
                     Choix choix = choixRepository.findById(qa.getChoixIds().get(0))
-                            .orElseThrow(() -> new RuntimeException("Choix not found"));
+                            .orElseThrow(() -> new RuntimeException("Choix introuvable"));
 
                     if (!choix.getQuestion().getId().equals(question.getId())) {
-                        throw new RuntimeException("Choix does not belong to question");
+                        throw new RuntimeException("Ce choix n'appartient pas à la question");
                     }
 
                     if (qa.getTexte() != null) {
-                        throw new RuntimeException("Choices question cannot have text");
+                        throw new RuntimeException("Une question à choix unique ne peut pas contenir de texte");
                     }
 
                     Reponse r = new Reponse();
@@ -111,11 +113,11 @@ public class ParticipationServiceImpl implements ParticipationService {
                 case CHOIX_MULTIPLE -> {
 
                     if (qa.getChoixIds() == null || qa.getChoixIds().isEmpty()) {
-                        throw new RuntimeException("Choices required");
+                        throw new RuntimeException("Veuillez sélectionner au moins un choix");
                     }
 
                     if (qa.getTexte() != null) {
-                        throw new RuntimeException("Choices question cannot have text");
+                        throw new RuntimeException("Une question à choix multiple ne peut pas contenir de texte");
                     }
 
                     Set<Long> uniqueChoixIds = new HashSet<>(qa.getChoixIds());
@@ -123,10 +125,10 @@ public class ParticipationServiceImpl implements ParticipationService {
                     for (Long choixId : uniqueChoixIds) {
 
                         Choix choix = choixRepository.findById(choixId)
-                                .orElseThrow(() -> new RuntimeException("Choix not found"));
+                                .orElseThrow(() -> new RuntimeException("Choix introuvable"));
 
                         if (!choix.getQuestion().getId().equals(question.getId())) {
-                            throw new RuntimeException("Invalid choix for question");
+                            throw new RuntimeException("Choix invalide pour cette question");
                         }
 
                         Reponse r = new Reponse();
@@ -141,11 +143,11 @@ public class ParticipationServiceImpl implements ParticipationService {
                 case TEXTE -> {
 
                     if (qa.getTexte() == null || qa.getTexte().isBlank()) {
-                        throw new RuntimeException("Text answer required");
+                        throw new RuntimeException("Une réponse textuelle est requise");
                     }
 
                     if (qa.getChoixIds() != null && !qa.getChoixIds().isEmpty()) {
-                        throw new RuntimeException("Text question cannot have choices");
+                        throw new RuntimeException("Une question textuelle ne peut pas contenir de choix");
                     }
 
                     Reponse r = new Reponse();
@@ -163,4 +165,58 @@ public class ParticipationServiceImpl implements ParticipationService {
         participationRepository.save(participation);
     }
 
+    @Override
+    public ParticipationResponse getUserParticipation(Long sondageId, String email) {
+
+        Adherent user = adherentRepository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("Utilisateur introuvable"));
+
+        Sondage sondage = sondageRepository.findById(sondageId)
+                .orElseThrow(() -> new RuntimeException("Sondage introuvable"));
+
+        ParticipationResponse response = new ParticipationResponse();
+
+        Participation participation = participationRepository
+                .findByAdherentAndSondage(user, sondage)
+                .orElse(null);
+
+        if (participation == null) {
+            response.setHasParticipated(false);
+            return response;
+        }
+
+        response.setHasParticipated(true);
+
+        List<ParticipationResponse.QuestionAnswer> answers = new ArrayList<>();
+
+        Map<Long, ParticipationResponse.QuestionAnswer> map = new HashMap<>();
+
+        for (Reponse r : participation.getReponses()) {
+
+            Long qId = r.getQuestion().getId();
+
+            ParticipationResponse.QuestionAnswer qa = map.get(qId);
+
+            if (qa == null) {
+                qa = new ParticipationResponse.QuestionAnswer();
+                qa.setQuestionId(qId);
+                qa.setChoixIds(new ArrayList<>());
+                map.put(qId, qa);
+            }
+
+            // TEXT
+            if (r.getTexte() != null) {
+                qa.setTexte(r.getTexte());
+            }
+
+            // CHOIX
+            if (r.getChoix() != null) {
+                qa.getChoixIds().add(r.getChoix().getId());
+            }
+        }
+
+        response.setAnswers(new ArrayList<>(map.values()));
+
+        return response;
+    }
 }
