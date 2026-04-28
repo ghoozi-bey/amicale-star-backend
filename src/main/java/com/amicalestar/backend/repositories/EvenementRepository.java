@@ -34,4 +34,13 @@ public interface EvenementRepository extends JpaRepository<Evenement, Long> {
     String getPhotoTypeById(@Param("id") Long id);
     @Query("SELECT COUNT(i) FROM Inscription i WHERE i.evenement.id = :eventId")
     int countInscriptions(@Param("eventId") Long eventId);
+    @Query("SELECT e FROM Evenement e WHERE " +
+            "(:budget IS NULL OR e.prix <= :budget) AND " +
+            "(:participants IS NULL OR e.nbPlaces >= :participants) AND " +
+            "LOWER(e.typeEvenement.nom) LIKE LOWER(CONCAT('%', :type, '%'))")
+    List<Evenement> findRecommended(
+            @Param("budget") Integer budget,
+            @Param("participants") Integer participants,
+            @Param("type") String type
+    );
 }

@@ -379,6 +379,7 @@ public class InscriptionServiceImpl implements InscriptionService {
                 // 🎉 Event
                 .titre(i.getEvenement().getTitre())
                 .prix(i.getEvenement().getPrix())
+                .prixTotal(i.getPrixTotal())
 
                 // ❌ SUPPRIMÉ (ancienne logique)
                 // .modePaiement(...)
