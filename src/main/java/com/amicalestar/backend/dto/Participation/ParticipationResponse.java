@@ -1,13 +1,13 @@
-package com.amicalestar.backend.dto;
+package com.amicalestar.backend.dto.Participation;
 
-import jakarta.annotation.Nullable;
 import lombok.Data;
+
 import java.util.List;
 
 @Data
-public class ParticipationRequest {
+public class ParticipationResponse {
 
-    private Long sondageId;
+    private boolean hasParticipated;
     private List<QuestionAnswer> answers;
 
     @Data

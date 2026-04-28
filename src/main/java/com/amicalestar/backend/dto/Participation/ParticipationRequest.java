@@ -1,13 +1,12 @@
-package com.amicalestar.backend.dto;
+package com.amicalestar.backend.dto.Participation;
 
 import lombok.Data;
-
 import java.util.List;
 
 @Data
-public class ParticipationResponse {
+public class ParticipationRequest {
 
-    private boolean hasParticipated;
+    private Long sondageId;
     private List<QuestionAnswer> answers;
 
     @Data

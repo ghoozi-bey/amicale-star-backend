@@ -1,9 +1,12 @@
 package com.amicalestar.backend.controllers;
 
 import com.amicalestar.backend.dto.CreateSondageRequest;
+import com.amicalestar.backend.dto.Participation.ParticipationDTO;
 import com.amicalestar.backend.dto.SondageResponse;
+import com.amicalestar.backend.dto.stats.SondageStatsDTO;
 import com.amicalestar.backend.entities.Sondage;
 import com.amicalestar.backend.services.SondageService;
+import com.amicalestar.backend.services.SondageStatsService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
@@ -17,6 +20,7 @@ import java.util.List;
 public class SondageController {
 
     private final SondageService sondageService;
+    private final SondageStatsService statsService;
 
     // Endpoints for all users
     @GetMapping("/actifs")
@@ -85,4 +89,15 @@ public class SondageController {
         sondageService.supprimerSondage(id);
         return ResponseEntity.ok("Deleted");
     }
+
+    @GetMapping("/{id}/stats")
+    public ResponseEntity<SondageStatsDTO> getStats(@PathVariable Long id) {
+        return ResponseEntity.ok(statsService.getStats(id));
+    }
+
+    @GetMapping("/{id}/participations")
+    public ResponseEntity<List<ParticipationDTO>> getParticipations(@PathVariable Long id) {
+        return ResponseEntity.ok(statsService.getParticipations(id));
+    }
+
 }

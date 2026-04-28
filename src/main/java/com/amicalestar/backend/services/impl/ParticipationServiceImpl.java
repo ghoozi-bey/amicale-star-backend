@@ -1,10 +1,9 @@
 package com.amicalestar.backend.services.impl;
 
-import com.amicalestar.backend.dto.ParticipationRequest;
-import com.amicalestar.backend.dto.ParticipationResponse;
+import com.amicalestar.backend.dto.Participation.ParticipationRequest;
+import com.amicalestar.backend.dto.Participation.ParticipationResponse;
 import com.amicalestar.backend.entities.*;
 import com.amicalestar.backend.enums.StatutSondage;
-import com.amicalestar.backend.enums.TypeQuestion;
 import com.amicalestar.backend.repositories.*;
 import com.amicalestar.backend.services.ParticipationService;
 import com.amicalestar.backend.services.SondageService;

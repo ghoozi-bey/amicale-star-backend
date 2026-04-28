@@ -1,7 +1,7 @@
 package com.amicalestar.backend.controllers;
 
-import com.amicalestar.backend.dto.ParticipationRequest;
-import com.amicalestar.backend.dto.ParticipationResponse;
+import com.amicalestar.backend.dto.Participation.ParticipationRequest;
+import com.amicalestar.backend.dto.Participation.ParticipationResponse;
 import com.amicalestar.backend.services.ParticipationService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;

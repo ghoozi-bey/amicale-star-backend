@@ -1,8 +1,7 @@
 package com.amicalestar.backend.services;
 
-import com.amicalestar.backend.dto.ParticipationRequest;
-import com.amicalestar.backend.dto.ParticipationResponse;
-import com.amicalestar.backend.entities.Sondage;
+import com.amicalestar.backend.dto.Participation.ParticipationRequest;
+import com.amicalestar.backend.dto.Participation.ParticipationResponse;
 
 public interface ParticipationService {
     void submitParticipation(ParticipationRequest request, String email);
