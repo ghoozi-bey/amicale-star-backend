@@ -7,6 +7,7 @@ import java.util.List;
 @Data
 public class ParticipationDTO {
     private String nom;
+    private String prenom;
     private String email;
     private List<ReponseDTO> reponses;
 }

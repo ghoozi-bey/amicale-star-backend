@@ -96,6 +96,7 @@ public class SondageStatsServiceImpl implements SondageStatsService {
 
             ParticipationDTO dto = new ParticipationDTO();
             dto.setNom(p.getAdherent().getNom());
+            dto.setPrenom(p.getAdherent().getPrenom());
             dto.setEmail(p.getAdherent().getEmail());
 
             List<ReponseDTO> reponses = p.getReponses().stream().map(r -> {
