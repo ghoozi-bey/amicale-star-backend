@@ -11,7 +11,7 @@ import java.util.List;
 public interface PaiementRepository extends JpaRepository<Paiement, Long> {
 
     @Query("""
-SELECT new com.amicalestar.backend.dto.PaiementDTO(
+SELECT new com.amicalestar.backend.dto.evenement.PaiementDTO(
     p.id,
     p.montant,
     p.modePaiement,

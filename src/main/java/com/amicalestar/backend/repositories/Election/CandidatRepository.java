@@ -9,8 +9,8 @@ import java.util.List;
 @Repository
 public interface CandidatRepository extends JpaRepository<Candidat, Long> {
 
-    boolean existsByAdherentIdAndElectionId(
-            String adherentId,
+    boolean existsByAdherentMatriculeAndElectionId(
+            String matricule,
             Long electionId
     );
 

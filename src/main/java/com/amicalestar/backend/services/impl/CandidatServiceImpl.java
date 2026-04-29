@@ -1,5 +1,6 @@
 package com.amicalestar.backend.services.impl;
 
+import com.amicalestar.backend.dto.election.CandidatResponseDTO;
 import com.amicalestar.backend.entities.Adherent;
 import com.amicalestar.backend.entities.election.Candidat;
 import com.amicalestar.backend.entities.election.Election;
@@ -21,21 +22,21 @@ public class CandidatServiceImpl implements CandidatService {
     private final AdherentRepository adherentRepository;
 
     @Override
-    public Candidat addCandidat(Long electionId, String adherentId) {
+    public CandidatResponseDTO addCandidat(Long electionId, String matricule) {
 
         Election election = electionRepository.findById(electionId)
                 .orElseThrow(() ->
                         new RuntimeException("Election introuvable")
                 );
 
-        Adherent adherent = adherentRepository.findById(adherentId)
+        Adherent adherent = adherentRepository.findById(matricule)
                 .orElseThrow(() ->
                         new RuntimeException("Adhérent introuvable")
                 );
 
         boolean exists =
-                candidatRepository.existsByAdherentIdAndElectionId(
-                        adherentId,
+                candidatRepository.existsByAdherentMatriculeAndElectionId(
+                        matricule,
                         electionId
                 );
 
@@ -50,7 +51,18 @@ public class CandidatServiceImpl implements CandidatService {
         candidat.setElection(election);
         candidat.setAdherent(adherent);
 
-        return candidatRepository.save(candidat);
+        Candidat saved = candidatRepository.save(candidat);
+
+        CandidatResponseDTO dto = new CandidatResponseDTO();
+
+        dto.setId(saved.getId());
+        dto.setElectionId(saved.getElection().getId());
+
+        dto.setNom(saved.getAdherent().getNom());
+        dto.setPrenom(saved.getAdherent().getPrenom());
+        dto.setMatricule(saved.getAdherent().getMatricule());
+
+        return dto;
     }
 
     @Override
@@ -65,8 +77,24 @@ public class CandidatServiceImpl implements CandidatService {
     }
 
     @Override
-    public List<Candidat> getElectionCandidats(Long electionId) {
+    public List<CandidatResponseDTO> getElectionCandidats(Long electionId) {
 
-        return candidatRepository.findByElectionId(electionId);
+        List<Candidat> candidats =
+                candidatRepository.findByElectionId(electionId);
+
+        return candidats.stream().map(candidat -> {
+
+            CandidatResponseDTO dto = new CandidatResponseDTO();
+
+            dto.setId(candidat.getId());
+            dto.setElectionId(candidat.getElection().getId());
+
+            dto.setNom(candidat.getAdherent().getNom());
+            dto.setPrenom(candidat.getAdherent().getPrenom());
+            dto.setMatricule(candidat.getAdherent().getMatricule());
+
+            return dto;
+
+        }).toList();
     }
 }

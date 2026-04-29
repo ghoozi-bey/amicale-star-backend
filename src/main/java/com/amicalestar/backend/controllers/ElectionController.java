@@ -1,9 +1,11 @@
 package com.amicalestar.backend.controllers;
 
 import com.amicalestar.backend.dto.election.CreateElectionRequest;
+import com.amicalestar.backend.dto.election.ElectionResponseDTO;
 import com.amicalestar.backend.entities.election.Election;
 import com.amicalestar.backend.services.interfaces.ElectionService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -17,24 +19,26 @@ public class ElectionController {
 
     // CREATE
     @PostMapping
-    public Election createElection(
+    public ElectionResponseDTO createElection(
             @RequestBody CreateElectionRequest request,
-            @RequestParam String createdById
+            Authentication authentication
     ) {
 
-        return electionService.create(request, createdById);
+        String email = authentication.getName();
+
+        return electionService.create(request, email);
     }
 
     // GET ALL
     @GetMapping
-    public List<Election> getAllElections() {
+    public List<ElectionResponseDTO> getAllElections() {
 
         return electionService.getAll();
     }
 
     // GET BY ID
     @GetMapping("/{id}")
-    public Election getElectionById(
+    public ElectionResponseDTO getElectionById(
             @PathVariable Long id
     ) {
 
@@ -43,7 +47,7 @@ public class ElectionController {
 
     // UPDATE
     @PutMapping("/{id}")
-    public Election updateElection(
+    public ElectionResponseDTO updateElection(
             @PathVariable Long id,
             @RequestBody CreateElectionRequest request
     ) {

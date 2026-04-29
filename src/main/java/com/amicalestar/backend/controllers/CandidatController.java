@@ -1,8 +1,11 @@
 package com.amicalestar.backend.controllers;
 
+import com.amicalestar.backend.dto.election.AddCandidatRequest;
+import com.amicalestar.backend.dto.election.CandidatResponseDTO;
 import com.amicalestar.backend.entities.election.Candidat;
 import com.amicalestar.backend.services.interfaces.CandidatService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -15,17 +18,17 @@ public class CandidatController {
 
     // ADD CANDIDAT
     @PostMapping("/api/elections/{id}/candidats")
-    public Candidat addCandidat(
+    public CandidatResponseDTO addCandidat(
             @PathVariable Long id,
-            @RequestParam String adherentId
+            @RequestBody AddCandidatRequest request
     ) {
 
-        return candidatService.addCandidat(id, adherentId);
+        return candidatService.addCandidat(id, request.getMatricule());
     }
 
     // GET CANDIDATS OF ELECTION
     @GetMapping("/api/elections/{id}/candidats")
-    public List<Candidat> getElectionCandidats(
+    public List<CandidatResponseDTO> getElectionCandidats(
             @PathVariable Long id
     ) {
 
@@ -33,11 +36,12 @@ public class CandidatController {
     }
 
     // REMOVE CANDIDAT
-    @DeleteMapping("/api/candidats/{id}")
+    @DeleteMapping("/api/elections/{electionId}/candidats/{candidatId}")
     public void removeCandidat(
-            @PathVariable Long id
+            @PathVariable Long electionId,
+            @PathVariable Long candidatId
     ) {
 
-        candidatService.removeCandidat(id);
+        candidatService.removeCandidat(candidatId);
     }
 }

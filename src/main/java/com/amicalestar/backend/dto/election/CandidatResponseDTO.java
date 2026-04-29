@@ -5,7 +5,15 @@ import lombok.Setter;
 
 @Getter
 @Setter
-public class AddCandidatRequest {
+public class CandidatResponseDTO {
+
+    private Long id;
+
+    private Long electionId;
+
+    private String nom;
+
+    private String prenom;
 
     private String matricule;
 }

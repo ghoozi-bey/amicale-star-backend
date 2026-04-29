@@ -19,7 +19,7 @@ public interface InscriptionRepository extends JpaRepository<Inscription, Long> 
     // 🔥 LISTE PAR EMAIL
     // =========================
     @Query("""
-        SELECT new com.amicalestar.backend.dto.InscriptionDTO(
+        SELECT new com.amicalestar.backend.dto.evenement.InscriptionDTO(
             i.id,
             i.statut,
             e.id,
@@ -45,7 +45,7 @@ public interface InscriptionRepository extends JpaRepository<Inscription, Long> 
     """)
     Optional<Inscription> findByIdWithDetails(@Param("id") Long id);
     @Query("""
-SELECT new com.amicalestar.backend.dto.InscriptionListDTO(
+SELECT new com.amicalestar.backend.dto.evenement.InscriptionListDTO(
     i.id,
     a.nom,
     a.email,
@@ -83,7 +83,7 @@ WHERE i.evenement.id = :eventId
             Pageable pageable
     );
 
-    @Query("SELECT new com.amicalestar.backend.dto.EnfantDTO(e.nom, e.prenom, e.dateNaissance) " +
+    @Query("SELECT new com.amicalestar.backend.dto.evenement.EnfantDTO(e.nom, e.prenom, e.dateNaissance) " +
             "FROM Enfant e WHERE e.inscription.id = :id")
     List<EnfantDTO> findEnfantsDTOByInscriptionId(@Param("id") Long id);
 

@@ -1,6 +1,7 @@
 package com.amicalestar.backend.services.impl;
 
 import com.amicalestar.backend.dto.election.CreateElectionRequest;
+import com.amicalestar.backend.dto.election.ElectionResponseDTO;
 import com.amicalestar.backend.entities.Adherent;
 import com.amicalestar.backend.entities.election.Election;
 import com.amicalestar.backend.enums.StatutElection;
@@ -21,18 +22,10 @@ public class ElectionServiceImpl implements ElectionService {
     private final AdherentRepository adherentRepository;
 
     @Override
-    public Election create(CreateElectionRequest request, String createdById) {
+    public ElectionResponseDTO create(CreateElectionRequest request, String email) {
 
-        if(request.getDateFin().isBefore(request.getDateDebut())) {
-            throw new RuntimeException(
-                    "La date de fin doit être après la date de début"
-            );
-        }
-
-        Adherent adherent = adherentRepository.findById(createdById)
-                .orElseThrow(() ->
-                        new RuntimeException("Adhérent introuvable")
-                );
+        Adherent creator = adherentRepository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("Utilisateur introuvable"));
 
         Election election = new Election();
 
@@ -41,33 +34,53 @@ public class ElectionServiceImpl implements ElectionService {
         election.setDateDebut(request.getDateDebut());
         election.setDateFin(request.getDateFin());
 
-        election.setCreatedBy(adherent);
+        election.setCreatedBy(creator);
 
-        election.setDateCreation(LocalDateTime.now());
+        Election saved = electionRepository.save(election);
 
-        election.setStatut(StatutElection.BROUILLON);
+        ElectionResponseDTO dto = new ElectionResponseDTO();
 
-        return electionRepository.save(election);
+        dto.setId(saved.getId());
+        dto.setTitle(saved.getTitle());
+        dto.setDescription(saved.getDescription());
+        dto.setDateCreation(saved.getDateCreation());
+        dto.setDateDebut(saved.getDateDebut());
+        dto.setDateFin(saved.getDateFin());
+        dto.setStatut(saved.getStatut());
+
+        dto.setCreatedByNom(saved.getCreatedBy().getNom());
+        dto.setCreatedByPrenom(saved.getCreatedBy().getPrenom());
+
+        return dto;
     }
 
     @Override
-    public List<Election> getAll() {
-        return electionRepository.findAll();
+    public List<ElectionResponseDTO> getAll() {
+
+        return electionRepository.findAll()
+                .stream()
+                .map(this::mapToDTO)
+                .toList();
     }
 
     @Override
-    public Election getById(Long id) {
+    public ElectionResponseDTO getById(Long id) {
 
-        return electionRepository.findById(id)
+        Election election = electionRepository.findById(id)
                 .orElseThrow(() ->
                         new RuntimeException("Election introuvable")
                 );
+
+        return mapToDTO(election);
     }
 
     @Override
-    public Election update(Long id, CreateElectionRequest request) {
+    public ElectionResponseDTO update(Long id, CreateElectionRequest request) {
 
-        Election election = getById(id);
+        Election election = electionRepository.findById(id)
+                .orElseThrow(() ->
+                        new RuntimeException("Election introuvable")
+                );
 
         if(request.getDateFin().isBefore(request.getDateDebut())) {
             throw new RuntimeException(
@@ -80,14 +93,46 @@ public class ElectionServiceImpl implements ElectionService {
         election.setDateDebut(request.getDateDebut());
         election.setDateFin(request.getDateFin());
 
-        return electionRepository.save(election);
+        Election saved = electionRepository.save(election);
+
+        return mapToDTO(saved);
+    }
+
+    private ElectionResponseDTO mapToDTO(Election election) {
+
+        ElectionResponseDTO dto = new ElectionResponseDTO();
+
+        dto.setId(election.getId());
+        dto.setTitle(election.getTitle());
+        dto.setDescription(election.getDescription());
+
+        dto.setDateCreation(election.getDateCreation());
+        dto.setDateDebut(election.getDateDebut());
+        dto.setDateFin(election.getDateFin());
+
+        dto.setStatut(election.getStatut());
+
+        if(election.getCreatedBy() != null) {
+
+            dto.setCreatedByNom(
+                    election.getCreatedBy().getNom()
+            );
+
+            dto.setCreatedByPrenom(
+                    election.getCreatedBy().getPrenom()
+            );
+        }
+
+        return dto;
     }
 
     @Override
     public void delete(Long id) {
 
-        Election election = getById(id);
+        if(!electionRepository.existsById(id)) {
+            throw new RuntimeException("Election introuvable");
+        }
 
-        electionRepository.delete(election);
+        electionRepository.deleteById(id);
     }
 }
