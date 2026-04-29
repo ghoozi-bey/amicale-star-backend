@@ -5,6 +5,10 @@ import com.amicalestar.backend.entities.*;
 import com.amicalestar.backend.repositories.*;
 import com.amicalestar.backend.services.InscriptionService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -70,6 +74,14 @@ public class InscriptionServiceImpl implements InscriptionService {
                 evenement.getTypeEvenement().getNom().equalsIgnoreCase("VOYAGE");
 
         boolean isExterne = Boolean.TRUE.equals(evenement.getIsInternational());
+        // =========================
+        // 🔒 BLOQUER DOUBLE INSCRIPTION
+        // =========================
+        if (inscriptionRepository.existsByAdherentMatriculeAndEvenementId(
+                adherent.getMatricule(), evenement.getId())) {
+
+            throw new RuntimeException("Vous êtes déjà inscrit à cet événement ");
+        }
 
         // =========================
         // 3. VALIDATION PASSEPORT
@@ -77,17 +89,17 @@ public class InscriptionServiceImpl implements InscriptionService {
         if (isVoyage && isExterne) {
 
             if (adherentFile == null || adherentFile.isEmpty()) {
-                throw new RuntimeException("Passeport obligatoire ❌");
+                throw new RuntimeException("Passeport obligatoire ");
             }
 
             if (request.getConjoint() != null &&
                     (conjointFile == null || conjointFile.isEmpty())) {
-                throw new RuntimeException("Passeport conjoint obligatoire ❌");
+                throw new RuntimeException("Passeport conjoint obligatoire ");
             }
 
             if (request.getEnfants() != null && !request.getEnfants().isEmpty()) {
                 if (enfantsFiles == null || enfantsFiles.isEmpty()) {
-                    throw new RuntimeException("Passeports enfants obligatoires ❌");
+                    throw new RuntimeException("Passeports enfants obligatoires ");
                 }
             }
         }
@@ -405,8 +417,11 @@ public class InscriptionServiceImpl implements InscriptionService {
                 .build();
     }
     @Override
-    public List<InscriptionListDTO> getInscriptionsByEvent(Long eventId) {
-        return inscriptionRepository.findDTOByEventId(eventId);
+    public Page<InscriptionListDTO> getInscriptionsByEvent(Long eventId, int page, int size) {
+
+        Pageable pageable = PageRequest.of(page, size, Sort.by("id").descending());
+
+        return inscriptionRepository.findDTOByEventId(eventId, pageable);
     }
     private String toBase64(byte[] file) {
         if (file == null) return null;
@@ -751,6 +766,7 @@ public class InscriptionServiceImpl implements InscriptionService {
 
         return f;
     }
+
 
 
 

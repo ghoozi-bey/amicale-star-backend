@@ -2,6 +2,7 @@ package com.amicalestar.backend.services;
 
 import com.amicalestar.backend.dto.*;
 import com.amicalestar.backend.entities.Inscription;
+import org.springframework.data.domain.Page;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
@@ -20,10 +21,9 @@ public interface InscriptionService {
     // ✅ get (OPTIMISÉ DTO 🔥)
     List<InscriptionDTO> getInscriptionsAdherent(String email);
     InscriptionDetailsDTO getByIdSecure(Long id, String email);
-    List<InscriptionListDTO> getInscriptionsByEvent(Long eventId);
     InscriptionFullDTO getFullDetails(Long id);
     void updateStatut(Long id, String statut);
     void uploadJustificatif(Long id, MultipartFile file);
     FactureDTO calculerFactureDetaillee(Inscription inscription);
-
+    Page<InscriptionListDTO> getInscriptionsByEvent(Long eventId, int page, int size);
 }

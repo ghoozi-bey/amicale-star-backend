@@ -6,6 +6,7 @@ import com.amicalestar.backend.repositories.InscriptionRepository;
 import com.amicalestar.backend.services.InscriptionService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -108,10 +109,7 @@ public class InscriptionController {
             return ResponseEntity.badRequest().body(e.getMessage());
         }
     }
-    @GetMapping("/event/{id}")
-    public ResponseEntity<List<InscriptionListDTO>> getByEvent(@PathVariable Long id) {
-        return ResponseEntity.ok(inscriptionService.getInscriptionsByEvent(id));
-    }
+
     @GetMapping("/{id}/full")
     public ResponseEntity<InscriptionFullDTO> getFullDetails(@PathVariable Long id) {
         return ResponseEntity.ok(inscriptionService.getFullDetails(id));
@@ -142,6 +140,14 @@ public class InscriptionController {
             e.printStackTrace(); // 🔥 TU VAS VOIR L'ERREUR EXACTE
             return ResponseEntity.badRequest().body(e.getMessage());
         }
+    }
+    @GetMapping("/event/{id}")
+    public Page<InscriptionListDTO> getByEvent(
+            @PathVariable Long id,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "5") int size
+    ) {
+        return inscriptionService.getInscriptionsByEvent(id, page, size);
     }
 
 }
