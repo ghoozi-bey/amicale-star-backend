@@ -1,7 +1,7 @@
 package com.amicalestar.backend.controllers;
 
-import com.amicalestar.backend.entities.Candidat;
-import com.amicalestar.backend.services.CandidatService;
+import com.amicalestar.backend.entities.election.Candidat;
+import com.amicalestar.backend.services.interfaces.CandidatService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 

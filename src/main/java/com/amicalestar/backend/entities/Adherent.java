@@ -1,5 +1,8 @@
 package com.amicalestar.backend.entities;
 
+import com.amicalestar.backend.entities.evenement.Evenement;
+import com.amicalestar.backend.entities.evenement.Inscription;
+import com.amicalestar.backend.entities.evenement.TypeEvenement;
 import com.amicalestar.backend.enums.Departement;
 import com.amicalestar.backend.enums.TypeAdherent;
 import com.fasterxml.jackson.annotation.JsonIgnore;

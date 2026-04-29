@@ -1,12 +1,12 @@
 package com.amicalestar.backend.services.impl;
 
 import com.amicalestar.backend.entities.Adherent;
-import com.amicalestar.backend.entities.Candidat;
-import com.amicalestar.backend.entities.Election;
+import com.amicalestar.backend.entities.election.Candidat;
+import com.amicalestar.backend.entities.election.Election;
 import com.amicalestar.backend.repositories.AdherentRepository;
 import com.amicalestar.backend.repositories.Election.CandidatRepository;
 import com.amicalestar.backend.repositories.Election.ElectionRepository;
-import com.amicalestar.backend.services.CandidatService;
+import com.amicalestar.backend.services.interfaces.CandidatService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 

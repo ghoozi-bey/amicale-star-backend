@@ -1,28 +1,24 @@
 package com.amicalestar.backend.services.impl;
 
-import com.amicalestar.backend.dto.*;
+import com.amicalestar.backend.dto.evenement.*;
 import com.amicalestar.backend.entities.*;
+import com.amicalestar.backend.entities.evenement.*;
 import com.amicalestar.backend.repositories.*;
-import com.amicalestar.backend.services.InscriptionService;
+import com.amicalestar.backend.repositories.evenement.*;
+import com.amicalestar.backend.services.interfaces.InscriptionService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
-import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
-import org.springframework.web.bind.annotation.ExceptionHandler;
-import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.time.Period;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Base64;
-
-import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor

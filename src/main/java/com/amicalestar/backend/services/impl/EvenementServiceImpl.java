@@ -1,17 +1,15 @@
 package com.amicalestar.backend.services.impl;
 
-import com.amicalestar.backend.entities.Evenement;
+import com.amicalestar.backend.entities.evenement.Evenement;
 import com.amicalestar.backend.enums.StatutEvenement;
-import com.amicalestar.backend.repositories.EvenementRepository;
-import com.amicalestar.backend.services.EvenementService;
+import com.amicalestar.backend.repositories.evenement.EvenementRepository;
+import com.amicalestar.backend.services.interfaces.EvenementService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.core.io.ClassPathResource;
 import java.io.InputStream;
 import java.io.IOException;
 
-import java.nio.file.Files;
-import java.nio.file.Paths;
 import java.util.List;
 
 @Service

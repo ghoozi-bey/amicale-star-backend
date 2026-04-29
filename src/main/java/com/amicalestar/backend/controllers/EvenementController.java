@@ -1,15 +1,14 @@
 package com.amicalestar.backend.controllers;
 
 import com.amicalestar.backend.entities.Adherent;
-import com.amicalestar.backend.entities.Evenement;
-import com.amicalestar.backend.entities.TypeEvenement;
+import com.amicalestar.backend.entities.evenement.Evenement;
+import com.amicalestar.backend.entities.evenement.TypeEvenement;
 import com.amicalestar.backend.enums.StatutEvenement;
 import com.amicalestar.backend.repositories.AdherentRepository;
-import com.amicalestar.backend.repositories.EvenementRepository;
-import com.amicalestar.backend.repositories.TypeEvenementRepository;
-import com.amicalestar.backend.services.EvenementService;
-import com.amicalestar.backend.dto.EvenementDTO;
-import com.amicalestar.backend.enums.StatutEvenement;
+import com.amicalestar.backend.repositories.evenement.EvenementRepository;
+import com.amicalestar.backend.repositories.evenement.TypeEvenementRepository;
+import com.amicalestar.backend.services.interfaces.EvenementService;
+import com.amicalestar.backend.dto.evenement.EvenementDTO;
 
 import lombok.RequiredArgsConstructor;
 

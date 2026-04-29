@@ -1,9 +1,9 @@
 package com.amicalestar.backend.controllers;
 
-import com.amicalestar.backend.dto.AdherentDTO;
-import com.amicalestar.backend.dto.UpdateProfileRequest;
+import com.amicalestar.backend.dto.adherent.AdherentDTO;
+import com.amicalestar.backend.dto.adherent.UpdateProfileRequest;
 import com.amicalestar.backend.entities.Adherent;
-import com.amicalestar.backend.services.AdherentService;
+import com.amicalestar.backend.services.interfaces.AdherentService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;

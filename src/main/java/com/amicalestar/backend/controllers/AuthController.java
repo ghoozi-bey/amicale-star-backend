@@ -1,6 +1,6 @@
 package com.amicalestar.backend.controllers;
 
-import com.amicalestar.backend.dto.LoginRequest;
+import com.amicalestar.backend.dto.adherent.LoginRequest;
 import com.amicalestar.backend.entities.Adherent;
 import com.amicalestar.backend.repositories.AdherentRepository;
 import com.amicalestar.backend.security.JwtService;

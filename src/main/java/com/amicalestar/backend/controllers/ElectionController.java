@@ -1,8 +1,8 @@
 package com.amicalestar.backend.controllers;
 
-import com.amicalestar.backend.dto.Election.CreateElectionRequest;
-import com.amicalestar.backend.entities.Election;
-import com.amicalestar.backend.services.ElectionService;
+import com.amicalestar.backend.dto.election.CreateElectionRequest;
+import com.amicalestar.backend.entities.election.Election;
+import com.amicalestar.backend.services.interfaces.ElectionService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 

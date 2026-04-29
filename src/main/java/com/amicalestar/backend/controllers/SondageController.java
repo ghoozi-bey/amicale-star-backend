@@ -1,12 +1,12 @@
 package com.amicalestar.backend.controllers;
 
-import com.amicalestar.backend.dto.CreateSondageRequest;
-import com.amicalestar.backend.dto.Participation.ParticipationDTO;
-import com.amicalestar.backend.dto.SondageResponse;
-import com.amicalestar.backend.dto.stats.SondageStatsDTO;
-import com.amicalestar.backend.entities.Sondage;
-import com.amicalestar.backend.services.SondageService;
-import com.amicalestar.backend.services.SondageStatsService;
+import com.amicalestar.backend.dto.sondage.CreateSondageRequest;
+import com.amicalestar.backend.dto.sondage.participation.ParticipationDTO;
+import com.amicalestar.backend.dto.sondage.SondageResponse;
+import com.amicalestar.backend.dto.sondage.stats.SondageStatsDTO;
+import com.amicalestar.backend.entities.sondage.Sondage;
+import com.amicalestar.backend.services.interfaces.SondageService;
+import com.amicalestar.backend.services.interfaces.SondageStatsService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;

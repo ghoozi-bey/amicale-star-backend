@@ -2,10 +2,8 @@ package com.amicalestar.backend.repositories;
 
 import com.amicalestar.backend.entities.Adherent;
 import com.amicalestar.backend.enums.Departement;
-import com.amicalestar.backend.dto.AdherentDTO;
 
 import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;

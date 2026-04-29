@@ -1,7 +1,7 @@
 package com.amicalestar.backend.chatbot;
 
-import com.amicalestar.backend.entities.Evenement;
-import com.amicalestar.backend.repositories.EvenementRepository;
+import com.amicalestar.backend.entities.evenement.Evenement;
+import com.amicalestar.backend.repositories.evenement.EvenementRepository;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;

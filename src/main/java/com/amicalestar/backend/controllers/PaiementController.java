@@ -1,9 +1,9 @@
 package com.amicalestar.backend.controllers;
 
-import com.amicalestar.backend.dto.PaiementDTO;
-import com.amicalestar.backend.entities.Inscription;
-import com.amicalestar.backend.entities.Paiement;
-import com.amicalestar.backend.repositories.PaiementRepository;
+import com.amicalestar.backend.dto.evenement.PaiementDTO;
+import com.amicalestar.backend.entities.evenement.Inscription;
+import com.amicalestar.backend.entities.evenement.Paiement;
+import com.amicalestar.backend.repositories.evenement.PaiementRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -11,9 +11,7 @@ import org.springframework.web.multipart.MultipartFile;
 import org.springframework.transaction.annotation.Transactional;
 
 
-import java.io.IOException;
 import java.time.LocalDate;
-import java.util.Base64;
 import java.util.List;
 
 @RequiredArgsConstructor

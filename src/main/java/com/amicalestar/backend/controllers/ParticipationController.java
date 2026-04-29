@@ -1,8 +1,8 @@
 package com.amicalestar.backend.controllers;
 
-import com.amicalestar.backend.dto.Participation.ParticipationRequest;
-import com.amicalestar.backend.dto.Participation.ParticipationResponse;
-import com.amicalestar.backend.services.ParticipationService;
+import com.amicalestar.backend.dto.sondage.participation.ParticipationRequest;
+import com.amicalestar.backend.dto.sondage.participation.ParticipationResponse;
+import com.amicalestar.backend.services.interfaces.ParticipationService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;

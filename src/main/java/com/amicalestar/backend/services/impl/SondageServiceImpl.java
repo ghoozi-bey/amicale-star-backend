@@ -1,15 +1,18 @@
 package com.amicalestar.backend.services.impl;
 
-import com.amicalestar.backend.dto.ChoixResponse;
-import com.amicalestar.backend.dto.CreateSondageRequest;
-import com.amicalestar.backend.dto.QuestionResponse;
-import com.amicalestar.backend.dto.SondageResponse;
+import com.amicalestar.backend.dto.sondage.ChoixResponse;
+import com.amicalestar.backend.dto.sondage.CreateSondageRequest;
+import com.amicalestar.backend.dto.sondage.QuestionResponse;
+import com.amicalestar.backend.dto.sondage.SondageResponse;
 import com.amicalestar.backend.entities.*;
+import com.amicalestar.backend.entities.sondage.Choix;
+import com.amicalestar.backend.entities.sondage.Question;
+import com.amicalestar.backend.entities.sondage.Sondage;
 import com.amicalestar.backend.enums.StatutSondage;
 import com.amicalestar.backend.enums.TypeQuestion;
 import com.amicalestar.backend.repositories.AdherentRepository;
-import com.amicalestar.backend.repositories.SondageRepository;
-import com.amicalestar.backend.services.SondageService;
+import com.amicalestar.backend.repositories.sondage.SondageRepository;
+import com.amicalestar.backend.services.interfaces.SondageService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 

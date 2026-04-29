@@ -1,9 +1,12 @@
 package com.amicalestar.backend.controllers;
 
-import com.amicalestar.backend.dto.*;
-import com.amicalestar.backend.entities.Inscription;
-import com.amicalestar.backend.repositories.InscriptionRepository;
-import com.amicalestar.backend.services.InscriptionService;
+import com.amicalestar.backend.dto.evenement.InscriptionDTO;
+import com.amicalestar.backend.dto.evenement.InscriptionFullDTO;
+import com.amicalestar.backend.dto.evenement.InscriptionListDTO;
+import com.amicalestar.backend.dto.evenement.InscriptionRequest;
+import com.amicalestar.backend.entities.evenement.Inscription;
+import com.amicalestar.backend.repositories.evenement.InscriptionRepository;
+import com.amicalestar.backend.services.interfaces.InscriptionService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;

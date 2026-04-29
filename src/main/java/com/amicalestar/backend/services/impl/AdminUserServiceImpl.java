@@ -1,22 +1,20 @@
 package com.amicalestar.backend.services.impl;
 
-import com.amicalestar.backend.dto.AdherentDTO;
-import com.amicalestar.backend.dto.CreateUserRequest;
-import com.amicalestar.backend.dto.UpdateUserRequest;
+import com.amicalestar.backend.dto.adherent.AdherentDTO;
+import com.amicalestar.backend.dto.adherent.CreateUserRequest;
+import com.amicalestar.backend.dto.adherent.UpdateUserRequest;
 import com.amicalestar.backend.entities.Adherent;
-import com.amicalestar.backend.entities.TypeEvenement;
+import com.amicalestar.backend.entities.evenement.TypeEvenement;
 import com.amicalestar.backend.enums.TypeAdherent;
 import com.amicalestar.backend.exceptions.ValidationException;
 import com.amicalestar.backend.repositories.AdherentRepository;
-import com.amicalestar.backend.repositories.TypeEvenementRepository;
-import com.amicalestar.backend.services.AdminUserService;
-import com.amicalestar.backend.services.AdherentService;
+import com.amicalestar.backend.repositories.evenement.TypeEvenementRepository;
+import com.amicalestar.backend.services.interfaces.AdminUserService;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
-import java.util.Base64;
 import java.util.List;
 import java.util.HashMap;
 import java.util.Map;

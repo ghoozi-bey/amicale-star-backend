@@ -1,8 +1,8 @@
 package com.amicalestar.backend.services.impl;
 
-import com.amicalestar.backend.entities.TypeEvenement;
-import com.amicalestar.backend.repositories.TypeEvenementRepository;
-import com.amicalestar.backend.services.TypeEvenementService;
+import com.amicalestar.backend.entities.evenement.TypeEvenement;
+import com.amicalestar.backend.repositories.evenement.TypeEvenementRepository;
+import com.amicalestar.backend.services.interfaces.TypeEvenementService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 

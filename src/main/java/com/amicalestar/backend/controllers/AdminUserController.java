@@ -1,17 +1,17 @@
 package com.amicalestar.backend.controllers;
 
-import com.amicalestar.backend.dto.CreateUserRequest;
-import com.amicalestar.backend.dto.UpdateUserRequest;
+import com.amicalestar.backend.dto.adherent.CreateUserRequest;
+import com.amicalestar.backend.dto.adherent.UpdateUserRequest;
 import com.amicalestar.backend.entities.Adherent;
-import com.amicalestar.backend.entities.TypeEvenement;
+import com.amicalestar.backend.entities.evenement.TypeEvenement;
 import com.amicalestar.backend.enums.Departement;
 import com.amicalestar.backend.enums.TypeAdherent;
-import com.amicalestar.backend.services.AdminUserService;
-import com.amicalestar.backend.services.TypeEvenementService;
+import com.amicalestar.backend.services.interfaces.AdminUserService;
+import com.amicalestar.backend.services.interfaces.TypeEvenementService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
-import com.amicalestar.backend.dto.AdherentDTO;
+import com.amicalestar.backend.dto.adherent.AdherentDTO;
 
 import java.util.List;
 

@@ -1,18 +1,18 @@
 package com.amicalestar.backend.services.impl;
 
-import com.amicalestar.backend.dto.Participation.ParticipationDTO;
-import com.amicalestar.backend.dto.Participation.ReponseDTO;
-import com.amicalestar.backend.dto.stats.ChoixStatsDTO;
-import com.amicalestar.backend.dto.stats.QuestionStatsDTO;
-import com.amicalestar.backend.dto.stats.SondageStatsDTO;
-import com.amicalestar.backend.entities.Choix;
-import com.amicalestar.backend.entities.Participation;
-import com.amicalestar.backend.entities.Question;
-import com.amicalestar.backend.entities.Sondage;
-import com.amicalestar.backend.repositories.ParticipationRepository;
-import com.amicalestar.backend.repositories.ReponseRepository;
-import com.amicalestar.backend.repositories.SondageRepository;
-import com.amicalestar.backend.services.SondageStatsService;
+import com.amicalestar.backend.dto.sondage.participation.ParticipationDTO;
+import com.amicalestar.backend.dto.sondage.participation.ReponseDTO;
+import com.amicalestar.backend.dto.sondage.stats.ChoixStatsDTO;
+import com.amicalestar.backend.dto.sondage.stats.QuestionStatsDTO;
+import com.amicalestar.backend.dto.sondage.stats.SondageStatsDTO;
+import com.amicalestar.backend.entities.sondage.Choix;
+import com.amicalestar.backend.entities.sondage.Participation;
+import com.amicalestar.backend.entities.sondage.Question;
+import com.amicalestar.backend.entities.sondage.Sondage;
+import com.amicalestar.backend.repositories.sondage.ParticipationRepository;
+import com.amicalestar.backend.repositories.sondage.ReponseRepository;
+import com.amicalestar.backend.repositories.sondage.SondageRepository;
+import com.amicalestar.backend.services.interfaces.SondageStatsService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
