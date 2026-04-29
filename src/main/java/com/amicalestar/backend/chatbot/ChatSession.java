@@ -2,10 +2,12 @@ package com.amicalestar.backend.chatbot;
 
 import java.util.List;
 
-public class ChatResponseDTO {
+public class ChatSession {
+
+    public String step; // GREETING, INTENT, DETAILS, RECOMMENDATION
+    public String intent;
     public Integer budget;
     public Integer participants;
-    public String type;
-    public String intent;
+    public String location;
     public List<String> keywords;
 }

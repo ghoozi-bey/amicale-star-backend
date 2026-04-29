@@ -43,4 +43,15 @@ public interface EvenementRepository extends JpaRepository<Evenement, Long> {
             @Param("participants") Integer participants,
             @Param("type") String type
     );
+    @Query("SELECT e FROM Evenement e WHERE " +
+            "(:budget IS NULL OR e.prix <= :budget) AND " +
+            "(:participants IS NULL OR e.nbPlaces >= :participants) AND " +
+            "(:type IS NULL OR LOWER(e.typeEvenement.nom) LIKE LOWER(CONCAT('%', :type, '%'))) AND " +
+            "(:keyword IS NULL OR LOWER(e.description) LIKE LOWER(CONCAT('%', :keyword, '%')))")
+    List<Evenement> searchAdvanced(
+            @Param("budget") Integer budget,
+            @Param("participants") Integer participants,
+            @Param("type") String type,
+            @Param("keyword") String keyword
+    );
 }
