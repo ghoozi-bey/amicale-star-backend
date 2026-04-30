@@ -5,15 +5,18 @@ import com.amicalestar.backend.repositories.evenement.EvenementRepository;
 import org.springframework.web.bind.annotation.*;
 
 import java.security.Principal;
-import java.util.*;
-import java.util.stream.Collectors;
+import java.util.Base64;
+import java.util.List;
+import java.util.Map;
+import java.util.HashMap;
 
 @RestController
-@RequestMapping("/chatbot")
+@RequestMapping("/api/chatbot")
 public class ChatbotController {
 
     private final OllamaService ollamaService;
     private final EvenementRepository evenementRepository;
+    private final Map<String, ChatSession> sessions = new HashMap<>();
 
     public ChatbotController(OllamaService ollamaService,
                              EvenementRepository evenementRepository) {
@@ -25,130 +28,164 @@ public class ChatbotController {
     public Object chat(@RequestBody String message, Principal principal) {
 
         String username = principal != null ? principal.getName() : "Utilisateur";
-        String msg = message.toLowerCase();
 
-        // 🔥 récupérer session
-        ChatSession session = sessions.getOrDefault(username, new ChatSession());
-
-        // 🧠 1. GREETING
-        if (msg.contains("bonjour") || msg.contains("salut")) {
-            return "Bonjour " + username + " 👋\nComment puis-je vous aider ?\n" +
-                    "- Voir événements\n" +
-                    "- Faire une inscription\n" +
-                    "- Trouver un événement adapté";
+        String cleanMessage = message.toLowerCase().trim();
+        // ⚡ FAST MODE (sans IA)
+        if (cleanMessage.contains("bonjour") || cleanMessage.contains("salut") || cleanMessage.contains("bonsoir") || cleanMessage.contains("cc") || cleanMessage.contains("coucou")|| cleanMessage.contains("hey")|| cleanMessage.contains("hi") ) {
+            return Map.of(
+                    "type", "text",
+                    "message", "Bonjour 👋 Comment puis-je vous aider ?"
+            );
         }
+        // 🔥 COMMANDE DIRECTE : TOUS LES EVENTS
+        if (cleanMessage.contains("tout") && cleanMessage.contains("evenement")) {
 
-        // 🧠 2. INSCRIPTION
-        if (msg.contains("inscription")) {
-            return "Vous pouvez consulter et gérer vos inscriptions depuis votre dashboard.";
-        }
+            sessions.remove(username); // reset
 
-        // 🧠 3. DASHBOARD
-        if (msg.contains("dashboard")) {
-            return "Accédez à votre dashboard pour suivre vos inscriptions, paiements et événements.";
-        }
+            List<Evenement> results = evenementRepository.findAll();
 
-        // 🧠 4. IA extraction
-        ChatResponseDTO dto = ollamaService.askAI(message);
+            return Map.of(
+                    "type", "events",
+                    "events", results.stream().map(e -> {
 
-        if (dto != null) {
-            if (dto.intent != null) session.intent = dto.intent;
-            if (dto.budget != null) session.budget = dto.budget;
-            if (dto.participants != null) session.participants = dto.participants;
-            if (dto.keywords != null) session.keywords = dto.keywords;
-        }
+                        String imageBase64 = null;
 
-        sessions.put(username, session);
+                        if (e.getPhoto() != null) {
+                            imageBase64 = "data:image/jpeg;base64," +
+                                    Base64.getEncoder().encodeToString(e.getPhoto());
+                        }
 
-        // 🧠 5. QUESTIONS PROGRESSIVES
-
-        if (session.intent == null) {
-            return "Quel type d’événement cherchez-vous ? (voyage, omra, convention...)";
-        }
-
-        if (session.participants == null) {
-            return "Pour combien de personnes ?";
-        }
-
-        if (session.budget == null) {
-            return "Quel est votre budget approximatif ?";
-        }
-
-        // 🧠 6. RECOMMANDATION
-
-        String type = mapIntent(session.intent);
-
-        List<Evenement> results = new ArrayList<>();
-
-        if (session.keywords != null && !session.keywords.isEmpty()) {
-            for (String keyword : session.keywords) {
-                results.addAll(
-                        evenementRepository.searchAdvanced(
-                                session.budget,
-                                session.participants,
-                                type,
-                                keyword
-                        )
-                );
-            }
-        } else {
-            results = evenementRepository.searchAdvanced(
-                    session.budget,
-                    session.participants,
-                    type,
-                    ""
+                        return Map.of(
+                                "id", e.getId(),
+                                "nom", e.getTitre(),
+                                "dateDebut", e.getDateDebut(),
+                                "prix", e.getPrix(),
+                                "imageUrl", imageBase64
+                        );
+                    }).toList()
             );
         }
 
-        // 🔥 supprimer doublons
-        List<Evenement> unique = results.stream()
-                .distinct()
-                .collect(Collectors.toList());
+        // 🧠 récupérer session
+        ChatSession session = sessions.getOrDefault(username, new ChatSession());
 
-        // 🔥 ranking IA
-        List<Long> rankedIds = ollamaService.rankEvents(message, unique);
+        // 🧠 IA extraction
+        ChatResponseDTO dto = ollamaService.askAI(cleanMessage);
 
-        List<Evenement> finalResults = rankedIds.stream()
-                .map(id -> unique.stream()
-                        .filter(e -> e.getId().equals(id))
-                        .findFirst()
-                        .orElse(null))
-                .filter(Objects::nonNull)
-                .collect(Collectors.toList());
+        // 🔥 NORMALISATION TYPE
+        String normalizedType = normalizeType(dto.type, cleanMessage);
 
-        // 🧠 7. PAS DE RESULTAT
-        if (finalResults.isEmpty()) {
-            return "Je n’ai pas trouvé d’événements 😕\n" +
-                    "Essayez de modifier votre budget ou votre type.";
+        // 🔢 extraction nombre fallback
+        Integer participants = dto.participants != null ? dto.participants : extractNumber(cleanMessage);
+
+        Integer budget = dto.budget;
+
+        // 🔥 MERGE SESSION (clé)
+        if (normalizedType != null) session.type = normalizedType;
+        if (participants != null) session.participants = participants;
+        if (budget != null) session.budget = budget;
+
+        sessions.put(username, session);
+
+        // 🎯 LOGIQUE INTELLIGENTE
+
+        if (session.type == null) {
+            return Map.of(
+                    "type", "text",
+                    "message", "Quel type d’événement cherchez-vous ? (voyage, omra, convention)"
+            );
         }
 
-        // 🧠 8. RESET SESSION (IMPORTANT)
+        if (session.participants == null) {
+            return Map.of(
+                    "type", "text",
+                    "message", "Pour combien de personnes ?"
+            );
+        }
+
+        // 🔥 SI CE N'EST PAS CONVENTION → demander budget
+        if (session.budget == null && !"CONVENTION".equals(session.type)) {
+            return Map.of(
+                    "type", "text",
+                    "message", "Quel est votre budget approximatif ?"
+            );
+        }
+
+        // 🔥 SEARCH FINAL
+        List<Evenement> results = evenementRepository.searchAdvanced(
+                session.budget,
+                session.participants,
+                session.type,
+                ""
+        );
+
+        // 🔥 RESET SESSION (important)
         sessions.remove(username);
 
-        // 🧠 9. RÉPONSE FINALE
-        Map<String, Object> response = new HashMap<>();
-        response.put("message", "Parfait " + username + " 👌 Voici les meilleurs événements pour vous 👇");
-        response.put("events", finalResults);
+        // 🔥 TRANSFORMATION PROPRE (TRÈS IMPORTANT)
+        return Map.of(
+                "type", "events",
+                "events", results.stream().map(e -> {
 
-        return response;
+                    String imageBase64 = null;
+
+                    if (e.getPhoto() != null) {
+                        imageBase64 = "data:image/jpeg;base64," +
+                                Base64.getEncoder().encodeToString(e.getPhoto());
+                    }
+
+                    return Map.of(
+                            "id", e.getId(),
+                            "nom", e.getTitre(),
+                            "dateDebut", e.getDateDebut(),
+                            "prix", e.getPrix(),
+                            "imageUrl", imageBase64
+                    );
+                }).toList()
+        );
     }
+    private String normalizeType(String type, String message) {
 
-    private String mapIntent(String intent) {
+        String text = (type != null ? type : "") + " " + message;
+        text = text.toLowerCase();
 
-        if (intent == null) return null;
+        if (text.contains("omra") || text.contains("hajj") || text.contains("haj")) {
+            return "OMRA & HAJ";
+        }
 
-        intent = intent.toLowerCase();
+        if (text.contains("voyage") || text.contains("trip") || text.contains("travel")||text.contains("hotel") || text.contains("voyage dans le sud")  ) {
+            return "VOYAGE";
+        }
 
-        if (intent.equals("vacation") || intent.equals("relaxation") ||
-                intent.equals("adventure") || intent.equals("family")) {
-            return "voyage";
-        } else if (intent.equals("religious")) {
-            return "omra";
-        } else if (intent.equals("business")) {
-            return "convention";
+        if (text.contains("convention") || text.contains("ooredoo") || text.contains("tunisieTelecon")||text.contains("orange") ||text.contains("OOREDOO") || text.contains("TunisieTélécom") || text.contains("ORANGE")) {
+            return "CONVENTION";
         }
 
         return null;
     }
-    private Map<String, ChatSession> sessions = new HashMap<>();
+    private Integer extractNumber(String text) {
+
+        text = text.toLowerCase();
+
+        // chiffres
+        String digits = text.replaceAll("\\D", "");
+        if (!digits.isEmpty()) {
+            return Integer.parseInt(digits);
+        }
+
+        // mots
+        if (text.contains("un") || text.contains("une")) return 1;
+        if (text.contains("deux")) return 2;
+        if (text.contains("trois")) return 3;
+        if (text.contains("quatre")) return 4;
+        if (text.contains("cinq")) return 5;
+        if (text.contains("six")) return 6;
+        if (text.contains("sept")) return 7;
+        if (text.contains("huit")) return 8;
+        if (text.contains("neuf")) return 9;
+        if (text.contains("dix")) return 10;
+
+        return null;
+    }
+
 }

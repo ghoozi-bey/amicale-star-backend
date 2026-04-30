@@ -1,130 +1,96 @@
 package com.amicalestar.backend.chatbot;
 
-import com.amicalestar.backend.entities.evenement.Evenement;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 @Service
 public class OllamaService {
 
-    public ChatResponseDTO askAI(String userMessage) {
+    private final RestTemplate restTemplate = new RestTemplate();
+    private final ObjectMapper objectMapper = new ObjectMapper();
+
+    private final String URL = "http://localhost:11434/api/generate";
+
+
+    public ChatResponseDTO askAI(String message) {
+        
 
         try {
-            RestTemplate restTemplate = new RestTemplate();
-            ObjectMapper mapper = new ObjectMapper();
 
             String prompt = """
-You are an intelligent assistant for event recommendation.
+            You are an AI that extracts structured data.
 
-Your task is to extract structured data from a user's message.
+            STRICT RULES:
+            - Respond ONLY with valid JSON
+            - No text before or after JSON
+            - No explanation
 
-Extract the following fields:
-- budget: number (in dinars) or null
-- participants: number or null
-- intent: one of [vacation, religious, business, family, relaxation, adventure] or null
-- keywords: array of relevant keywords
-
-Guidelines:
-- Keywords should be short (hotel, piscine, famille, luxe, enfants)
-- Detect intent by meaning
-- If not found → null
-- Return ONLY JSON
-- No explanation
-
-Example:
-Input: "je veux un hotel avec piscine pour famille"
-Output:
-{
-  "budget": null,
-  "participants": null,
-  "intent": "family",
-  "keywords": ["hotel", "piscine", "famille"]
-}
-
-User message:
-""" + userMessage;
-
-            Map<String, Object> body = new HashMap<>();
-            body.put("model", "mistral");
-            body.put("prompt", prompt);
-            body.put("stream", false);
-
-            String rawResponse = restTemplate.postForObject(
-                    "http://localhost:11434/api/generate",
-                    body,
-                    String.class
-            );
-
-            Map<?, ?> result = mapper.readValue(rawResponse, Map.class);
-            String json = (String) result.get("response");
-
-            return mapper.readValue(json, ChatResponseDTO.class);
-
-        } catch (Exception e) {
-            e.printStackTrace();
-            return null;
-        }
-    }
-    public List<Long> rankEvents(String userMessage, List<Evenement> events) {
-
-        try {
-            RestTemplate restTemplate = new RestTemplate();
-            ObjectMapper mapper = new ObjectMapper();
-
-            StringBuilder eventsText = new StringBuilder();
-
-            for (Evenement e : events) {
-                eventsText.append("ID: ").append(e.getId()).append("\n")
-                        .append("Titre: ").append(e.getTitre()).append("\n")
-                        .append("Description: ").append(e.getDescription()).append("\n\n");
+            Format EXACTLY:
+            {
+              "type": "voyage | omra | convention | null",
+              "participants": number or null,
+              "budget": number or null
             }
 
-            String prompt = """
-        You are an intelligent assistant.
+            Examples:
 
-        A user is looking for events.
+            User: je veux une omra pour 2 personnes avec 3000
+            {
+              "type": "omra",
+              "participants": 2,
+              "budget": 3000
+            }
 
-        User request:
-        """ + userMessage + """
+            User: """ + message;
 
-        Here is a list of events:
+            Map<String, Object> request = new HashMap<>();
+            request.put("model", "llama3");
+            request.put("prompt", prompt);
+            request.put("stream", false);
 
-        """ + eventsText + """
+            Map response = restTemplate.postForObject(URL, request, Map.class);
 
-        Task:
-        - Select the most relevant events
-        - Return ONLY a JSON array of IDs sorted by relevance
-        - Example: [5,2,9]
-        - No explanation
-        """;
+            String result = (String) response.get("response");
 
-            Map<String, Object> body = new HashMap<>();
-            body.put("model", "mistral");
-            body.put("prompt", prompt);
-            body.put("stream", false);
+            System.out.println("RAW IA: " + result); // 🔥 DEBUG
 
-            String raw = restTemplate.postForObject(
-                    "http://localhost:11434/api/generate",
-                    body,
-                    String.class
-            );
+            String json = extractJson(result);
 
-            Map<?, ?> result = mapper.readValue(raw, Map.class);
-            String json = ((String) result.get("response")).trim();
-
-            return mapper.readValue(json, List.class);
+            return objectMapper.readValue(json, ChatResponseDTO.class);
 
         } catch (Exception e) {
             e.printStackTrace();
-            return events.stream()
-                    .map(Evenement::getId)
-                    .collect(Collectors.toList());
+            return new ChatResponseDTO(); // 🔥 fallback safe
         }
+    }
+
+    public String ask(String message) {
+
+        Map<String, Object> request = new HashMap<>();
+        request.put("model", "llama3");
+        request.put("prompt", message);
+        request.put("stream", false);
+
+        Map response = restTemplate.postForObject(URL, request, Map.class);
+
+        return (String) response.get("response");
+    }
+
+    private String extractJson(String text) {
+
+        if (text == null) return "{}";
+
+        int start = text.indexOf("{");
+        int end = text.lastIndexOf("}");
+
+        if (start != -1 && end != -1 && end > start) {
+            return text.substring(start, end + 1);
+        }
+
+        return "{}";
     }
 }
