@@ -4,7 +4,7 @@ public enum StatutElection {
 
     BROUILLON,
     PUBLIEE,
-    EN_COURS,
+    ACTIF,
     TERMINEE,
     FINALISEE,
     REJETEE

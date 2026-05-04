@@ -18,4 +18,10 @@ public interface ElectionService {
 
     void delete(Long id);
 
+    void updateStatut(Election e);
+
+    void publish(Long id);
+
+    void unpublish(Long id);
+
 }

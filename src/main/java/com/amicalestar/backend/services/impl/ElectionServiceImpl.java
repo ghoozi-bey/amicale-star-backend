@@ -57,8 +57,14 @@ public class ElectionServiceImpl implements ElectionService {
     @Override
     public List<ElectionResponseDTO> getAll() {
 
-        return electionRepository.findAll()
-                .stream()
+        List<Election> elections =
+                electionRepository.findAll();
+
+        elections.forEach(this::updateStatut);
+
+        electionRepository.saveAll(elections);
+
+        return elections.stream()
                 .map(this::mapToDTO)
                 .toList();
     }
@@ -71,6 +77,10 @@ public class ElectionServiceImpl implements ElectionService {
                         new RuntimeException("Election introuvable")
                 );
 
+        updateStatut(election);
+
+        electionRepository.save(election);
+
         return mapToDTO(election);
     }
 
@@ -81,6 +91,13 @@ public class ElectionServiceImpl implements ElectionService {
                 .orElseThrow(() ->
                         new RuntimeException("Election introuvable")
                 );
+
+        if(election.getStatut() != StatutElection.BROUILLON) {
+
+            throw new RuntimeException(
+                    "Seules les élections brouillon peuvent être modifiées"
+            );
+        }
 
         if(request.getDateFin().isBefore(request.getDateDebut())) {
             throw new RuntimeException(
@@ -129,10 +146,111 @@ public class ElectionServiceImpl implements ElectionService {
     @Override
     public void delete(Long id) {
 
-        if(!electionRepository.existsById(id)) {
-            throw new RuntimeException("Election introuvable");
+        Election election = electionRepository.findById(id)
+                .orElseThrow(() ->
+                        new RuntimeException("Election introuvable")
+                );
+
+        if(election.getStatut() != StatutElection.REJETEE) {
+
+            throw new RuntimeException(
+                    "Seules les élections rejetées peuvent être supprimées"
+            );
         }
 
-        electionRepository.deleteById(id);
+        electionRepository.delete(election);
+    }
+
+    @Override
+    public void updateStatut(Election e) {
+
+        // 🔒 NEVER TOUCH FINAL STATES
+        if (
+                e.getStatut() == StatutElection.TERMINEE
+                        || e.getStatut() == StatutElection.REJETEE
+                        || e.getStatut() == StatutElection.FINALISEE
+        ) {
+            return;
+        }
+
+        LocalDateTime now = LocalDateTime.now();
+
+        // ❌ BROUILLON expired → REJETEE
+        if (
+                e.getStatut() == StatutElection.BROUILLON
+                        && now.isAfter(e.getDateDebut())
+        ) {
+
+            e.setStatut(StatutElection.REJETEE);
+
+            return;
+        }
+
+        // 🟢 PUBLIEE → ACTIF
+        if (
+                e.getStatut() == StatutElection.PUBLIEE
+                        &&
+                        (
+                                now.isEqual(e.getDateDebut())
+                                        || now.isAfter(e.getDateDebut())
+                        )
+                        &&
+                        now.isBefore(e.getDateFin())
+        ) {
+
+            e.setStatut(StatutElection.ACTIF);
+
+            return;
+        }
+
+        // 🔴 ACTIF → TERMINEE
+        if (
+                e.getStatut() == StatutElection.ACTIF
+                        &&
+                        now.isAfter(e.getDateFin())
+        ) {
+
+            e.setStatut(StatutElection.TERMINEE);
+        }
+    }
+
+    @Override
+    public void publish(Long id) {
+
+        Election election = electionRepository.findById(id)
+                .orElseThrow(() ->
+                        new RuntimeException("Election introuvable")
+                );
+
+        if(election.getStatut() != StatutElection.BROUILLON) {
+
+            throw new RuntimeException(
+                    "Publication impossible"
+            );
+        }
+
+        election.setStatut(StatutElection.PUBLIEE);
+
+        electionRepository.save(election);
+    }
+
+    @Override
+    public void unpublish(Long id) {
+
+        Election election = electionRepository.findById(id)
+                .orElseThrow(() ->
+                        new RuntimeException("Election introuvable")
+                );
+
+        if(election.getStatut() != StatutElection.PUBLIEE) {
+
+            throw new RuntimeException(
+                    "Annulation impossible"
+            );
+        }
+
+        election.setStatut(StatutElection.BROUILLON);
+
+        electionRepository.save(election);
     }
 }

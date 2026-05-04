@@ -63,4 +63,22 @@ public class ElectionController {
 
         electionService.delete(id);
     }
+
+    // PUBLISH
+    @PutMapping("/{id}/publish")
+    public void publish(
+            @PathVariable Long id
+    ) {
+
+        electionService.publish(id);
+    }
+
+    // UNPUBLISH
+    @PutMapping("/{id}/unpublish")
+    public void unpublish(
+            @PathVariable Long id
+    ) {
+
+        electionService.unpublish(id);
+    }
 }

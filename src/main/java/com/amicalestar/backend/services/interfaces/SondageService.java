@@ -12,12 +12,12 @@ public interface SondageService {
     List<SondageResponse> getAllSondages();
     List<SondageResponse> getSondagesByCreatorEmail(String email);
     SondageResponse getSondageById(Long id);
-    public Sondage publierSondage(Long id);
-    public void updateStatut(Sondage s);
-    public Sondage annulerPublication(Long id);
-    public void rejeterSondage(Long id);
+    Sondage publierSondage(Long id);
+    void updateStatut(Sondage s);
+    Sondage annulerPublication(Long id);
+    void rejeterSondage(Long id);
     Sondage updateSondage(Long id, CreateSondageRequest request);
-    public void supprimerSondage(Long id);
-    public List<SondageResponse> getActiveSondages();
-    public SondageResponse getActiveSondageById(Long id);
+    void supprimerSondage(Long id);
+    List<SondageResponse> getActiveSondages();
+    SondageResponse getActiveSondageById(Long id);
 }
