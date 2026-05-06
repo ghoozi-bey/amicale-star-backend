@@ -4,6 +4,7 @@ import lombok.Getter;
 import lombok.Setter;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Getter
 @Setter
@@ -16,5 +17,7 @@ public class CreateElectionRequest {
     private LocalDateTime dateDebut;
 
     private LocalDateTime dateFin;
+
+    private List<String> candidats;
 
 }

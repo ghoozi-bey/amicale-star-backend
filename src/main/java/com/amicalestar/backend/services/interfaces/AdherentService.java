@@ -1,8 +1,11 @@
 package com.amicalestar.backend.services.interfaces;
 
+import com.amicalestar.backend.dto.election.AdherentLiteDTO;
 import com.amicalestar.backend.entities.Adherent;
 import com.amicalestar.backend.dto.adherent.UpdateProfileRequest;
 import com.amicalestar.backend.dto.adherent.AdherentDTO;
+
+import java.util.List;
 
 
 public interface AdherentService {
@@ -36,4 +39,6 @@ public interface AdherentService {
      */
     void updateProfileByEmail(String email, UpdateProfileRequest request);
     AdherentDTO getProfileDTOByEmail(String email);
+
+    List<AdherentLiteDTO> getAllLite();
 }

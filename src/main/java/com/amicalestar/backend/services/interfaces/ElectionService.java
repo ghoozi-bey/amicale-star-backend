@@ -1,5 +1,6 @@
 package com.amicalestar.backend.services.interfaces;
 
+import com.amicalestar.backend.dto.election.AdherentLiteDTO;
 import com.amicalestar.backend.dto.election.CreateElectionRequest;
 import com.amicalestar.backend.dto.election.ElectionResponseDTO;
 import com.amicalestar.backend.entities.election.Election;
@@ -23,5 +24,9 @@ public interface ElectionService {
     void publish(Long id);
 
     void unpublish(Long id);
+
+    void reject(Long id);
+
+    List<AdherentLiteDTO> getEligibleAdherents(Long electionId);
 
 }

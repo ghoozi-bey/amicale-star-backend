@@ -1,5 +1,6 @@
 package com.amicalestar.backend.controllers;
 
+import com.amicalestar.backend.dto.election.AdherentLiteDTO;
 import com.amicalestar.backend.dto.election.CreateElectionRequest;
 import com.amicalestar.backend.dto.election.ElectionResponseDTO;
 import com.amicalestar.backend.entities.election.Election;
@@ -60,7 +61,6 @@ public class ElectionController {
     public void deleteElection(
             @PathVariable Long id
     ) {
-
         electionService.delete(id);
     }
 
@@ -80,5 +80,23 @@ public class ElectionController {
     ) {
 
         electionService.unpublish(id);
+    }
+
+    // REJECT
+    @PutMapping("/{id}/reject")
+    public void reject(
+            @PathVariable Long id
+    ) {
+
+        electionService.reject(id);
+    }
+
+    @GetMapping("/{id}/eligible-adherents")
+    public List<AdherentLiteDTO> getEligibleAdherents(
+            @PathVariable Long id
+    ) {
+
+        return electionService
+                .getEligibleAdherents(id);
     }
 }

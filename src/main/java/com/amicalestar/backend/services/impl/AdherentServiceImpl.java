@@ -1,6 +1,7 @@
 package com.amicalestar.backend.services.impl;
 
 import com.amicalestar.backend.dto.adherent.AdherentDTO;
+import com.amicalestar.backend.dto.election.AdherentLiteDTO;
 import com.amicalestar.backend.entities.Adherent;
 import com.amicalestar.backend.repositories.AdherentRepository;
 import com.amicalestar.backend.services.interfaces.AdherentService;
@@ -9,6 +10,8 @@ import com.amicalestar.backend.dto.adherent.UpdateProfileRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.security.crypto.password.PasswordEncoder;
+
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -197,6 +200,7 @@ public class AdherentServiceImpl implements AdherentService {
         return adherentRepository.findById(matricule)
                 .orElseThrow(() -> new RuntimeException("Adherent non trouvé"));
     }
+
     @Override
     public AdherentDTO getProfileDTOByEmail(String email) {
 
@@ -217,4 +221,38 @@ public class AdherentServiceImpl implements AdherentService {
         );
     }
 
+    @Override
+    public List<AdherentLiteDTO> getAllLite() {
+
+        return adherentRepository.findAll()
+                .stream()
+                .map(a -> {
+
+                    AdherentLiteDTO dto =
+                            new AdherentLiteDTO();
+
+                    dto.setMatricule(
+                            a.getMatricule()
+                    );
+
+                    dto.setNom(
+                            a.getNom()
+                    );
+
+                    dto.setPrenom(
+                            a.getPrenom()
+                    );
+
+                    dto.setDepartement(
+                            a.getDepartement().name()
+                    );
+
+                    dto.setRole(
+                            a.getTypeAdherent().name()
+                    );
+
+                    return dto;
+                })
+                .toList();
+    }
 }

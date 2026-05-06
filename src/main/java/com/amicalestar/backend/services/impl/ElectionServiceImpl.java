@@ -1,8 +1,10 @@
 package com.amicalestar.backend.services.impl;
 
+import com.amicalestar.backend.dto.election.AdherentLiteDTO;
 import com.amicalestar.backend.dto.election.CreateElectionRequest;
 import com.amicalestar.backend.dto.election.ElectionResponseDTO;
 import com.amicalestar.backend.entities.Adherent;
+import com.amicalestar.backend.entities.election.Candidat;
 import com.amicalestar.backend.entities.election.Election;
 import com.amicalestar.backend.enums.StatutElection;
 import com.amicalestar.backend.repositories.AdherentRepository;
@@ -12,7 +14,9 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 @Service
 @RequiredArgsConstructor
@@ -24,34 +28,110 @@ public class ElectionServiceImpl implements ElectionService {
     @Override
     public ElectionResponseDTO create(CreateElectionRequest request, String email) {
 
-        Adherent creator = adherentRepository.findByEmail(email)
-                .orElseThrow(() -> new RuntimeException("Utilisateur introuvable"));
+        Adherent creator =
+                adherentRepository.findByEmail(email)
+                        .orElseThrow(() ->
+                                new RuntimeException(
+                                        "Utilisateur introuvable"
+                                )
+                        );
+
+        // VALIDATION
+        if(
+                request.getDateDebut() == null
+                        || request.getDateFin() == null
+        ) {
+
+            throw new RuntimeException(
+                    "Les dates sont obligatoires"
+            );
+        }
+
+        if(
+                request.getDateFin()
+                        .isBefore(request.getDateDebut())
+        ) {
+
+            throw new RuntimeException(
+                    "La date de fin doit être après la date début"
+            );
+        }
 
         Election election = new Election();
 
-        election.setTitle(request.getTitle());
-        election.setDescription(request.getDescription());
-        election.setDateDebut(request.getDateDebut());
-        election.setDateFin(request.getDateFin());
+        election.setTitle(
+                request.getTitle()
+        );
 
-        election.setCreatedBy(creator);
+        election.setDescription(
+                request.getDescription()
+        );
 
-        Election saved = electionRepository.save(election);
+        election.setDateDebut(
+                request.getDateDebut()
+        );
 
-        ElectionResponseDTO dto = new ElectionResponseDTO();
+        election.setDateFin(
+                request.getDateFin()
+        );
 
-        dto.setId(saved.getId());
-        dto.setTitle(saved.getTitle());
-        dto.setDescription(saved.getDescription());
-        dto.setDateCreation(saved.getDateCreation());
-        dto.setDateDebut(saved.getDateDebut());
-        dto.setDateFin(saved.getDateFin());
-        dto.setStatut(saved.getStatut());
+        election.setCreatedBy(
+                creator
+        );
 
-        dto.setCreatedByNom(saved.getCreatedBy().getNom());
-        dto.setCreatedByPrenom(saved.getCreatedBy().getPrenom());
+        Election saved =
+                electionRepository.save(election);
 
-        return dto;
+        // ===== ADD CANDIDATS =====
+
+        if(
+                request.getCandidats() != null
+        ) {
+            Set<String> unique =
+                    new HashSet<>(
+                            request.getCandidats()
+                    );
+
+            if(
+                    unique.size()
+                            != request.getCandidats().size()
+            ) {
+
+                throw new RuntimeException(
+                        "Candidats dupliqués"
+                );
+            }
+
+            for(
+                    String matricule :
+                    request.getCandidats()
+            ) {
+
+                Adherent adherent =
+                        adherentRepository
+                                .findById(matricule)
+                                .orElseThrow(() ->
+                                        new RuntimeException(
+                                                "Adhérent introuvable"
+                                        )
+                                );
+
+                Candidat candidat =
+                        new Candidat();
+
+                candidat.setElection(saved);
+
+                candidat.setAdherent(adherent);
+
+                saved.getCandidats()
+                        .add(candidat);
+            }
+
+            saved =
+                    electionRepository.save(saved);
+        }
+
+        return mapToDTO(saved);
     }
 
     @Override
@@ -87,30 +167,129 @@ public class ElectionServiceImpl implements ElectionService {
     @Override
     public ElectionResponseDTO update(Long id, CreateElectionRequest request) {
 
-        Election election = electionRepository.findById(id)
-                .orElseThrow(() ->
-                        new RuntimeException("Election introuvable")
-                );
+        Election election =
+                electionRepository.findById(id)
+                        .orElseThrow(() ->
+                                new RuntimeException(
+                                        "Election introuvable"
+                                )
+                        );
 
-        if(election.getStatut() != StatutElection.BROUILLON) {
+        // UPDATE STATUS
+        updateStatut(election);
+
+        // ONLY BROUILLON
+        if(
+                election.getStatut()
+                        != StatutElection.BROUILLON
+        ) {
 
             throw new RuntimeException(
                     "Seules les élections brouillon peuvent être modifiées"
             );
         }
 
-        if(request.getDateFin().isBefore(request.getDateDebut())) {
+        // VALIDATION
+        if(
+                request.getDateDebut() == null
+                        || request.getDateFin() == null
+        ) {
+
             throw new RuntimeException(
-                    "La date de fin doit être après la date de début"
+                    "Les dates sont obligatoires"
             );
         }
 
-        election.setTitle(request.getTitle());
-        election.setDescription(request.getDescription());
-        election.setDateDebut(request.getDateDebut());
-        election.setDateFin(request.getDateFin());
+        if(
+                request.getDateFin()
+                        .isBefore(request.getDateDebut())
+        ) {
 
-        Election saved = electionRepository.save(election);
+            throw new RuntimeException(
+                    "La date de fin doit être après la date début"
+            );
+        }
+
+        if(
+                request.getDateDebut()
+                        .isBefore(LocalDateTime.now())
+        ) {
+
+            throw new RuntimeException(
+                    "La date début doit être dans le futur"
+            );
+        }
+
+        // UPDATE INFOS
+        election.setTitle(
+                request.getTitle()
+        );
+
+        election.setDescription(
+                request.getDescription()
+        );
+
+        election.setDateDebut(
+                request.getDateDebut()
+        );
+
+        election.setDateFin(
+                request.getDateFin()
+        );
+
+        // ===== RESET CANDIDATS =====
+
+        election.getCandidats()
+                .clear();
+
+        // ===== RE-ADD =====
+
+        if(
+                request.getCandidats() != null
+        ) {
+            Set<String> unique =
+                    new HashSet<>(
+                            request.getCandidats()
+                    );
+
+            if(
+                    unique.size()
+                            != request.getCandidats().size()
+            ) {
+
+                throw new RuntimeException(
+                        "Candidats dupliqués"
+                );
+            }
+
+            for(
+                    String matricule :
+                    request.getCandidats()
+            ) {
+
+                Adherent adherent =
+                        adherentRepository
+                                .findById(matricule)
+                                .orElseThrow(() ->
+                                        new RuntimeException(
+                                                "Adhérent introuvable"
+                                        )
+                                );
+
+                Candidat candidat =
+                        new Candidat();
+
+                candidat.setElection(election);
+
+                candidat.setAdherent(adherent);
+
+                election.getCandidats()
+                        .add(candidat);
+            }
+        }
+
+        Election saved =
+                electionRepository.save(election);
 
         return mapToDTO(saved);
     }
@@ -139,6 +318,17 @@ public class ElectionServiceImpl implements ElectionService {
                     election.getCreatedBy().getPrenom()
             );
         }
+
+        dto.setCandidats(
+
+                election.getCandidats()
+                        .stream()
+                        .map(c ->
+                                c.getAdherent()
+                                        .getMatricule()
+                        )
+                        .toList()
+        );
 
         return dto;
     }
@@ -253,4 +443,72 @@ public class ElectionServiceImpl implements ElectionService {
 
         electionRepository.save(election);
     }
+
+    @Override
+    public void reject(Long id) {
+
+        Election election = electionRepository.findById(id)
+                .orElseThrow(() ->
+                        new RuntimeException("Election introuvable")
+                );
+
+        if(election.getStatut() != StatutElection.BROUILLON) {
+
+            throw new RuntimeException(
+                    "Seules les élections brouillon peuvent être rejetées"
+            );
+        }
+
+        election.setStatut(StatutElection.REJETEE);
+
+        electionRepository.save(election);
+    }
+
+    @Override
+    public List<AdherentLiteDTO> getEligibleAdherents(Long electionId) {
+
+        Election election = electionRepository.findById(electionId)
+                .orElseThrow(() ->
+                        new RuntimeException("Election introuvable")
+                );
+
+        List<String> candidatMatricules =
+                election.getCandidats()
+                        .stream()
+                        .map(c -> c.getAdherent().getMatricule())
+                        .toList();
+
+        return adherentRepository.findAll()
+                .stream()
+
+                // exclude already candidates
+                .filter(a ->
+                        !candidatMatricules.contains(
+                                a.getMatricule()
+                        )
+                )
+
+                .map(a -> {
+
+                    AdherentLiteDTO dto =
+                            new AdherentLiteDTO();
+
+                    dto.setMatricule(
+                            a.getMatricule()
+                    );
+
+                    dto.setNom(
+                            a.getNom()
+                    );
+
+                    dto.setPrenom(
+                            a.getPrenom()
+                    );
+
+                    return dto;
+                })
+
+                .toList();
+    }
+
 }

@@ -5,6 +5,7 @@ import lombok.Getter;
 import lombok.Setter;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Getter
 @Setter
@@ -27,4 +28,6 @@ public class ElectionResponseDTO {
     private String createdByNom;
 
     private String createdByPrenom;
+
+    private List<String> candidats;
 }

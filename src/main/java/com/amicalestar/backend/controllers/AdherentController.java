@@ -2,6 +2,7 @@ package com.amicalestar.backend.controllers;
 
 import com.amicalestar.backend.dto.adherent.AdherentDTO;
 import com.amicalestar.backend.dto.adherent.UpdateProfileRequest;
+import com.amicalestar.backend.dto.election.AdherentLiteDTO;
 import com.amicalestar.backend.entities.Adherent;
 import com.amicalestar.backend.services.interfaces.AdherentService;
 import lombok.RequiredArgsConstructor;
@@ -12,6 +13,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 @RestController
@@ -85,4 +87,11 @@ public class AdherentController {
                     .body("Erreur interne serveur");
         }
     }
+
+    @GetMapping("/lite")
+    public List<AdherentLiteDTO> getAllLite() {
+
+        return adherentService.getAllLite();
+    }
+
 }
