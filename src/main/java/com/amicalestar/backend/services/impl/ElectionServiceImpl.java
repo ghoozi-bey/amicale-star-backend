@@ -7,7 +7,9 @@ import com.amicalestar.backend.entities.Adherent;
 import com.amicalestar.backend.entities.election.Candidat;
 import com.amicalestar.backend.entities.election.Election;
 import com.amicalestar.backend.enums.StatutElection;
+import com.amicalestar.backend.enums.TypeAdherent;
 import com.amicalestar.backend.repositories.AdherentRepository;
+import com.amicalestar.backend.repositories.Election.CandidatRepository;
 import com.amicalestar.backend.repositories.Election.ElectionRepository;
 import com.amicalestar.backend.services.interfaces.ElectionService;
 import lombok.RequiredArgsConstructor;
@@ -17,6 +19,7 @@ import java.time.LocalDateTime;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -24,6 +27,7 @@ public class ElectionServiceImpl implements ElectionService {
 
     private final ElectionRepository electionRepository;
     private final AdherentRepository adherentRepository;
+    private final CandidatRepository candidatRepository;
 
     @Override
     public ElectionResponseDTO create(CreateElectionRequest request, String email) {
@@ -57,6 +61,46 @@ public class ElectionServiceImpl implements ElectionService {
             );
         }
 
+        if(
+                request.getDateDebut()
+                        .isBefore(LocalDateTime.now())
+        ) {
+
+            throw new RuntimeException(
+                    "La date début doit être dans le futur"
+            );
+        }
+
+        if(
+                request.getNombreCandidats() == null
+                        || request.getNombreCandidats() <= 1
+        ) {
+
+            throw new RuntimeException(
+                    "Le nombre de candidats doit être supérieur à 0"
+            );
+        }
+
+        if(
+                request.getNombreGagnants() == null
+                        || request.getNombreGagnants() <= 0
+        ) {
+
+            throw new RuntimeException(
+                    "Le nombre de gagnants doit être supérieur à 0"
+            );
+        }
+
+        if(
+                request.getNombreGagnants()
+                        >= request.getNombreCandidats()
+        ) {
+
+            throw new RuntimeException(
+                    "Le nombre de gagnants doit être inférieur au nombre de candidats"
+            );
+        }
+
         Election election = new Election();
 
         election.setTitle(
@@ -75,12 +119,17 @@ public class ElectionServiceImpl implements ElectionService {
                 request.getDateFin()
         );
 
+        election.setNombreCandidats(
+                request.getNombreCandidats()
+        );
+
+        election.setNombreGagnants(
+                request.getNombreGagnants()
+        );
+
         election.setCreatedBy(
                 creator
         );
-
-        Election saved =
-                electionRepository.save(election);
 
         // ===== ADD CANDIDATS =====
 
@@ -102,6 +151,16 @@ public class ElectionServiceImpl implements ElectionService {
                 );
             }
 
+            if(
+                    request.getCandidats().size()
+                            > request.getNombreCandidats()
+            ) {
+
+                throw new RuntimeException(
+                        "Le nombre de candidats dépasse la limite autorisée"
+                );
+            }
+
             for(
                     String matricule :
                     request.getCandidats()
@@ -116,22 +175,30 @@ public class ElectionServiceImpl implements ElectionService {
                                         )
                                 );
 
+                if(
+                        adherent.getTypeAdherent()
+                                == TypeAdherent.RESPONSABLE_ELECTION
+                ) {
+
+                    throw new RuntimeException(
+                            "Un responsable élection ne peut pas être candidat"
+                    );
+                }
+
                 Candidat candidat =
                         new Candidat();
 
-                candidat.setElection(saved);
+                candidat.setElection(election);
 
                 candidat.setAdherent(adherent);
 
-                saved.getCandidats()
+                election.getCandidats()
                         .add(candidat);
             }
-
-            saved =
-                    electionRepository.save(saved);
         }
+        election = electionRepository.save(election);
 
-        return mapToDTO(saved);
+        return mapToDTO(election);
     }
 
     @Override
@@ -220,6 +287,36 @@ public class ElectionServiceImpl implements ElectionService {
             );
         }
 
+        if(
+                request.getNombreCandidats() == null
+                        || request.getNombreCandidats() <= 0
+        ) {
+
+            throw new RuntimeException(
+                    "Le nombre de candidats doit être supérieur à 0"
+            );
+        }
+
+        if(
+                request.getNombreGagnants() == null
+                        || request.getNombreGagnants() <= 0
+        ) {
+
+            throw new RuntimeException(
+                    "Le nombre de gagnants doit être supérieur à 0"
+            );
+        }
+
+        if(
+                request.getNombreGagnants()
+                        >= request.getNombreCandidats()
+        ) {
+
+            throw new RuntimeException(
+                    "Le nombre de gagnants doit être inférieur au nombre de candidats"
+            );
+        }
+
         // UPDATE INFOS
         election.setTitle(
                 request.getTitle()
@@ -237,10 +334,21 @@ public class ElectionServiceImpl implements ElectionService {
                 request.getDateFin()
         );
 
+        election.setNombreCandidats(
+                request.getNombreCandidats()
+        );
+
+        election.setNombreGagnants(
+                request.getNombreGagnants()
+        );
+
         // ===== RESET CANDIDATS =====
 
-        election.getCandidats()
-                .clear();
+        candidatRepository.deleteAll(election.getCandidats());
+
+        election.getCandidats().clear();
+
+        candidatRepository.flush();
 
         // ===== RE-ADD =====
 
@@ -262,6 +370,16 @@ public class ElectionServiceImpl implements ElectionService {
                 );
             }
 
+            if(
+                    request.getCandidats().size()
+                            > request.getNombreCandidats()
+            ) {
+
+                throw new RuntimeException(
+                        "Le nombre de candidats dépasse la limite autorisée"
+                );
+            }
+
             for(
                     String matricule :
                     request.getCandidats()
@@ -276,6 +394,16 @@ public class ElectionServiceImpl implements ElectionService {
                                         )
                                 );
 
+                if(
+                        adherent.getTypeAdherent()
+                                == TypeAdherent.RESPONSABLE_ELECTION
+                ) {
+
+                    throw new RuntimeException(
+                            "Un responsable élection ne peut pas être candidat"
+                    );
+                }
+
                 Candidat candidat =
                         new Candidat();
 
@@ -288,10 +416,9 @@ public class ElectionServiceImpl implements ElectionService {
             }
         }
 
-        Election saved =
-                electionRepository.save(election);
+        election = electionRepository.save(election);
 
-        return mapToDTO(saved);
+        return mapToDTO(election);
     }
 
     private ElectionResponseDTO mapToDTO(Election election) {
@@ -305,6 +432,10 @@ public class ElectionServiceImpl implements ElectionService {
         dto.setDateCreation(election.getDateCreation());
         dto.setDateDebut(election.getDateDebut());
         dto.setDateFin(election.getDateFin());
+
+        dto.setNombreCandidats(election.getNombreCandidats());
+
+        dto.setNombreGagnants(election.getNombreGagnants());
 
         dto.setStatut(election.getStatut());
 
@@ -469,14 +600,19 @@ public class ElectionServiceImpl implements ElectionService {
 
         Election election = electionRepository.findById(electionId)
                 .orElseThrow(() ->
-                        new RuntimeException("Election introuvable")
+                        new RuntimeException(
+                                "Election introuvable"
+                        )
                 );
 
-        List<String> candidatMatricules =
+        Set<String> candidatMatricules =
                 election.getCandidats()
                         .stream()
-                        .map(c -> c.getAdherent().getMatricule())
-                        .toList();
+                        .map(c ->
+                                c.getAdherent()
+                                        .getMatricule()
+                        )
+                        .collect(Collectors.toSet());
 
         return adherentRepository.findAll()
                 .stream()
@@ -486,6 +622,12 @@ public class ElectionServiceImpl implements ElectionService {
                         !candidatMatricules.contains(
                                 a.getMatricule()
                         )
+                )
+
+                // exclude responsables election
+                .filter(a ->
+                        a.getTypeAdherent()
+                                != TypeAdherent.RESPONSABLE_ELECTION
                 )
 
                 .map(a -> {
@@ -503,6 +645,16 @@ public class ElectionServiceImpl implements ElectionService {
 
                     dto.setPrenom(
                             a.getPrenom()
+                    );
+
+                    dto.setDepartement(
+                            a.getDepartement()
+                                    .name()
+                    );
+
+                    dto.setRole(
+                            a.getTypeAdherent()
+                                    .name()
                     );
 
                     return dto;

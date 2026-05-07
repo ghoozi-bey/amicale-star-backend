@@ -33,6 +33,10 @@ public class Election {
     @Enumerated(EnumType.STRING)
     private StatutElection statut;
 
+    private Integer nombreCandidats;
+
+    private Integer nombreGagnants;
+
     @ManyToOne
     @JoinColumn(name = "created_by")
     private Adherent createdBy;

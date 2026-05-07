@@ -18,6 +18,10 @@ public class CreateElectionRequest {
 
     private LocalDateTime dateFin;
 
+    private Integer nombreCandidats;
+
+    private Integer nombreGagnants;
+
     private List<String> candidats;
 
 }

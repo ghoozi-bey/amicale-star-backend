@@ -25,6 +25,10 @@ public class ElectionResponseDTO {
 
     private StatutElection statut;
 
+    private Integer nombreCandidats;
+
+    private Integer nombreGagnants;
+
     private String createdByNom;
 
     private String createdByPrenom;
