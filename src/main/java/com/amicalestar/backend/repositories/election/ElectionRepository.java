@@ -1,4 +1,4 @@
-package com.amicalestar.backend.repositories.Election;
+package com.amicalestar.backend.repositories.election;
 
 import com.amicalestar.backend.entities.election.Election;
 import org.springframework.data.jpa.repository.JpaRepository;
