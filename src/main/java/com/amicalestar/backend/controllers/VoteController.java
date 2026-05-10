@@ -42,4 +42,32 @@ public class VoteController {
                 "Vote enregistré avec succès"
         );
     }
+
+    @GetMapping("/me/{electionId}")
+    public ResponseEntity<?> hasVoted(
+            @PathVariable Long electionId,
+            Authentication authentication
+    ) {
+
+        User userDetails =
+                (User) authentication.getPrincipal();
+
+        String email =
+                userDetails.getUsername();
+
+        Adherent currentUser =
+                adherentRepository.findByEmail(email)
+                        .orElseThrow(() ->
+                                new RuntimeException(
+                                        "Utilisateur introuvable"
+                                ));
+
+        boolean hasVoted =
+                voteService.hasVoted(
+                        electionId,
+                        currentUser
+                );
+
+        return ResponseEntity.ok(hasVoted);
+    }
 }

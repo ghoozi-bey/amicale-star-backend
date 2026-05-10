@@ -6,6 +6,7 @@ import com.amicalestar.backend.dto.election.ElectionResponseDTO;
 import com.amicalestar.backend.entities.election.Election;
 import com.amicalestar.backend.services.interfaces.ElectionService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
@@ -17,6 +18,27 @@ import java.util.List;
 public class ElectionController {
 
     private final ElectionService electionService;
+
+    // Endpoints for all users
+    @GetMapping("/actifs")
+    public ResponseEntity<List<ElectionResponseDTO>> getAllPublic() {
+
+        return ResponseEntity.ok(
+                electionService.getActiveElections()
+        );
+    }
+
+    @GetMapping("/actifs/{id}")
+    public ResponseEntity<ElectionResponseDTO> getPublicById(
+            @PathVariable Long id
+    ) {
+
+        return ResponseEntity.ok(
+                electionService.getActiveElectionById(id)
+        );
+    }
+
+    //Endpoints for responsable election
 
     // CREATE
     @PostMapping

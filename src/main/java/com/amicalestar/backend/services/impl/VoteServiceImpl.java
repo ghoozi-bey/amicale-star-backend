@@ -6,6 +6,7 @@ import com.amicalestar.backend.entities.election.Candidat;
 import com.amicalestar.backend.entities.election.Election;
 import com.amicalestar.backend.entities.election.Vote;
 import com.amicalestar.backend.enums.StatutElection;
+import com.amicalestar.backend.exceptions.ValidationException;
 import com.amicalestar.backend.repositories.election.CandidatRepository;
 import com.amicalestar.backend.repositories.election.ElectionRepository;
 import com.amicalestar.backend.repositories.election.VoteRepository;
@@ -44,9 +45,10 @@ public class VoteServiceImpl implements VoteService {
 
         // ===== VALIDATION ELECTION =====
 
-        if (election.getStatut() != StatutElection.ACTIF) {
+        if (election.getStatut()
+                != StatutElection.ACTIF) {
 
-            throw new RuntimeException(
+            throw new ValidationException(
                     "Election inactive"
             );
         }
@@ -56,7 +58,7 @@ public class VoteServiceImpl implements VoteService {
         if (request.getCandidatIds() == null
                 || request.getCandidatIds().isEmpty()) {
 
-            throw new RuntimeException(
+            throw new ValidationException(
                     "Aucun candidat sélectionné"
             );
         }
@@ -66,7 +68,7 @@ public class VoteServiceImpl implements VoteService {
         if (request.getCandidatIds().size()
                 > election.getNombreGagnants()) {
 
-            throw new RuntimeException(
+            throw new ValidationException(
                     "Nombre maximum de votes dépassé"
             );
         }
@@ -74,54 +76,63 @@ public class VoteServiceImpl implements VoteService {
         // ===== VALIDATION DOUBLONS =====
 
         Set<Long> uniqueIds =
-                new HashSet<>(request.getCandidatIds());
+                new HashSet<>(
+                        request.getCandidatIds()
+                );
 
         if (uniqueIds.size()
                 != request.getCandidatIds().size()) {
 
-            throw new RuntimeException(
+            throw new ValidationException(
                     "Doublons détectés"
             );
         }
 
         boolean alreadyParticipated =
-                voteRepository.existsByElectionIdAndVoterMatricule(
-                        election.getId(),
-                        currentUser.getMatricule()
-                );
+                voteRepository
+                        .existsByElectionIdAndVoterMatricule(
+                                election.getId(),
+                                currentUser.getMatricule()
+                        );
 
         if (alreadyParticipated) {
 
-            throw new RuntimeException(
+            throw new ValidationException(
                     "Vous avez déjà voté"
             );
         }
 
         // ===== SAVE VOTES =====
 
-        for (Long candidatId : request.getCandidatIds()) {
+        for (Long candidatId
+                : request.getCandidatIds()) {
 
-            Candidat candidat = candidatRepository
-                    .findById(candidatId)
-                    .orElseThrow(() ->
-                            new RuntimeException(
-                                    "Candidat introuvable"
-                            ));
+            Candidat candidat =
+                    candidatRepository
+                            .findById(candidatId)
+                            .orElseThrow(() ->
+                                    new RuntimeException(
+                                            "Candidat introuvable"
+                                    ));
 
             // candidat belongs to election
-            if (!candidat.getElection().getId()
+            if (!candidat.getElection()
+                    .getId()
                     .equals(election.getId())) {
 
-                throw new RuntimeException(
+                throw new ValidationException(
                         "Candidat invalide"
                 );
             }
 
             // prevent self vote
-            if (candidat.getAdherent().getMatricule()
-                    .equals(currentUser.getMatricule())) {
+            if (candidat.getAdherent()
+                    .getMatricule()
+                    .equals(
+                            currentUser.getMatricule()
+                    )) {
 
-                throw new RuntimeException(
+                throw new ValidationException(
                         "Impossible de voter pour soi-même"
                 );
             }
@@ -134,10 +145,25 @@ public class VoteServiceImpl implements VoteService {
 
             vote.setCandidat(candidat);
 
-            LocalDateTime now = LocalDateTime.now();
+            LocalDateTime now =
+                    LocalDateTime.now();
+
             vote.setVotedAt(now);
 
             voteRepository.save(vote);
         }
+    }
+
+    @Override
+    public boolean hasVoted(
+            Long electionId,
+            Adherent currentUser
+    ) {
+
+        return voteRepository
+                .existsByElectionIdAndVoterMatricule(
+                        electionId,
+                        currentUser.getMatricule()
+                );
     }
 }

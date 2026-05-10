@@ -59,7 +59,7 @@ public class SecurityConfig {
                         .requestMatchers("/api/sondages/**").hasRole("MEMBRE_AMICALE")
 
                         // ELECTIONS
-                        .requestMatchers("/api/elections/public/**").authenticated()
+                        .requestMatchers("/api/elections/actifs/**").authenticated()
                         .requestMatchers("/api/elections/**").hasRole("RESPONSABLE_ELECTION")
 
                         // USER

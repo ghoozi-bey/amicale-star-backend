@@ -29,4 +29,8 @@ public interface ElectionService {
 
     List<AdherentLiteDTO> getEligibleAdherents(Long electionId);
 
+    List<ElectionResponseDTO> getActiveElections();
+
+    ElectionResponseDTO getActiveElectionById(Long id);
+
 }

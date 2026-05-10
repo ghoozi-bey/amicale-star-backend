@@ -10,4 +10,9 @@ public interface VoteService {
             Adherent currentUser
     );
 
+    boolean hasVoted(
+            Long electionId,
+            Adherent currentUser
+    );
+
 }

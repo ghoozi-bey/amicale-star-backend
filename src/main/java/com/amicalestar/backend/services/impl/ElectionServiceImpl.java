@@ -1,6 +1,7 @@
 package com.amicalestar.backend.services.impl;
 
 import com.amicalestar.backend.dto.election.AdherentLiteDTO;
+import com.amicalestar.backend.dto.election.CandidatResponseDTO;
 import com.amicalestar.backend.dto.election.CreateElectionRequest;
 import com.amicalestar.backend.dto.election.ElectionResponseDTO;
 import com.amicalestar.backend.entities.Adherent;
@@ -454,10 +455,38 @@ public class ElectionServiceImpl implements ElectionService {
 
                 election.getCandidats()
                         .stream()
-                        .map(c ->
-                                c.getAdherent()
-                                        .getMatricule()
-                        )
+
+                        .map(c -> {
+
+                            CandidatResponseDTO dtoCandidat =
+                                    new CandidatResponseDTO();
+
+                            dtoCandidat.setId(
+                                    c.getId()
+                            );
+
+                            dtoCandidat.setElectionId(
+                                    election.getId()
+                            );
+
+                            dtoCandidat.setNom(
+                                    c.getAdherent()
+                                            .getNom()
+                            );
+
+                            dtoCandidat.setPrenom(
+                                    c.getAdherent()
+                                            .getPrenom()
+                            );
+
+                            dtoCandidat.setMatricule(
+                                    c.getAdherent()
+                                            .getMatricule()
+                            );
+
+                            return dtoCandidat;
+                        })
+
                         .toList()
         );
 
@@ -661,6 +690,53 @@ public class ElectionServiceImpl implements ElectionService {
                 })
 
                 .toList();
+    }
+
+    @Override
+    public List<ElectionResponseDTO> getActiveElections() {
+
+        List<Election> elections =
+                electionRepository.findAll();
+
+        elections.forEach(this::updateStatut);
+
+        electionRepository.saveAll(elections);
+
+        return elections.stream()
+
+                .filter(e ->
+                        e.getStatut()
+                                == StatutElection.ACTIF
+                )
+
+                .map(this::mapToDTO)
+
+                .toList();
+    }
+
+    @Override
+    public ElectionResponseDTO getActiveElectionById(Long id) {
+
+        Election election =
+                electionRepository.findById(id)
+                        .orElseThrow(() ->
+                                new RuntimeException(
+                                        "Election introuvable"
+                                ));
+
+        updateStatut(election);
+
+        electionRepository.save(election);
+
+        if (election.getStatut()
+                != StatutElection.ACTIF) {
+
+            throw new RuntimeException(
+                    "Election inactive"
+            );
+        }
+
+        return mapToDTO(election);
     }
 
 }

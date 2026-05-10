@@ -33,5 +33,5 @@ public class ElectionResponseDTO {
 
     private String createdByPrenom;
 
-    private List<String> candidats;
+    private List<CandidatResponseDTO> candidats;
 }
