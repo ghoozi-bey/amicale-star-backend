@@ -1,6 +1,7 @@
 package com.amicalestar.backend.chatbot;
 
 import com.amicalestar.backend.entities.evenement.Evenement;
+import com.amicalestar.backend.enums.StatutEvenement;
 import com.amicalestar.backend.repositories.evenement.EvenementRepository;
 import org.springframework.web.bind.annotation.*;
 
@@ -10,14 +11,14 @@ import java.util.List;
 import java.util.Map;
 import java.util.HashMap;
 
+import static java.awt.SystemColor.text;
+
 @RestController
 @RequestMapping("/api/chatbot")
 public class ChatbotController {
-
     private final OllamaService ollamaService;
     private final EvenementRepository evenementRepository;
     private final Map<String, ChatSession> sessions = new HashMap<>();
-
     public ChatbotController(OllamaService ollamaService,
                              EvenementRepository evenementRepository) {
         this.ollamaService = ollamaService;
@@ -30,19 +31,18 @@ public class ChatbotController {
         String username = principal != null ? principal.getName() : "Utilisateur";
 
         String cleanMessage = message.toLowerCase().trim();
-        // ⚡ FAST MODE (sans IA)
         if (cleanMessage.contains("bonjour") || cleanMessage.contains("salut") || cleanMessage.contains("bonsoir") || cleanMessage.contains("cc") || cleanMessage.contains("coucou")|| cleanMessage.contains("hey")|| cleanMessage.contains("hi") ) {
             return Map.of(
                     "type", "text",
                     "message", "Bonjour 👋 Comment puis-je vous aider ?"
             );
         }
-        // 🔥 COMMANDE DIRECTE : TOUS LES EVENTS
+
         if (cleanMessage.contains("tout") && cleanMessage.contains("evenement")) {
+            sessions.remove(username);
 
-            sessions.remove(username); // reset
-
-            List<Evenement> results = evenementRepository.findAll();
+            List<Evenement> results =
+                    evenementRepository.findByStatut(StatutEvenement.ACTIF);
 
             return Map.of(
                     "type", "events",
@@ -75,19 +75,31 @@ public class ChatbotController {
         // 🔥 NORMALISATION TYPE
         String normalizedType = normalizeType(dto.type, cleanMessage);
 
-        // 🔢 extraction nombre fallback
-        Integer participants = dto.participants != null ? dto.participants : extractNumber(cleanMessage);
 
+        Integer participants = dto.participants;
         Integer budget = dto.budget;
 
-        // 🔥 MERGE SESSION (clé)
-        if (normalizedType != null) session.type = normalizedType;
-        if (participants != null) session.participants = participants;
-        if (budget != null) session.budget = budget;
+
+
+        if (session.type == null && normalizedType != null) {
+            session.type = normalizedType;
+        }
+
+
+
+        if (session.participants == null && participants != null) {
+            session.participants = participants;
+        }
+
+
+
+        if (session.budget == null && budget != null) {
+            session.budget = budget;
+        }
 
         sessions.put(username, session);
 
-        // 🎯 LOGIQUE INTELLIGENTE
+
 
         if (session.type == null) {
             return Map.of(
@@ -95,34 +107,114 @@ public class ChatbotController {
                     "message", "Quel type d’événement cherchez-vous ? (voyage, omra, convention)"
             );
         }
+        // 🔥 CAS SPECIAL CONVENTION
+        if ("CONVENTION".equals(session.type)) {
 
+            // première demande
+            if (session.societe == null) {
+
+                // utilisateur vient juste d’écrire "convention"
+                if (cleanMessage.contains("convention")) {
+
+                    return Map.of(
+                            "type", "text",
+                            "message", "Quelle société cherchez-vous ?"
+                    );
+                }
+
+                // sauvegarder société
+                session.societe = cleanMessage;
+                sessions.put(username, session);
+            }
+
+            List<Evenement> results =
+                    evenementRepository.searchConvention(session.societe);
+            if (results.isEmpty()) {
+
+                sessions.remove(username);
+
+                return Map.of(
+                        "type", "text",
+                        "message", "Aucune convention correspondant à cette société n’a été trouvée."
+                );
+            }
+
+            sessions.remove(username);
+
+            return Map.of(
+                    "type", "events",
+                    "events", results.stream().map(e -> {
+
+                        String imageBase64 = null;
+
+                        if (e.getPhoto() != null) {
+                            imageBase64 = "data:image/jpeg;base64," +
+                                    Base64.getEncoder().encodeToString(e.getPhoto());
+                        }
+
+                        return Map.of(
+                                "id", e.getId(),
+                                "nom", e.getTitre(),
+                                "dateDebut", e.getDateDebut(),
+                                "prix", e.getPrix(),
+                                "imageUrl", imageBase64
+                        );
+                    }).toList()
+            );
+        }
+
+// 🔥 CAS NORMAL
         if (session.participants == null) {
-            return Map.of(
-                    "type", "text",
-                    "message", "Pour combien de personnes ?"
-            );
+            Integer number = extractNumber(cleanMessage);
+
+            if (number != null) {
+                session.participants = number;
+                sessions.put(username, session);
+
+                return Map.of(
+                        "type", "text",
+                        "message", "Quel est votre budget approximatif ?"
+                );
+            } else {
+                return Map.of(
+                        "type", "text",
+                        "message", "Pour combien de personnes ?"
+                );
+            }
         }
 
-        // 🔥 SI CE N'EST PAS CONVENTION → demander budget
-        if (session.budget == null && !"CONVENTION".equals(session.type)) {
-            return Map.of(
-                    "type", "text",
-                    "message", "Quel est votre budget approximatif ?"
-            );
-        }
+        if (session.budget == null) {
 
-        // 🔥 SEARCH FINAL
+            if (cleanMessage.matches("\\d+")) {
+                session.budget = Integer.parseInt(cleanMessage);
+                sessions.put(username, session);
+            } else {
+                return Map.of(
+                        "type", "text",
+                        "message", "Quel est votre budget approximatif ?"
+                );
+            }
+        }
         List<Evenement> results = evenementRepository.searchAdvanced(
                 session.budget,
                 session.participants,
                 session.type,
                 ""
         );
+        if (results.isEmpty()) {
 
-        // 🔥 RESET SESSION (important)
+            sessions.remove(username);
+
+            return Map.of(
+                    "type", "text",
+                    "message", "Aucun événement correspondant n’a été trouvé."
+            );
+        }
+
+
         sessions.remove(username);
 
-        // 🔥 TRANSFORMATION PROPRE (TRÈS IMPORTANT)
+
         return Map.of(
                 "type", "events",
                 "events", results.stream().map(e -> {
@@ -146,7 +238,11 @@ public class ChatbotController {
     }
     private String normalizeType(String type, String message) {
 
-        String text = (type != null ? type : "") + " " + message;
+        if (type == null || type.equalsIgnoreCase("null")) {
+            return null;
+        }
+
+        String text = type + " " + message;
         text = text.toLowerCase();
 
         if (text.contains("omra") || text.contains("hajj") || text.contains("haj")) {

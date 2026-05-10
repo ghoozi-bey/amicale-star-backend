@@ -4,4 +4,5 @@ public class ChatSession {
     public String type;
     public Integer participants;
     public Integer budget;
+    public String societe;
 }

@@ -44,6 +44,7 @@ public interface EvenementRepository extends JpaRepository<Evenement, Long> {
             @Param("type") String type
     );
     @Query("SELECT e FROM Evenement e WHERE " +
+            "e.statut = com.amicalestar.backend.enums.StatutEvenement.ACTIF AND " +
             "(:budget IS NULL OR e.prix <= :budget) AND " +
             "(:participants IS NULL OR e.nbPlaces >= :participants) AND " +
             "(:type IS NULL OR LOWER(e.typeEvenement.nom) LIKE LOWER(CONCAT('%', :type, '%'))) AND " +
@@ -53,5 +54,13 @@ public interface EvenementRepository extends JpaRepository<Evenement, Long> {
             @Param("participants") Integer participants,
             @Param("type") String type,
             @Param("keyword") String keyword
+    );
+    List<Evenement> findByStatut(StatutEvenement statut);
+    @Query("SELECT e FROM Evenement e WHERE " +
+            "e.statut = com.amicalestar.backend.enums.StatutEvenement.ACTIF AND " +
+            "LOWER(e.typeEvenement.nom) LIKE '%convention%' AND " +
+            "LOWER(e.societe) LIKE LOWER(CONCAT('%', :societe, '%'))")
+    List<Evenement> searchConvention(
+            @Param("societe") String societe
     );
 }
