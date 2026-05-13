@@ -38,9 +38,7 @@ public class VoteController {
 
         voteService.voter(request, currentUser);
 
-        return ResponseEntity.ok(
-                "Vote enregistré avec succès"
-        );
+        return ResponseEntity.ok().build();
     }
 
     @GetMapping("/me/{electionId}")

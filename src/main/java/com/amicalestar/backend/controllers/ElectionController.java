@@ -121,4 +121,15 @@ public class ElectionController {
         return electionService
                 .getEligibleAdherents(id);
     }
+
+    @GetMapping("/{id}/stats")
+    public ResponseEntity<?> getStats(
+            @PathVariable Long id
+    ) {
+
+        return ResponseEntity.ok(
+                electionService.getStats(id)
+        );
+    }
+
 }

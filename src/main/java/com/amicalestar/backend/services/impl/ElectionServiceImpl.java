@@ -1,22 +1,22 @@
 package com.amicalestar.backend.services.impl;
 
-import com.amicalestar.backend.dto.election.AdherentLiteDTO;
-import com.amicalestar.backend.dto.election.CandidatResponseDTO;
-import com.amicalestar.backend.dto.election.CreateElectionRequest;
-import com.amicalestar.backend.dto.election.ElectionResponseDTO;
+import com.amicalestar.backend.dto.election.*;
 import com.amicalestar.backend.entities.Adherent;
 import com.amicalestar.backend.entities.election.Candidat;
 import com.amicalestar.backend.entities.election.Election;
 import com.amicalestar.backend.enums.StatutElection;
 import com.amicalestar.backend.enums.TypeAdherent;
+import com.amicalestar.backend.exceptions.ValidationException;
 import com.amicalestar.backend.repositories.AdherentRepository;
 import com.amicalestar.backend.repositories.election.CandidatRepository;
 import com.amicalestar.backend.repositories.election.ElectionRepository;
+import com.amicalestar.backend.repositories.election.VoteRepository;
 import com.amicalestar.backend.services.interfaces.ElectionService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -29,6 +29,7 @@ public class ElectionServiceImpl implements ElectionService {
     private final ElectionRepository electionRepository;
     private final AdherentRepository adherentRepository;
     private final CandidatRepository candidatRepository;
+    private final VoteRepository voteRepository;
 
     @Override
     public ElectionResponseDTO create(CreateElectionRequest request, String email) {
@@ -36,7 +37,7 @@ public class ElectionServiceImpl implements ElectionService {
         Adherent creator =
                 adherentRepository.findByEmail(email)
                         .orElseThrow(() ->
-                                new RuntimeException(
+                                new ValidationException(
                                         "Utilisateur introuvable"
                                 )
                         );
@@ -47,7 +48,7 @@ public class ElectionServiceImpl implements ElectionService {
                         || request.getDateFin() == null
         ) {
 
-            throw new RuntimeException(
+            throw new ValidationException(
                     "Les dates sont obligatoires"
             );
         }
@@ -57,7 +58,7 @@ public class ElectionServiceImpl implements ElectionService {
                         .isBefore(request.getDateDebut())
         ) {
 
-            throw new RuntimeException(
+            throw new ValidationException(
                     "La date de fin doit être après la date début"
             );
         }
@@ -67,7 +68,7 @@ public class ElectionServiceImpl implements ElectionService {
                         .isBefore(LocalDateTime.now())
         ) {
 
-            throw new RuntimeException(
+            throw new ValidationException(
                     "La date début doit être dans le futur"
             );
         }
@@ -77,7 +78,7 @@ public class ElectionServiceImpl implements ElectionService {
                         || request.getNombreCandidats() <= 1
         ) {
 
-            throw new RuntimeException(
+            throw new ValidationException(
                     "Le nombre de candidats doit être supérieur à 0"
             );
         }
@@ -97,7 +98,7 @@ public class ElectionServiceImpl implements ElectionService {
                         >= request.getNombreCandidats()
         ) {
 
-            throw new RuntimeException(
+            throw new ValidationException(
                     "Le nombre de gagnants doit être inférieur au nombre de candidats"
             );
         }
@@ -147,7 +148,7 @@ public class ElectionServiceImpl implements ElectionService {
                             != request.getCandidats().size()
             ) {
 
-                throw new RuntimeException(
+                throw new ValidationException(
                         "Candidats dupliqués"
                 );
             }
@@ -157,7 +158,7 @@ public class ElectionServiceImpl implements ElectionService {
                             > request.getNombreCandidats()
             ) {
 
-                throw new RuntimeException(
+                throw new ValidationException(
                         "Le nombre de candidats dépasse la limite autorisée"
                 );
             }
@@ -171,7 +172,7 @@ public class ElectionServiceImpl implements ElectionService {
                         adherentRepository
                                 .findById(matricule)
                                 .orElseThrow(() ->
-                                        new RuntimeException(
+                                        new ValidationException(
                                                 "Adhérent introuvable"
                                         )
                                 );
@@ -181,7 +182,7 @@ public class ElectionServiceImpl implements ElectionService {
                                 == TypeAdherent.RESPONSABLE_ELECTION
                 ) {
 
-                    throw new RuntimeException(
+                    throw new ValidationException(
                             "Un responsable élection ne peut pas être candidat"
                     );
                 }
@@ -238,7 +239,7 @@ public class ElectionServiceImpl implements ElectionService {
         Election election =
                 electionRepository.findById(id)
                         .orElseThrow(() ->
-                                new RuntimeException(
+                                new ValidationException(
                                         "Election introuvable"
                                 )
                         );
@@ -252,7 +253,7 @@ public class ElectionServiceImpl implements ElectionService {
                         != StatutElection.BROUILLON
         ) {
 
-            throw new RuntimeException(
+            throw new ValidationException(
                     "Seules les élections brouillon peuvent être modifiées"
             );
         }
@@ -263,7 +264,7 @@ public class ElectionServiceImpl implements ElectionService {
                         || request.getDateFin() == null
         ) {
 
-            throw new RuntimeException(
+            throw new ValidationException(
                     "Les dates sont obligatoires"
             );
         }
@@ -273,7 +274,7 @@ public class ElectionServiceImpl implements ElectionService {
                         .isBefore(request.getDateDebut())
         ) {
 
-            throw new RuntimeException(
+            throw new ValidationException(
                     "La date de fin doit être après la date début"
             );
         }
@@ -283,7 +284,7 @@ public class ElectionServiceImpl implements ElectionService {
                         .isBefore(LocalDateTime.now())
         ) {
 
-            throw new RuntimeException(
+            throw new ValidationException(
                     "La date début doit être dans le futur"
             );
         }
@@ -293,7 +294,7 @@ public class ElectionServiceImpl implements ElectionService {
                         || request.getNombreCandidats() <= 0
         ) {
 
-            throw new RuntimeException(
+            throw new ValidationException(
                     "Le nombre de candidats doit être supérieur à 0"
             );
         }
@@ -303,7 +304,7 @@ public class ElectionServiceImpl implements ElectionService {
                         || request.getNombreGagnants() <= 0
         ) {
 
-            throw new RuntimeException(
+            throw new ValidationException(
                     "Le nombre de gagnants doit être supérieur à 0"
             );
         }
@@ -313,7 +314,7 @@ public class ElectionServiceImpl implements ElectionService {
                         >= request.getNombreCandidats()
         ) {
 
-            throw new RuntimeException(
+            throw new ValidationException(
                     "Le nombre de gagnants doit être inférieur au nombre de candidats"
             );
         }
@@ -366,7 +367,7 @@ public class ElectionServiceImpl implements ElectionService {
                             != request.getCandidats().size()
             ) {
 
-                throw new RuntimeException(
+                throw new ValidationException(
                         "Candidats dupliqués"
                 );
             }
@@ -376,7 +377,7 @@ public class ElectionServiceImpl implements ElectionService {
                             > request.getNombreCandidats()
             ) {
 
-                throw new RuntimeException(
+                throw new ValidationException(
                         "Le nombre de candidats dépasse la limite autorisée"
                 );
             }
@@ -390,7 +391,7 @@ public class ElectionServiceImpl implements ElectionService {
                         adherentRepository
                                 .findById(matricule)
                                 .orElseThrow(() ->
-                                        new RuntimeException(
+                                        new ValidationException(
                                                 "Adhérent introuvable"
                                         )
                                 );
@@ -400,7 +401,7 @@ public class ElectionServiceImpl implements ElectionService {
                                 == TypeAdherent.RESPONSABLE_ELECTION
                 ) {
 
-                    throw new RuntimeException(
+                    throw new ValidationException(
                             "Un responsable élection ne peut pas être candidat"
                     );
                 }
@@ -482,6 +483,12 @@ public class ElectionServiceImpl implements ElectionService {
                             dtoCandidat.setMatricule(
                                     c.getAdherent()
                                             .getMatricule()
+                            );
+
+                            dtoCandidat.setDepartement(
+                                    c.getAdherent()
+                                            .getDepartement()
+                                            .name()
                             );
 
                             return dtoCandidat;
@@ -737,6 +744,73 @@ public class ElectionServiceImpl implements ElectionService {
         }
 
         return mapToDTO(election);
+    }
+
+    @Override
+    public List<ElectionStatsDTO> getStats(Long electionId) {
+
+        Election election =
+                electionRepository.findById(electionId)
+                        .orElseThrow(() ->
+                                new RuntimeException(
+                                        "Election introuvable"
+                                ));
+
+        if (
+                election.getStatut() != StatutElection.ACTIF
+                        &&
+                        election.getStatut() != StatutElection.TERMINEE
+                        &&
+                        election.getStatut() != StatutElection.FINALISEE
+        ) {
+
+            throw new RuntimeException(
+                    "Les statistiques ne sont pas disponibles pour cette élection"
+            );
+        }
+
+        List<ElectionStatsDTO> stats =
+                new ArrayList<>();
+
+        for (Candidat candidat : election.getCandidats()) {
+
+            ElectionStatsDTO dto =
+                    new ElectionStatsDTO();
+
+            dto.setCandidatId(
+                    candidat.getId()
+            );
+
+            dto.setNom(
+                    candidat.getAdherent().getNom()
+            );
+
+            dto.setPrenom(
+                    candidat.getAdherent().getPrenom()
+            );
+
+            dto.setDepartement(
+                    candidat.getAdherent()
+                            .getDepartement()
+                            .name()
+            );
+
+            dto.setVotes(
+                    voteRepository.countVotesByCandidatId(
+                            candidat.getId()
+                    )
+            );
+
+            stats.add(dto);
+        }
+
+        stats.sort((a, b) ->
+                Long.compare(
+                        b.getVotes(),
+                        a.getVotes()
+                ));
+
+        return stats;
     }
 
 }

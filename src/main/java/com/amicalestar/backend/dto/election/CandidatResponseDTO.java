@@ -16,4 +16,6 @@ public class CandidatResponseDTO {
     private String prenom;
 
     private String matricule;
+
+    private String Departement;
 }
