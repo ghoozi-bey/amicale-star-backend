@@ -4,6 +4,7 @@ import com.amicalestar.backend.dto.election.*;
 import com.amicalestar.backend.entities.Adherent;
 import com.amicalestar.backend.entities.election.Candidat;
 import com.amicalestar.backend.entities.election.Election;
+import com.amicalestar.backend.entities.evenement.TypeEvenement;
 import com.amicalestar.backend.enums.StatutElection;
 import com.amicalestar.backend.enums.TypeAdherent;
 import com.amicalestar.backend.exceptions.ValidationException;
@@ -11,7 +12,9 @@ import com.amicalestar.backend.repositories.AdherentRepository;
 import com.amicalestar.backend.repositories.election.CandidatRepository;
 import com.amicalestar.backend.repositories.election.ElectionRepository;
 import com.amicalestar.backend.repositories.election.VoteRepository;
+import com.amicalestar.backend.repositories.evenement.TypeEvenementRepository;
 import com.amicalestar.backend.services.interfaces.ElectionService;
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -30,6 +33,8 @@ public class ElectionServiceImpl implements ElectionService {
     private final AdherentRepository adherentRepository;
     private final CandidatRepository candidatRepository;
     private final VoteRepository voteRepository;
+    private final TypeEvenementRepository
+            typeEvenementRepository;
 
     @Override
     public ElectionResponseDTO create(CreateElectionRequest request, String email) {
@@ -811,6 +816,300 @@ public class ElectionServiceImpl implements ElectionService {
                 ));
 
         return stats;
+    }
+
+    @Override
+    public List<ElectionWinnerDTO>
+    getElectionWinners(Long electionId) {
+
+        Election election =
+                electionRepository.findById(
+                        electionId
+                ).orElseThrow(() ->
+                        new RuntimeException(
+                                "Election introuvable"
+                        )
+                );
+
+        if (
+                election.getStatut()
+                        != StatutElection.TERMINEE
+                        &&
+                        election.getStatut()
+                                != StatutElection.FINALISEE
+        ) {
+
+            throw new ValidationException(
+                    "Les gagnants ne sont pas disponibles avant la cloture de l'election"
+            );
+        }
+
+        List<Candidat> candidats =
+                new ArrayList<>(
+                        election.getCandidats()
+                );
+
+        // ===== SORT =====
+
+        candidats.sort((a, b) -> {
+
+            Long votesA =
+                    voteRepository.countVotesByCandidatId(
+                            a.getId()
+                    );
+
+            Long votesB =
+                    voteRepository.countVotesByCandidatId(
+                            b.getId()
+                    );
+
+            int compareVotes =
+                    Long.compare(
+                            votesB,
+                            votesA
+                    );
+
+            // votes different
+            if (compareVotes != 0) {
+
+                return compareVotes;
+            }
+
+            // same votes
+            // oldest adherent wins
+
+            return a.getAdherent()
+                    .getDateinscription()
+                    .compareTo(
+                            b.getAdherent()
+                                    .getDateinscription()
+                    );
+        });
+
+        int winnersCount =
+                election.getNombreGagnants();
+
+        List<ElectionWinnerDTO> winners =
+                new ArrayList<>();
+
+        for (
+                int i = 0;
+                i < Math.min(
+                        winnersCount,
+                        candidats.size()
+                );
+                i++
+        ) {
+
+            Candidat candidat =
+                    candidats.get(i);
+
+            Long votes =
+                    voteRepository.countVotesByCandidatId(
+                            candidat.getId()
+                    );
+
+            ElectionWinnerDTO dto =
+                    new ElectionWinnerDTO();
+
+            dto.setMatricule(
+                    candidat.getAdherent()
+                            .getMatricule()
+            );
+
+            dto.setNom(
+                    candidat.getAdherent()
+                            .getNom()
+            );
+
+            dto.setPrenom(
+                    candidat.getAdherent()
+                            .getPrenom()
+            );
+
+            dto.setDepartement(
+                    String.valueOf(
+                            candidat.getAdherent()
+                                    .getDepartement()
+                    )
+            );
+
+            dto.setVotes(votes);
+
+            winners.add(dto);
+        }
+
+        return winners;
+    }
+
+    @Override
+    @Transactional
+    public void attribuerRoles(Long electionId, List<AttribuerRoleDTO> request) {
+
+        if (
+                request == null
+                        || request.isEmpty()
+        ) {
+
+            throw new ValidationException(
+                    "Aucun membre sélectionné"
+            );
+        }
+
+        Election election =
+                electionRepository.findById(
+                        electionId
+                ).orElseThrow(() ->
+                        new RuntimeException(
+                                "Election introuvable"
+                        )
+                );
+
+        // ===== ONLY TERMINEE / FINALISEE =====
+
+        if (
+                election.getStatut()
+                        != StatutElection.TERMINEE
+                        &&
+                        election.getStatut()
+                                != StatutElection.FINALISEE
+        ) {
+
+            throw new ValidationException(
+                    "Election non terminée"
+            );
+        }
+
+        // ===== GET WINNERS =====
+
+        List<ElectionWinnerDTO> winners =
+                getElectionWinners(
+                        electionId
+                );
+
+        Set<String> winnerMatricules =
+                winners.stream()
+                        .map(
+                                ElectionWinnerDTO
+                                        ::getMatricule
+                        )
+                        .collect(Collectors.toSet());
+
+        if (
+                request.size()
+                        != election.getNombreGagnants()
+        ) {
+
+            throw new ValidationException(
+                    "Le nombre de membres attribués doit être égal au nombre de gagnants"
+            );
+        }
+
+        Set<String> uniqueMatricules =
+                new HashSet<>();
+
+        for (
+                AttribuerRoleDTO dto
+                : request
+        ) {
+
+            if (
+                    !uniqueMatricules.add(
+                            dto.getMatricule()
+                    )
+            ) {
+
+                throw new ValidationException(
+                        "Membres dupliqués"
+                );
+            }
+        }
+
+        // ===== VALIDATE REQUEST =====
+
+        for (
+                AttribuerRoleDTO dto
+                : request
+        ) {
+
+            if (
+                    !winnerMatricules.contains(
+                            dto.getMatricule()
+                    )
+            ) {
+
+                throw new ValidationException(
+                        "Utilisateur non gagnant"
+                );
+            }
+        }
+
+        // ===== REMOVE OLD MEMBERS =====
+
+        List<Adherent> oldResponsables =
+                adherentRepository
+                        .findByTypeAdherent(
+                                TypeAdherent.MEMBRE_AMICALE
+                        );
+
+        for (Adherent adherent : oldResponsables) {
+
+            adherent.setTypeAdherent(
+                    TypeAdherent.ADHERENT
+            );
+
+            adherent.setTypeEvenement(
+                    null
+            );
+        }
+
+        // ===== ASSIGN NEW MEMBERS =====
+
+        for (
+                AttribuerRoleDTO dto
+                : request
+        ) {
+
+            Adherent adherent =
+                    adherentRepository
+                            .findById(
+                                    dto.getMatricule()
+                            )
+                            .orElseThrow(() ->
+                                    new RuntimeException(
+                                            "Adhérent introuvable"
+                                    )
+                            );
+
+            TypeEvenement typeEvenement =
+                    typeEvenementRepository
+                            .findById(
+                                    dto.getTypeEvenementId()
+                            )
+                            .orElseThrow(() ->
+                                    new RuntimeException(
+                                            "Type événement introuvable"
+                                    )
+                            );
+
+            adherent.setTypeAdherent(
+                    TypeAdherent.MEMBRE_AMICALE
+            );
+
+            adherent.setTypeEvenement(
+                    typeEvenement
+            );
+        }
+
+        // ===== FINALIZE ELECTION =====
+
+        election.setStatut(
+                StatutElection.FINALISEE
+        );
+
+        electionRepository.save(
+                election
+        );
     }
 
 }

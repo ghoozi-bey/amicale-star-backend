@@ -3,6 +3,7 @@ package com.amicalestar.backend.repositories;
 import com.amicalestar.backend.entities.Adherent;
 import com.amicalestar.backend.enums.Departement;
 
+import com.amicalestar.backend.enums.TypeAdherent;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
@@ -22,6 +23,7 @@ public interface AdherentRepository extends JpaRepository<Adherent, String> {
     // ================= RECHERCHE =================
     Optional<Adherent> findByCin(String cin);
     Optional<Adherent> findByMatricule(String matricule);
+    List<Adherent> findByTypeAdherent(TypeAdherent typeAdherent);
 
     // ================= VALIDATIONS =================
     boolean existsByEmail(String email);

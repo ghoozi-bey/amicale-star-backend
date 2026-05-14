@@ -1,9 +1,6 @@
 package com.amicalestar.backend.services.interfaces;
 
-import com.amicalestar.backend.dto.election.AdherentLiteDTO;
-import com.amicalestar.backend.dto.election.CreateElectionRequest;
-import com.amicalestar.backend.dto.election.ElectionResponseDTO;
-import com.amicalestar.backend.dto.election.ElectionStatsDTO;
+import com.amicalestar.backend.dto.election.*;
 import com.amicalestar.backend.entities.election.Election;
 
 import java.util.List;
@@ -34,6 +31,10 @@ public interface ElectionService {
 
     ElectionResponseDTO getActiveElectionById(Long id);
 
-    public List<ElectionStatsDTO> getStats(Long electionId);
+    List<ElectionStatsDTO> getStats(Long electionId);
+
+    void attribuerRoles(Long electionId, List<AttribuerRoleDTO> request);
+
+    List<ElectionWinnerDTO> getElectionWinners(Long electionId);
 
 }
