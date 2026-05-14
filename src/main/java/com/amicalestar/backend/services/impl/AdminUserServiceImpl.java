@@ -12,12 +12,16 @@ import com.amicalestar.backend.repositories.evenement.TypeEvenementRepository;
 import com.amicalestar.backend.services.interfaces.AdminUserService;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
-import java.util.List;
 import java.util.HashMap;
 import java.util.Map;
+
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 
 @Service
 @RequiredArgsConstructor
@@ -121,38 +125,60 @@ public class AdminUserServiceImpl implements AdminUserService {
 
     // ================= READ =================
     @Override
-    public List<AdherentDTO> getAllUsers() {
-        return adherentRepository.findAll().stream().map(user -> {
+    public Page<AdherentDTO> getAllUsers(
+            int page,
+            int size,
+            String sortBy,
+            String sortDir
+    ) {
 
-            Long typeEvenementId = user.getTypeEvenement() != null
-                    ? user.getTypeEvenement().getId()
-                    : null;
+        Sort sort = sortDir.equalsIgnoreCase("asc")
+                ? Sort.by(sortBy).ascending()
+                : Sort.by(sortBy).descending();
 
-            AdherentDTO dto = new AdherentDTO(
-                    user.getMatricule(),
-                    user.getNom(),
-                    user.getPrenom(),
-                    user.getEmail(),
-                    user.getTelephone(),
-                    user.getCin(),
-                    user.getTypeAdherent().name(),
-                    user.getDepartement().name(),
-                    "http://localhost:8080/api/user/photo/" + user.getMatricule(),
-                    user.getPhotoProfil() != null && user.getPhotoProfil().length > 0
-            );
+        Pageable pageable = PageRequest.of(
+                page,
+                size,
+                sort
+        );
 
-            dto.setTypeEvenementId(typeEvenementId);
-            dto.setActif(user.getActif());
-            dto.setDateNaissance(
-                    user.getDateNaissance() != null
-                            ? new java.text.SimpleDateFormat("yyyy-MM-dd")
-                            .format(user.getDateNaissance())
-                            : null
-            );
+        return adherentRepository
+                .findAll(pageable)
+                .map(user -> {
 
-            return dto;
+                    Long typeEvenementId = user.getTypeEvenement() != null
+                            ? user.getTypeEvenement().getId()
+                            : null;
 
-        }).toList();
+                    AdherentDTO dto = new AdherentDTO(
+                            user.getMatricule(),
+                            user.getNom(),
+                            user.getPrenom(),
+                            user.getEmail(),
+                            user.getTelephone(),
+                            user.getCin(),
+                            user.getTypeAdherent().name(),
+                            user.getDepartement().name(),
+                            "http://localhost:8080/api/user/photo/" + user.getMatricule(),
+                            user.getPhotoProfil() != null
+                                    && user.getPhotoProfil().length > 0
+                    );
+
+                    dto.setTypeEvenementId(typeEvenementId);
+
+                    dto.setActif(user.getActif());
+
+                    dto.setDateNaissance(
+                            user.getDateNaissance() != null
+                                    ? new java.text.SimpleDateFormat("yyyy-MM-dd")
+                                    .format(user.getDateNaissance())
+                                    : null
+                    );
+
+                    return dto;
+
+                });
+
     }
 
     @Override

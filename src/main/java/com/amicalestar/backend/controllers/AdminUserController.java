@@ -12,6 +12,8 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 import com.amicalestar.backend.dto.adherent.AdherentDTO;
+import org.springframework.data.domain.Page;
+
 
 import java.util.List;
 
@@ -30,8 +32,22 @@ public class AdminUserController {
     }
 
     @GetMapping("/users")
-    public List<AdherentDTO> getAll() {
-        return adminUserService.getAllUsers();
+    public Page<AdherentDTO> getAll(
+
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(defaultValue = "matricule") String sortBy,
+            @RequestParam(defaultValue = "asc") String sortDir
+
+    ) {
+
+        return adminUserService.getAllUsers(
+                page,
+                size,
+                sortBy,
+                sortDir
+        );
+
     }
 
     @DeleteMapping("/users/{matricule}")

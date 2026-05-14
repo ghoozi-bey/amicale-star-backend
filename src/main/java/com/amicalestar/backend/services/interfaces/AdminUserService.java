@@ -4,6 +4,7 @@ import com.amicalestar.backend.dto.adherent.AdherentDTO;
 import com.amicalestar.backend.dto.adherent.CreateUserRequest;
 import com.amicalestar.backend.dto.adherent.UpdateUserRequest;
 import com.amicalestar.backend.entities.Adherent;
+import org.springframework.data.domain.Page;
 
 import java.util.List;
 
@@ -11,7 +12,12 @@ public interface AdminUserService {
 
     Adherent createUser(CreateUserRequest request);
 
-    List<AdherentDTO> getAllUsers();
+    Page<AdherentDTO> getAllUsers(
+            int page,
+            int size,
+            String sortBy,
+            String sortDir
+    );
 
     AdherentDTO getUserByMatricule(String matricule);
 
