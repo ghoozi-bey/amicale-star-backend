@@ -43,6 +43,6 @@ public class Sondage {
         this.statut = StatutSondage.BROUILLON;
     }
 
-    @OneToMany(mappedBy = "sondage")
+    @OneToMany(mappedBy = "sondage", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Participation> participations = new ArrayList<>();
 }

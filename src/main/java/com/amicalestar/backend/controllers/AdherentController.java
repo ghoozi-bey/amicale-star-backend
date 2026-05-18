@@ -4,12 +4,15 @@ import com.amicalestar.backend.dto.adherent.AdherentDTO;
 import com.amicalestar.backend.dto.adherent.UpdateProfileRequest;
 import com.amicalestar.backend.dto.election.AdherentLiteDTO;
 import com.amicalestar.backend.entities.Adherent;
+import com.amicalestar.backend.exceptions.ValidationException;
 import com.amicalestar.backend.services.interfaces.AdherentService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.HashMap;
@@ -65,27 +68,49 @@ public class AdherentController {
     }
 
     // ================= UPDATE PROFILE =================
+
     @PutMapping(value = "/profile", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    public ResponseEntity<?> updateProfile(@ModelAttribute UpdateProfileRequest request) {
+    public ResponseEntity<?> updateProfile(
+            @Valid @ModelAttribute UpdateProfileRequest request,
+            BindingResult result
+    ) {
 
-        String email = SecurityContextHolder.getContext().getAuthentication().getName();
+        String email = SecurityContextHolder
+                .getContext()
+                .getAuthentication()
+                .getName();
 
-        try {
-            adherentService.updateProfileByEmail(email, request);
-            return ResponseEntity.ok("Profil modifié avec succès");
+        // ================= VALIDATION =================
 
-        } catch (RuntimeException e) {
+        if (result.hasErrors()) {
 
-            return ResponseEntity
-                    .badRequest()
-                    .body(e.getMessage());
+            Map<String, String> errors = new HashMap<>();
 
-        } catch (Exception e) {
+            result.getFieldErrors().forEach(error ->
+                    errors.put(
+                            error.getField(),
+                            error.getDefaultMessage()
+                    )
+            );
 
-            return ResponseEntity
-                    .status(500)
-                    .body("Erreur interne serveur");
+            throw new ValidationException(errors);
         }
+
+        // ================= UPDATE =================
+
+        adherentService.updateProfileByEmail(
+                email,
+                request
+        );
+
+        // ================= RESPONSE =================
+
+        return ResponseEntity.ok(
+                Map.of(
+                        "message",
+                        "Profil modifié avec succès"
+                )
+        );
     }
 
     @GetMapping("/lite")

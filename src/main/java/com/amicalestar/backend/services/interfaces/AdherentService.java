@@ -10,10 +10,7 @@ import java.util.List;
 
 public interface AdherentService {
 
-    // ================= READ =================
-    Adherent getAdherentById(String matricule);
-
-    // 🔥 utilisé pour image endpoint
+    // utilisé pour image endpoint
     Adherent getByMatricule(String matricule);
 
     // ================= UPDATE ADMIN =================

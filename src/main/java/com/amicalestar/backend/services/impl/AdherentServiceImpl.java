@@ -3,6 +3,7 @@ package com.amicalestar.backend.services.impl;
 import com.amicalestar.backend.dto.adherent.AdherentDTO;
 import com.amicalestar.backend.dto.election.AdherentLiteDTO;
 import com.amicalestar.backend.entities.Adherent;
+import com.amicalestar.backend.exceptions.ValidationException;
 import com.amicalestar.backend.repositories.AdherentRepository;
 import com.amicalestar.backend.services.interfaces.AdherentService;
 import com.amicalestar.backend.dto.adherent.UpdateProfileRequest;
@@ -12,6 +13,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
 import java.util.List;
+import java.util.Map;
 
 @Service
 @RequiredArgsConstructor
@@ -20,12 +22,8 @@ public class AdherentServiceImpl implements AdherentService {
     private final AdherentRepository adherentRepository;
     private final PasswordEncoder passwordEncoder;
 
-    @Override
-    public Adherent getAdherentById(String matricule) {
-        return adherentRepository.findById(matricule).orElse(null);
-    }
 
-    // 🔥 IMPORTANT pour controller image
+    // IMPORTANT pour controller image
     @Override
     public Adherent getByMatricule(String matricule) {
         return adherentRepository.findById(matricule)
@@ -103,76 +101,176 @@ public class AdherentServiceImpl implements AdherentService {
     public void updateProfileByEmail(String email, UpdateProfileRequest request) {
 
         Adherent adherent = adherentRepository.findByEmail(email)
-                .orElseThrow(() -> new RuntimeException("Utilisateur non trouvé"));
+                .orElseThrow(() ->
+                        new RuntimeException("Utilisateur non trouvé")
+                );
 
-        // ================= INFOS =================
-        if (request.getNom() != null && !request.getNom().isEmpty()) {
-            adherent.setNom(request.getNom());
+        // ================= EMAIL =================
+
+        if (request.getEmail() != null &&
+                !request.getEmail().isBlank()) {
+
+            adherentRepository.findByEmail(request.getEmail())
+                    .ifPresent(user -> {
+
+                        if (!user.getMatricule().equals(adherent.getMatricule())) {
+
+                            throw new ValidationException(
+                                    Map.of(
+                                            "email",
+                                            "Email déjà utilisé"
+                                    )
+                            );
+                        }
+                    });
+
+            adherent.setEmail(
+                    request.getEmail().trim()
+            );
         }
 
-        if (request.getPrenom() != null && !request.getPrenom().isEmpty()) {
-            adherent.setPrenom(request.getPrenom());
+        // ================= NOM =================
+
+        if (request.getNom() != null &&
+                !request.getNom().isBlank()) {
+
+            adherent.setNom(
+                    request.getNom().trim()
+            );
         }
 
-        if (request.getEmail() != null && !request.getEmail().isEmpty()) {
-            adherent.setEmail(request.getEmail());
+        // ================= PRENOM =================
+
+        if (request.getPrenom() != null &&
+                !request.getPrenom().isBlank()) {
+
+            adherent.setPrenom(
+                    request.getPrenom().trim()
+            );
         }
 
-        if (request.getTelephone() != null && !request.getTelephone().isEmpty()) {
-            adherent.setTelephone(request.getTelephone());
+        // ================= TELEPHONE =================
+
+        if (request.getTelephone() != null &&
+                !request.getTelephone().isBlank()) {
+
+            adherentRepository.findByTelephone(
+                    request.getTelephone().trim()
+            ).ifPresent(user -> {
+
+                if (!user.getMatricule()
+                        .equals(adherent.getMatricule())) {
+
+                    throw new ValidationException(
+                            Map.of(
+                                    "telephone",
+                                    "Numéro de téléphone déjà utilisé"
+                            )
+                    );
+                }
+            });
+
+            adherent.setTelephone(
+                    request.getTelephone().trim()
+            );
         }
 
-        // ================= 🔥 PHOTO =================
+        // ================= PHOTO =================
 
         try {
 
-            // 🔥 DELETE PHOTO
-            System.out.println("REMOVE PHOTO VALUE = " + request.getRemovePhoto());
-            if (request.getRemovePhoto() != null &&
-                    request.getRemovePhoto().trim().equalsIgnoreCase("true")) {
-
-                System.out.println("🔥 SUPPRESSION PHOTO DETECTÉE");
+            if ("true".equalsIgnoreCase(
+                    request.getRemovePhoto()
+            )) {
 
                 adherent.setPhotoProfil(null);
                 adherent.setPhotoType(null);
             }
 
-            // 🔥 UPLOAD NEW PHOTO
-            else if (request.getPhotoProfil() != null && !request.getPhotoProfil().isEmpty()) {
+            else if (request.getPhotoProfil() != null &&
+                    !request.getPhotoProfil().isEmpty()) {
 
-                String contentType = request.getPhotoProfil().getContentType();
+                String contentType =
+                        request.getPhotoProfil().getContentType();
 
-                if (contentType == null || !contentType.startsWith("image/")) {
-                    throw new RuntimeException("Fichier invalide (image uniquement)");
+                if (contentType == null ||
+                        !contentType.startsWith("image/")) {
+
+                    throw new ValidationException(
+                            Map.of(
+                                    "photoProfil",
+                                    "Fichier invalide (image uniquement)"
+                            )
+                    );
                 }
 
-                if (request.getPhotoProfil().getSize() > 2 * 1024 * 1024) {
-                    throw new RuntimeException("Image trop grande (max 2MB)");
+                if (request.getPhotoProfil().getSize()
+                        > 2 * 1024 * 1024) {
+
+                    throw new ValidationException(
+                            Map.of(
+                                    "photoProfil",
+                                    "Image trop grande (max 2MB)"
+                            )
+                    );
                 }
 
-                adherent.setPhotoProfil(request.getPhotoProfil().getBytes());
+                adherent.setPhotoProfil(
+                        request.getPhotoProfil().getBytes()
+                );
+
                 adherent.setPhotoType(contentType);
-
-                System.out.println("✅ Image bien sauvegardée en BLOB");
             }
 
+        } catch (ValidationException e) {
+
+            throw e;
+
         } catch (Exception e) {
-            throw new RuntimeException("Erreur traitement image: " + e.getMessage());
+
+            throw new RuntimeException(
+                    "Erreur traitement image"
+            );
         }
 
         // ================= PASSWORD =================
-        if (request.getNewPassword() != null && !request.getNewPassword().isEmpty()) {
+
+        if (request.getNewPassword() != null &&
+                !request.getNewPassword().isBlank()) {
 
             if (request.getCurrentPassword() == null ||
-                    !passwordEncoder.matches(request.getCurrentPassword(), adherent.getPassword())) {
+                    request.getCurrentPassword().isBlank()) {
 
-                throw new RuntimeException("Mot de passe actuel incorrect");
+                throw new ValidationException(
+                        Map.of(
+                                "currentPassword",
+                                "Mot de passe actuel requis"
+                        )
+                );
             }
 
-            adherent.setPassword(passwordEncoder.encode(request.getNewPassword()));
+            if (!passwordEncoder.matches(
+                    request.getCurrentPassword(),
+                    adherent.getPassword()
+            )) {
+
+                throw new ValidationException(
+                        Map.of(
+                                "currentPassword",
+                                "Mot de passe actuel incorrect"
+                        )
+                );
+            }
+
+            adherent.setPassword(
+                    passwordEncoder.encode(
+                            request.getNewPassword()
+                    )
+            );
         }
 
         // ================= SAVE =================
+
         adherentRepository.save(adherent);
     }
 
