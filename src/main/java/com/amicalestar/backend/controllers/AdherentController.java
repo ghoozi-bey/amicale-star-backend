@@ -24,12 +24,14 @@ import java.util.Map;
 @RequiredArgsConstructor
 public class AdherentController {
 
+    // Service de gestion des adhérents
     private final AdherentService adherentService;
 
-    // ================= GET PROFILE =================
+    // === Récupération du profil utilisateur ===
     @GetMapping("/profile")
     public ResponseEntity<?> getProfile() {
 
+        // Email de l'utilisateur connecté
         String email = SecurityContextHolder.getContext().getAuthentication().getName();
 
         AdherentDTO adherent = adherentService.getProfileDTOByEmail(email);
@@ -49,10 +51,11 @@ public class AdherentController {
         return ResponseEntity.ok(response);
     }
 
-    // ================= GET PHOTO =================
+    // === Récupération de la photo de profil ===
     @GetMapping("/photo/{matricule}")
     public ResponseEntity<byte[]> getPhoto(@PathVariable String matricule) {
 
+        // Recherche de l’adhérent
         Adherent adherent = adherentService.getByMatricule(matricule);
 
         if (adherent == null || adherent.getPhotoProfil() == null) {
@@ -62,26 +65,27 @@ public class AdherentController {
         String contentType = adherent.getPhotoType();
 
         return ResponseEntity.ok()
-                .header(HttpHeaders.CONTENT_TYPE,
-                        contentType != null ? contentType : MediaType.IMAGE_JPEG_VALUE)
+                .header(
+                        HttpHeaders.CONTENT_TYPE,
+                        contentType != null ? contentType : MediaType.IMAGE_JPEG_VALUE
+                )
                 .body(adherent.getPhotoProfil());
     }
 
-    // ================= UPDATE PROFILE =================
-
+    // === Mise à jour du profil utilisateur ===
     @PutMapping(value = "/profile", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<?> updateProfile(
             @Valid @ModelAttribute UpdateProfileRequest request,
             BindingResult result
     ) {
 
+        // Utilisateur connecté
         String email = SecurityContextHolder
                 .getContext()
                 .getAuthentication()
                 .getName();
 
-        // ================= VALIDATION =================
-
+        // Vérification des erreurs de validation
         if (result.hasErrors()) {
 
             Map<String, String> errors = new HashMap<>();
@@ -96,14 +100,11 @@ public class AdherentController {
             throw new ValidationException(errors);
         }
 
-        // ================= UPDATE =================
-
+        // Mise à jour du profil
         adherentService.updateProfileByEmail(
                 email,
                 request
         );
-
-        // ================= RESPONSE =================
 
         return ResponseEntity.ok(
                 Map.of(
@@ -113,6 +114,7 @@ public class AdherentController {
         );
     }
 
+    // === Liste simplifiée des adhérents ===
     @GetMapping("/lite")
     public List<AdherentLiteDTO> getAllLite() {
 

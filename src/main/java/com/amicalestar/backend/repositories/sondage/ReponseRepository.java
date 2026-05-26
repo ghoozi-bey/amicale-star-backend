@@ -7,6 +7,8 @@ import org.springframework.data.jpa.repository.Query;
 import java.util.List;
 
 public interface ReponseRepository extends JpaRepository<Reponse, Long> {
+
+    // === Comptage des réponses par choix d’une question ===
     @Query("""
     SELECT r.choix.id, COUNT(r)
     FROM Reponse r

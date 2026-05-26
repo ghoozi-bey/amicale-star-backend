@@ -19,11 +19,15 @@ public class CreateSondageRequest {
 
     private List<QuestionRequest> questions;
 
+    // === Informations d’une question du sondage ===
     @Data
     public static class QuestionRequest {
+
         private String text;
+
         @Enumerated(EnumType.STRING)
         private TypeQuestion type;
+
         private List<String> choix;
         private Boolean required;
     }

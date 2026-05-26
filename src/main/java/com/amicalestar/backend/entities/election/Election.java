@@ -41,15 +41,17 @@ public class Election {
     @JoinColumn(name = "created_by")
     private Adherent createdBy;
 
+    // Suppression automatique des candidats liés à l’élection
     @OneToMany(mappedBy = "election", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Candidat> candidats = new ArrayList<>();
 
+    // === Initialisation automatique avant insertion ===
     @PrePersist
     public void prePersist() {
 
         this.dateCreation = LocalDateTime.now();
 
-        if(this.statut == null) {
+        if (this.statut == null) {
             this.statut = StatutElection.BROUILLON;
         }
     }

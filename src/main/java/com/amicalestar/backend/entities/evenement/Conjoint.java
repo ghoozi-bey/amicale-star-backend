@@ -31,6 +31,7 @@ public class Conjoint {
     @Column(name = "telephone")
     private String telephone;
 
+    // Stockage du passeport en base de données
     @Lob
     @Column(name = "passport")
     private byte[] passport;

@@ -24,8 +24,10 @@ public class Evenement {
     private Long id;
 
     private String titre;
+
     @Column(columnDefinition = "TEXT")
     private String description;
+
     private String lieu;
 
     private LocalDate dateDebut;
@@ -34,6 +36,7 @@ public class Evenement {
     private Double prix;
     private Integer nbPlaces;
 
+    // Stockage de l’image en base de données
     @JsonIgnore
     @Column(name = "photo", columnDefinition = "bytea")
     private byte[] photo;
@@ -41,19 +44,19 @@ public class Evenement {
     @Column(name = "photo_type")
     private String photoType;
 
-
     @Enumerated(EnumType.STRING)
     private StatutEvenement statut;
 
-    // 🔥 IMPORTANT : garder JsonIgnore mais exposer ID
+    // Relation ignorée dans le JSON pour éviter la boucle infinie
     @JsonIgnore
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "type_evenement_id")
     private TypeEvenement typeEvenement;
 
-    // ✅ EXPOSER TYPE ID (TRÈS IMPORTANT)
+    // === Exposition de l’identifiant du type d’événement ===
     @JsonProperty("typeEvenementId")
     public Long getTypeEvenementId() {
+
         return typeEvenement != null ? typeEvenement.getId() : null;
     }
 
@@ -66,6 +69,7 @@ public class Evenement {
     private String agence;
     private String destination;
 
+    // Chargement lazy des inscriptions liées à l’événement
     @JsonIgnore
     @OneToMany(mappedBy = "evenement", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private List<Inscription> inscriptions;
@@ -73,22 +77,22 @@ public class Evenement {
     @Column(name = "is_international")
     private Boolean isInternational;
 
-    // ✅ FORCE JSON OUTPUT (IMPORTANT)
+    // === Retour sécurisé du statut international ===
     @JsonProperty("isInternational")
     public Boolean getIsInternationalSafe() {
+
         return isInternational != null ? isInternational : false;
     }
-    // 🔥 REMISES (OPTIONNELLES)
 
-    // enfant -12
+    // Remise enfant moins de 12 ans
     private Boolean remiseEnfant12Active;
     private Double remiseEnfant12Pourcentage;
 
-    // enfant -18
+    // Remise enfant moins de 18 ans
     private Boolean remiseEnfant18Active;
     private Double remiseEnfant18Pourcentage;
 
-    // couple
+    // Remise couple
     private Boolean remiseCoupleActive;
     private Double remiseCouplePourcentage;
 }

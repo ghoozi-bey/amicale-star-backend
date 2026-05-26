@@ -6,7 +6,6 @@ import java.time.LocalDate;
 
 @Getter
 @Setter
-
 @NoArgsConstructor
 @Builder
 public class PaiementDTO {
@@ -17,7 +16,17 @@ public class PaiementDTO {
     private String statut;
     private LocalDate datePaiement;
     private boolean hasJustificatif;
-    public PaiementDTO(Long id, Double montant, String modePaiement, String statut, LocalDate datePaiement, boolean hasJustificatif) {
+
+    // === Constructeur du DTO paiement ===
+    public PaiementDTO(
+            Long id,
+            Double montant,
+            String modePaiement,
+            String statut,
+            LocalDate datePaiement,
+            boolean hasJustificatif
+    ) {
+
         this.id = id;
         this.montant = montant;
         this.modePaiement = modePaiement;

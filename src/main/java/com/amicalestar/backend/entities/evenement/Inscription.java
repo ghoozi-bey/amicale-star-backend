@@ -24,28 +24,29 @@ public class Inscription {
 
     private String statut;
 
-
-    // ✅ LAZY + IGNORE (IMPORTANT)
+    // Chargement lazy et exclusion du JSON
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "adherent_id")
     @JsonIgnore
     private Adherent adherent;
 
-    // ✅ LAZY + IGNORE (TRÈS IMPORTANT)
+    // Chargement lazy et exclusion du JSON
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "evenement_id")
     @JsonIgnore
     private Evenement evenement;
 
-    // ✅ PASSEPORT (PARFAIT)
+    // Stockage du passeport avec chargement lazy
     @Lob
     @Basic(fetch = FetchType.LAZY)
     @JsonIgnore
     @Column(name = "passport")
     private byte[] passport;
 
+    // === Initialisation automatique avant insertion ===
     @PrePersist
     public void prePersist() {
+
         this.dateInscription = LocalDateTime.now();
 
         if (this.statut == null)
@@ -57,14 +58,17 @@ public class Inscription {
 
     @OneToOne(mappedBy = "inscription", fetch = FetchType.LAZY)
     private Conjoint conjoint;
+
     private Integer nbEnfantsMoins12;
     private Integer nbEnfantsMoins18;
     private Boolean estCouple;
 
     private Double prixTotal;
     private Double remiseAppliquee;
+
+    // Suppression automatique des paiements liés
     @OneToMany(mappedBy = "inscription", cascade = CascadeType.ALL)
     private List<Paiement> paiements;
-    private Double resteAPayer;
 
+    private Double resteAPayer;
 }

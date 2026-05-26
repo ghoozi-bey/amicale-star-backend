@@ -10,6 +10,7 @@ import java.util.List;
 @Repository
 public interface ElectionRepository extends JpaRepository<Election, Long> {
 
+    // === Recherche des élections par statut ===
     List<Election> findByStatut(
             StatutElection statut
     );

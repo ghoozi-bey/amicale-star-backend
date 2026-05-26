@@ -23,14 +23,15 @@ import java.util.List;
 @RequiredArgsConstructor
 @CrossOrigin(origins = "http://localhost:4200")
 public class InscriptionController {
+
+    // Repository des inscriptions
     @Autowired
     private InscriptionRepository inscriptionRepository;
 
+    // Service de gestion des inscriptions
     private final InscriptionService inscriptionService;
 
-    // =========================
-    // CREATE INSCRIPTION
-    // =========================
+    // === Création d’une inscription complète ===
     @PostMapping(value = "/create", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<?> createInscription(
             @RequestPart("data") InscriptionRequest request,
@@ -38,9 +39,11 @@ public class InscriptionController {
             @RequestPart(value = "conjointFile", required = false) MultipartFile conjointFile,
             @RequestPart(value = "enfantsFiles", required = false) MultipartFile[] enfantsFiles
     ) {
+
         try {
 
             List<MultipartFile> enfantsList = null;
+
             if (enfantsFiles != null) {
                 enfantsList = List.of(enfantsFiles);
             }
@@ -55,26 +58,26 @@ public class InscriptionController {
             return ResponseEntity.ok("Inscription créée avec succès ✅");
 
         } catch (Exception e) {
+
             e.printStackTrace();
+
             return ResponseEntity.badRequest().body(e.getMessage());
         }
     }
 
-    // =========================
-    // INSCRIPTION SIMPLE
-    // =========================
+    // === Inscription simple à un événement ===
     @PostMapping("/{matricule}/{eventId}")
     public ResponseEntity<Inscription> inscrire(
             @PathVariable String matricule,
-            @PathVariable Long eventId) {
+            @PathVariable Long eventId
+    ) {
 
         Inscription inscription = inscriptionService.inscrire(matricule, eventId);
+
         return ResponseEntity.ok(inscription);
     }
 
-    // =========================
-    // MES INSCRIPTIONS (SECURISÉ)
-    // =========================
+    // === Liste des inscriptions de l’utilisateur connecté ===
     @GetMapping("/mes-inscriptions")
     public ResponseEntity<List<InscriptionDTO>> getMesInscriptions(Authentication authentication) {
 
@@ -82,22 +85,22 @@ public class InscriptionController {
             return ResponseEntity.status(401).body(null);
         }
 
-        String email = authentication.getName(); // 🔥 JWT = email
+        String email = authentication.getName();
 
         List<InscriptionDTO> result = inscriptionService.getInscriptionsAdherent(email);
 
         return ResponseEntity.ok(result);
     }
 
-    // =========================
-    // DETAILS INSCRIPTION (SECURISÉ)
-    // =========================
+    // === Détails sécurisés d’une inscription ===
     @GetMapping("/{id}")
     public ResponseEntity<?> getById(
             @PathVariable Long id,
-            Authentication authentication) {
+            Authentication authentication
+    ) {
 
         try {
+
             String email = authentication.getName();
 
             return ResponseEntity.ok(
@@ -106,32 +109,44 @@ public class InscriptionController {
 
         } catch (Exception e) {
 
-            // 🔥 AJOUTE ICI
             e.printStackTrace();
 
             return ResponseEntity.badRequest().body(e.getMessage());
         }
     }
 
+    // === Détails complets d’une inscription ===
     @GetMapping("/{id}/full")
     public ResponseEntity<InscriptionFullDTO> getFullDetails(@PathVariable Long id) {
+
         return ResponseEntity.ok(inscriptionService.getFullDetails(id));
     }
+
+    // === Mise à jour du statut d’une inscription ===
     @PutMapping("/{id}/statut")
     public ResponseEntity<?> updateStatut(
             @PathVariable Long id,
             @RequestParam String statut
     ) {
+
         try {
+
             inscriptionService.updateStatut(id, statut);
+
             return ResponseEntity.ok("Statut mis à jour");
+
         } catch (Exception e) {
+
             return ResponseEntity.badRequest().body(e.getMessage());
         }
     }
+
+    // === Génération de la facture d’une inscription ===
     @GetMapping("/{id}/facture")
     public ResponseEntity<?> getFacture(@PathVariable Long id) {
+
         try {
+
             Inscription inscription = inscriptionRepository.findById(id)
                     .orElseThrow(() -> new RuntimeException("Introuvable"));
 
@@ -140,16 +155,21 @@ public class InscriptionController {
             );
 
         } catch (Exception e) {
-            e.printStackTrace(); // 🔥 TU VAS VOIR L'ERREUR EXACTE
+
+            e.printStackTrace();
+
             return ResponseEntity.badRequest().body(e.getMessage());
         }
     }
+
+    // === Liste des inscriptions d’un événement ===
     @GetMapping("/event/{id}")
     public Page<InscriptionListDTO> getByEvent(
             @PathVariable Long id,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "5") int size
     ) {
+
         return inscriptionService.getInscriptionsByEvent(id, page, size);
     }
 

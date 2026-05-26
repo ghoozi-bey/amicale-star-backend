@@ -13,30 +13,40 @@ import java.util.Map;
 @Service
 public class JwtService {
 
+    // Clé secrète utilisée pour signer le JWT
     private final String SECRET = "my-super-secret-key-12345678901234567890";
 
+    // === Génération de la clé de signature JWT ===
     private Key getSignInKey() {
+
         return Keys.hmacShaKeyFor(SECRET.getBytes());
     }
 
+    // === Génération du token JWT utilisateur ===
     public String generateToken(Adherent user) {
 
         Map<String, Object> claims = new HashMap<>();
 
-        // ✅ FIX ROLE (SANS ROLE_)
+        // Ajout du rôle utilisateur
         claims.put("role", user.getTypeAdherent().name());
 
-        // ✅ USERNAME
+        // Ajout du matricule utilisateur
         claims.put("username", user.getMatricule());
 
-        // ✅ INFOS USER
+        // Ajout des informations utilisateur
         claims.put("prenom", user.getPrenom());
         claims.put("nom", user.getNom());
 
-        // ✅ TYPE EVENEMENT
+        // Ajout du type d’événement associé
         if (user.getTypeEvenement() != null) {
-            claims.put("type_evenement_id", user.getTypeEvenement().getId());
+
+            claims.put(
+                    "type_evenement_id",
+                    user.getTypeEvenement().getId()
+            );
+
         } else {
+
             claims.put("type_evenement_id", null);
         }
 
@@ -44,7 +54,12 @@ public class JwtService {
                 .setClaims(claims)
                 .setSubject(user.getEmail())
                 .setIssuedAt(new Date())
-                .setExpiration(new Date(System.currentTimeMillis() + 1000 * 60 * 60 * 24))
+                .setExpiration(
+                        new Date(
+                                System.currentTimeMillis()
+                                        + 1000 * 60 * 60 * 24
+                        )
+                )
                 .signWith(getSignInKey())
                 .compact();
     }

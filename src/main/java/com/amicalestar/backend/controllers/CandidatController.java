@@ -14,9 +14,10 @@ import java.util.List;
 @RequiredArgsConstructor
 public class CandidatController {
 
+    // Service de gestion des candidats
     private final CandidatService candidatService;
 
-    // ADD CANDIDAT
+    // === Ajout d’un candidat à une élection ===
     @PostMapping("/api/elections/{id}/candidats")
     public CandidatResponseDTO addCandidat(
             @PathVariable Long id,
@@ -26,7 +27,7 @@ public class CandidatController {
         return candidatService.addCandidat(id, request.getMatricule());
     }
 
-    // GET CANDIDATS OF ELECTION
+    // === Liste des candidats d’une élection ===
     @GetMapping("/api/elections/{id}/candidats")
     public List<CandidatResponseDTO> getElectionCandidats(
             @PathVariable Long id
@@ -35,7 +36,7 @@ public class CandidatController {
         return candidatService.getElectionCandidats(id);
     }
 
-    // REMOVE CANDIDAT
+    // === Suppression d’un candidat ===
     @DeleteMapping("/api/elections/{electionId}/candidats/{candidatId}")
     public void removeCandidat(
             @PathVariable Long electionId,

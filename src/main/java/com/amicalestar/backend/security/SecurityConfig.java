@@ -23,89 +23,118 @@ public class SecurityConfig {
 
     private final JwtAuthenticationFilter jwtFilter;
 
+    // === Configuration principale de Spring Security ===
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
 
         http
                 .csrf(csrf -> csrf.disable())
 
-                // 🔥 CORS
+                // Configuration CORS
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
 
+                // Utilisation du mode stateless avec JWT
                 .sessionManagement(session ->
                         session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
                 )
 
                 .authorizeHttpRequests(auth -> auth
 
-                        // 🔐 AUTH
+                        // Authentification
                         .requestMatchers("/api/auth/**").permitAll()
                         .requestMatchers("/api/inscriptions/**").authenticated()
 
-                        // 🔁 OPTIONS (CORS)
+                        // Autorisation des requêtes OPTIONS
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
 
-                        // EVENEMENTS
+                        // Gestion des événements
                         .requestMatchers(HttpMethod.GET, "/api/evenements/**").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/evenements/**").hasRole("MEMBRE_AMICALE")
                         .requestMatchers(HttpMethod.PUT, "/api/evenements/**").hasRole("MEMBRE_AMICALE")
                         .requestMatchers(HttpMethod.DELETE, "/api/evenements/**").hasRole("MEMBRE_AMICALE")
 
-                        // PHOTO
+                        // Gestion des photos
                         .requestMatchers("/api/evenements/photo/**").permitAll()
 
-                        // SONDAGES
+                        // Gestion des sondages
                         .requestMatchers("/api/sondages/actifs/**").authenticated()
                         .requestMatchers("/api/sondages/**").hasRole("MEMBRE_AMICALE")
 
-                        // ELECTIONS
+                        // Gestion des élections
                         .requestMatchers("/api/elections/actifs/**").authenticated()
                         .requestMatchers("/api/elections/**").hasRole("RESPONSABLE_ELECTION")
 
-                        // USER
+                        // Gestion utilisateur
                         .requestMatchers("/api/user/photo/**").permitAll()
                         .requestMatchers("/api/user/**").authenticated()
 
-                        // ADMIN
+                        // Gestion administrateur
                         .requestMatchers("/api/admin/**").hasRole("ADMIN")
 
-                        // DEFAULT
+                        // Autorisation par défaut
                         .anyRequest().permitAll()
                 )
 
-                // ✅ FILTRE JWT CORRECT
-                .addFilterBefore(jwtFilter,
-                        org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter.class
+                // Ajout du filtre JWT avant l’authentification Spring
+                .addFilterBefore(
+                        jwtFilter,
+                        org.springframework.security.web.authentication
+                                .UsernamePasswordAuthenticationFilter.class
                 );
 
         return http.build();
     }
 
-    // 🔥 CORS CONFIG
+    // === Configuration CORS ===
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
 
         CorsConfiguration config = new CorsConfiguration();
 
-        config.setAllowedOriginPatterns(List.of("http://localhost:4200"));
-        config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"));
-        config.setAllowedHeaders(List.of("*"));
-        config.setAllowCredentials(true);
-        config.setExposedHeaders(List.of("Authorization"));
+        config.setAllowedOriginPatterns(
+                List.of("http://localhost:4200")
+        );
 
-        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+        config.setAllowedMethods(
+                List.of(
+                        "GET",
+                        "POST",
+                        "PUT",
+                        "DELETE",
+                        "PATCH",
+                        "OPTIONS"
+                )
+        );
+
+        config.setAllowedHeaders(List.of("*"));
+
+        config.setAllowCredentials(true);
+
+        config.setExposedHeaders(
+                List.of("Authorization")
+        );
+
+        UrlBasedCorsConfigurationSource source =
+                new UrlBasedCorsConfigurationSource();
+
         source.registerCorsConfiguration("/**", config);
 
         return source;
     }
 
+    // === Encodeur des mots de passe ===
     @Bean
     public PasswordEncoder passwordEncoder() {
+
         return new BCryptPasswordEncoder();
     }
 
+    // === Gestionnaire d’authentification Spring ===
     @Bean
-    public AuthenticationManager authenticationManager(AuthenticationConfiguration config) throws Exception {
+    public AuthenticationManager authenticationManager(
+            AuthenticationConfiguration config
+    ) throws Exception {
+
         return config.getAuthenticationManager();
     }
 }

@@ -10,6 +10,7 @@ import java.util.List;
 
 public interface PaiementRepository extends JpaRepository<Paiement, Long> {
 
+    // === Liste des paiements d’une inscription ===
     @Query("""
 SELECT new com.amicalestar.backend.dto.evenement.PaiementDTO(
     p.id,
@@ -25,4 +26,3 @@ WHERE p.inscription.id = :id
     List<PaiementDTO> findDTOByInscriptionId(@Param("id") Long id);
 
 }
-

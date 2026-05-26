@@ -14,7 +14,5 @@ public class ConjointFullDTO {
     private String dateNaissance;
     private String cin;
     private String telephone;
-
-    // 🔥 nouveau champ
     private String passeport;
 }

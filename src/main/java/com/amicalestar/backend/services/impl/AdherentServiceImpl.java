@@ -22,75 +22,21 @@ public class AdherentServiceImpl implements AdherentService {
     private final AdherentRepository adherentRepository;
     private final PasswordEncoder passwordEncoder;
 
-
-    // IMPORTANT pour controller image
+    // Utilisé pour controller photo profil
     @Override
     public Adherent getByMatricule(String matricule) {
         return adherentRepository.findById(matricule)
                 .orElseThrow(() -> new RuntimeException("Adherent non trouvé"));
     }
 
-    // ================= UPDATE ADMIN =================
-    @Override
-    public Adherent updateAdherent(String matricule, Adherent adherent) {
-
-        Adherent existing = adherentRepository.findById(matricule).orElse(null);
-
-        if (existing != null) {
-
-            if (adherent.getNom() != null)
-                existing.setNom(adherent.getNom());
-
-            if (adherent.getPrenom() != null)
-                existing.setPrenom(adherent.getPrenom());
-
-            if (adherent.getEmail() != null)
-                existing.setEmail(adherent.getEmail());
-
-            if (adherent.getPassword() != null)
-                existing.setPassword(passwordEncoder.encode(adherent.getPassword()));
-
-            if (adherent.getTypeAdherent() != null)
-                existing.setTypeAdherent(adherent.getTypeAdherent());
-
-            if (adherent.getDateNaissance() != null)
-                existing.setDateNaissance(adherent.getDateNaissance());
-
-            if (adherent.getTelephone() != null)
-                existing.setTelephone(adherent.getTelephone());
-
-            if (adherent.getDepartement() != null)
-                existing.setDepartement(adherent.getDepartement());
-
-            if (adherent.getActif() != null)
-                existing.setActif(adherent.getActif());
-
-            // ✔ compatible BLOB
-            if (adherent.getPhotoProfil() != null)
-                existing.setPhotoProfil(adherent.getPhotoProfil());
-
-            if (adherent.getPhotoType() != null)
-                existing.setPhotoType(adherent.getPhotoType());
-
-            if (adherent.getCin() != null)
-                existing.setCin(adherent.getCin());
-
-            if (adherent.getMatricule() != null)
-                existing.setMatricule(adherent.getMatricule());
-
-            return adherentRepository.save(existing);
-        }
-
-        return null;
-    }
-
-    // ================= DELETE =================
+    // Suppression adhérent
     @Override
     public void deleteAdherent(String matricule) {
+
         adherentRepository.deleteById(matricule);
     }
 
-    // ================= PROFILE JWT =================
+    // Récupération profil via email JWT
     @Override
     public Adherent getProfileByEmail(String email) {
         return adherentRepository.findByEmail(email)
@@ -105,14 +51,14 @@ public class AdherentServiceImpl implements AdherentService {
                         new RuntimeException("Utilisateur non trouvé")
                 );
 
-        // ================= EMAIL =================
-
+        // Vérification unicité email
         if (request.getEmail() != null &&
                 !request.getEmail().isBlank()) {
 
             adherentRepository.findByEmail(request.getEmail())
                     .ifPresent(user -> {
 
+                        // Empêche duplication email
                         if (!user.getMatricule().equals(adherent.getMatricule())) {
 
                             throw new ValidationException(
@@ -129,8 +75,7 @@ public class AdherentServiceImpl implements AdherentService {
             );
         }
 
-        // ================= NOM =================
-
+        // Mise à jour nom
         if (request.getNom() != null &&
                 !request.getNom().isBlank()) {
 
@@ -139,8 +84,7 @@ public class AdherentServiceImpl implements AdherentService {
             );
         }
 
-        // ================= PRENOM =================
-
+        // Mise à jour prénom
         if (request.getPrenom() != null &&
                 !request.getPrenom().isBlank()) {
 
@@ -149,8 +93,7 @@ public class AdherentServiceImpl implements AdherentService {
             );
         }
 
-        // ================= TELEPHONE =================
-
+        // Vérification unicité téléphone
         if (request.getTelephone() != null &&
                 !request.getTelephone().isBlank()) {
 
@@ -158,6 +101,7 @@ public class AdherentServiceImpl implements AdherentService {
                     request.getTelephone().trim()
             ).ifPresent(user -> {
 
+                // Empêche duplication téléphone
                 if (!user.getMatricule()
                         .equals(adherent.getMatricule())) {
 
@@ -175,10 +119,10 @@ public class AdherentServiceImpl implements AdherentService {
             );
         }
 
-        // ================= PHOTO =================
-
+        // Gestion image profil
         try {
 
+            // Suppression photo profil
             if ("true".equalsIgnoreCase(
                     request.getRemovePhoto()
             )) {
@@ -187,12 +131,14 @@ public class AdherentServiceImpl implements AdherentService {
                 adherent.setPhotoType(null);
             }
 
+            // Upload nouvelle photo
             else if (request.getPhotoProfil() != null &&
                     !request.getPhotoProfil().isEmpty()) {
 
                 String contentType =
                         request.getPhotoProfil().getContentType();
 
+                // Vérification type image
                 if (contentType == null ||
                         !contentType.startsWith("image/")) {
 
@@ -204,6 +150,7 @@ public class AdherentServiceImpl implements AdherentService {
                     );
                 }
 
+                // Limite taille image = 2MB
                 if (request.getPhotoProfil().getSize()
                         > 2 * 1024 * 1024) {
 
@@ -233,11 +180,11 @@ public class AdherentServiceImpl implements AdherentService {
             );
         }
 
-        // ================= PASSWORD =================
-
+        // Changement mot de passe sécurisé
         if (request.getNewPassword() != null &&
                 !request.getNewPassword().isBlank()) {
 
+            // Vérification mot de passe actuel obligatoire
             if (request.getCurrentPassword() == null ||
                     request.getCurrentPassword().isBlank()) {
 
@@ -249,6 +196,7 @@ public class AdherentServiceImpl implements AdherentService {
                 );
             }
 
+            // Vérification ancien mot de passe
             if (!passwordEncoder.matches(
                     request.getCurrentPassword(),
                     adherent.getPassword()
@@ -262,6 +210,7 @@ public class AdherentServiceImpl implements AdherentService {
                 );
             }
 
+            // Encodage nouveau mot de passe
             adherent.setPassword(
                     passwordEncoder.encode(
                             request.getNewPassword()
@@ -269,12 +218,11 @@ public class AdherentServiceImpl implements AdherentService {
             );
         }
 
-        // ================= SAVE =================
-
+        // Sauvegarde finale profil
         adherentRepository.save(adherent);
     }
 
-    // ================= OLD METHODS =================
+    // Ancienne méthode update profil
     @Override
     public void updateProfile(String matricule, UpdateProfileRequest request) {
 
@@ -293,12 +241,14 @@ public class AdherentServiceImpl implements AdherentService {
         adherentRepository.save(adherent);
     }
 
+    // Récupération profil par matricule
     @Override
     public Adherent getProfile(String matricule) {
         return adherentRepository.findById(matricule)
                 .orElseThrow(() -> new RuntimeException("Adherent non trouvé"));
     }
 
+    // Conversion profil vers DTO
     @Override
     public AdherentDTO getProfileDTOByEmail(String email) {
 
@@ -314,11 +264,16 @@ public class AdherentServiceImpl implements AdherentService {
                 a.getCin(),
                 a.getTypeAdherent().name(),
                 a.getDepartement().name(),
+
+                // URL endpoint image profil
                 "http://localhost:8080/api/user/photo/" + a.getMatricule(),
+
+                // Vérifie existence photo
                 a.getPhotoProfil() != null && a.getPhotoProfil().length > 0
         );
     }
 
+    // Liste simplifiée des adhérents
     @Override
     public List<AdherentLiteDTO> getAllLite() {
 

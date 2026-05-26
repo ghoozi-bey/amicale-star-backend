@@ -7,5 +7,6 @@ import java.util.Optional;
 
 public interface TypeEvenementRepository extends JpaRepository<TypeEvenement, Long> {
 
+    // === Recherche d’un type d’événement par nom ===
     Optional<TypeEvenement> findByNom(String nom);
 }

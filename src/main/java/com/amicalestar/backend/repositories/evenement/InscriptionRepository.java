@@ -13,11 +13,20 @@ import java.util.List;
 import java.util.Optional;
 
 public interface InscriptionRepository extends JpaRepository<Inscription, Long> {
-    boolean existsByAdherentMatriculeAndEvenementId(String matricule, Long evenementId);
-    Page<Inscription> findByEvenementId(Long eventId, Pageable pageable);
-    // =========================
-    // 🔥 LISTE PAR EMAIL
-    // =========================
+
+    // === Vérification d’inscription à un événement ===
+    boolean existsByAdherentMatriculeAndEvenementId(
+            String matricule,
+            Long evenementId
+    );
+
+    // === Liste paginée des inscriptions d’un événement ===
+    Page<Inscription> findByEvenementId(
+            Long eventId,
+            Pageable pageable
+    );
+
+    // === Liste des inscriptions par email ===
     @Query("""
         SELECT new com.amicalestar.backend.dto.evenement.InscriptionDTO(
             i.id,
@@ -32,9 +41,7 @@ public interface InscriptionRepository extends JpaRepository<Inscription, Long> 
     """)
     List<InscriptionDTO> findDTOByEmail(@Param("email") String email);
 
-    // =========================
-    // 🔥 DETAILS
-    // =========================
+    // === Chargement complet d’une inscription ===
     @Query("""
         SELECT DISTINCT i FROM Inscription i
         JOIN FETCH i.adherent
@@ -44,13 +51,14 @@ public interface InscriptionRepository extends JpaRepository<Inscription, Long> 
         WHERE i.id = :id
     """)
     Optional<Inscription> findByIdWithDetails(@Param("id") Long id);
+
+    // === Liste paginée des inscriptions avec informations de paiement ===
     @Query("""
 SELECT new com.amicalestar.backend.dto.evenement.InscriptionListDTO(
     i.id,
     a.nom,
     a.email,
 
-    /* mode paiement (1 seule ligne) */
     (
         SELECT p.modePaiement FROM Paiement p
         WHERE p.inscription.id = i.id
@@ -61,7 +69,6 @@ SELECT new com.amicalestar.backend.dto.evenement.InscriptionListDTO(
         )
     ),
 
-    /* statut paiement (1 seule ligne) */
     (
         SELECT p.statut FROM Paiement p
         WHERE p.inscription.id = i.id
@@ -83,9 +90,9 @@ WHERE i.evenement.id = :eventId
             Pageable pageable
     );
 
+    // === Liste des enfants d’une inscription ===
     @Query("SELECT new com.amicalestar.backend.dto.evenement.EnfantDTO(e.nom, e.prenom, e.dateNaissance) " +
             "FROM Enfant e WHERE e.inscription.id = :id")
     List<EnfantDTO> findEnfantsDTOByInscriptionId(@Param("id") Long id);
-
 
 }

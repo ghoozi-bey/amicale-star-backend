@@ -6,11 +6,12 @@ import java.util.List;
 
 public interface TypeEvenementService {
 
-    // par nom
+    // === Recherche d’un type d’événement par nom ===
     TypeEvenement findByNom(String nom);
 
-    // par id
+    // === Recherche d’un type d’événement par id ===
     TypeEvenement findById(Long id);
 
+    // === Liste des types d’événements ===
     List<TypeEvenement> getAll();
 }

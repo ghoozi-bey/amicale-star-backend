@@ -14,22 +14,34 @@ public class TypeEvenementServiceImpl implements TypeEvenementService {
 
     private final TypeEvenementRepository typeEvenementRepository;
 
-    // 🔥 recherche par nom
+    // === Recherche type événement par nom ===
     @Override
     public TypeEvenement findByNom(String nom) {
+
         return typeEvenementRepository.findByNom(nom)
-                .orElseThrow(() -> new RuntimeException("TypeEvenement introuvable: " + nom));
+                .orElseThrow(() ->
+                        new RuntimeException(
+                                "TypeEvenement introuvable: " + nom
+                        )
+                );
     }
 
-    // 🔥 recherche par ID (FIX PRINCIPAL)
+    // === Recherche type événement par ID ===
     @Override
     public TypeEvenement findById(Long id) {
+
         return typeEvenementRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("TypeEvenement introuvable avec id: " + id));
+                .orElseThrow(() ->
+                        new RuntimeException(
+                                "TypeEvenement introuvable avec id: " + id
+                        )
+                );
     }
 
+    // === Liste des types événements ===
     @Override
     public List<TypeEvenement> getAll() {
+
         return typeEvenementRepository.findAll();
     }
 }

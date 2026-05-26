@@ -12,15 +12,14 @@ import org.springframework.web.bind.annotation.*;
 @CrossOrigin(origins = "http://localhost:4200")
 public class AuthController {
 
+    // Service d'authentification
     private final AuthService authService;
 
+    // === Authentification de l'utilisateur ===
     @PostMapping("/login")
-    public AuthResponse login(
-            @RequestBody LoginRequest request
-    ) {
+    public AuthResponse login(@RequestBody LoginRequest request) {
 
         return authService.login(request);
-
     }
 
 }

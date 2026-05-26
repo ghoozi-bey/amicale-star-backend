@@ -10,8 +10,10 @@ import java.util.List;
 
 public interface AdminUserService {
 
+    // === Création d’un utilisateur ===
     Adherent createUser(CreateUserRequest request);
 
+    // === Liste paginée des utilisateurs ===
     Page<AdherentDTO> getAllUsers(
             int page,
             int size,
@@ -19,9 +21,15 @@ public interface AdminUserService {
             String sortDir
     );
 
+    // === Recherche d’un utilisateur par matricule ===
     AdherentDTO getUserByMatricule(String matricule);
 
+    // === Suppression d’un utilisateur ===
     void deleteUser(String matricule);
 
-    Adherent updateUser(String matricule, UpdateUserRequest request);
+    // === Mise à jour d’un utilisateur ===
+    Adherent updateUser(
+            String matricule,
+            UpdateUserRequest request
+    );
 }

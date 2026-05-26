@@ -12,44 +12,56 @@ public class CustomUserDetails implements UserDetails {
 
     private final Adherent adherent;
 
+    // === Initialisation des informations utilisateur ===
     public CustomUserDetails(Adherent adherent) {
+
         this.adherent = adherent;
     }
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
 
-        // 🔥 IMPORTANT : utiliser EXACTEMENT le role DB
-        return List.of(new SimpleGrantedAuthority("ROLE_" + adherent.getTypeAdherent().name()));
+        // Utilisation du rôle stocké en base
+        return List.of(
+                new SimpleGrantedAuthority(
+                        "ROLE_" + adherent.getTypeAdherent().name()
+                )
+        );
     }
 
     @Override
     public String getPassword() {
+
         return adherent.getPassword();
     }
 
     @Override
     public String getUsername() {
+
         return adherent.getMatricule();
     }
 
     @Override
     public boolean isAccountNonExpired() {
+
         return true;
     }
 
     @Override
     public boolean isAccountNonLocked() {
+
         return true;
     }
 
     @Override
     public boolean isCredentialsNonExpired() {
+
         return true;
     }
 
     @Override
     public boolean isEnabled() {
+
         return adherent.getActif() == null || adherent.getActif();
     }
 }

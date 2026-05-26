@@ -33,12 +33,18 @@ public class ElectionServiceImpl implements ElectionService {
     private final AdherentRepository adherentRepository;
     private final CandidatRepository candidatRepository;
     private final VoteRepository voteRepository;
-    private final TypeEvenementRepository
-            typeEvenementRepository;
 
+    // Gestion types événements des membres élus
+    private final TypeEvenementRepository typeEvenementRepository;
+
+    // Création élection
     @Override
-    public ElectionResponseDTO create(CreateElectionRequest request, String email) {
+    public ElectionResponseDTO create(
+            CreateElectionRequest request,
+            String email
+    ) {
 
+        // Recherche créateur élection
         Adherent creator =
                 adherentRepository.findByEmail(email)
                         .orElseThrow(() ->
@@ -47,8 +53,8 @@ public class ElectionServiceImpl implements ElectionService {
                                 )
                         );
 
-        // VALIDATION
-        if(
+        // Validation dates obligatoires
+        if (
                 request.getDateDebut() == null
                         || request.getDateFin() == null
         ) {
@@ -58,7 +64,8 @@ public class ElectionServiceImpl implements ElectionService {
             );
         }
 
-        if(
+        // Vérification cohérence dates
+        if (
                 request.getDateFin()
                         .isBefore(request.getDateDebut())
         ) {
@@ -68,7 +75,8 @@ public class ElectionServiceImpl implements ElectionService {
             );
         }
 
-        if(
+        // Vérification date future
+        if (
                 request.getDateDebut()
                         .isBefore(LocalDateTime.now())
         ) {
@@ -78,7 +86,8 @@ public class ElectionServiceImpl implements ElectionService {
             );
         }
 
-        if(
+        // Validation nombre candidats
+        if (
                 request.getNombreCandidats() == null
                         || request.getNombreCandidats() <= 1
         ) {
@@ -88,7 +97,8 @@ public class ElectionServiceImpl implements ElectionService {
             );
         }
 
-        if(
+        // Validation nombre gagnants
+        if (
                 request.getNombreGagnants() == null
                         || request.getNombreGagnants() <= 0
         ) {
@@ -98,7 +108,8 @@ public class ElectionServiceImpl implements ElectionService {
             );
         }
 
-        if(
+        // Nombre gagnants < nombre candidats
+        if (
                 request.getNombreGagnants()
                         >= request.getNombreCandidats()
         ) {
@@ -108,6 +119,7 @@ public class ElectionServiceImpl implements ElectionService {
             );
         }
 
+        // Construction élection
         Election election = new Election();
 
         election.setTitle(
@@ -138,17 +150,18 @@ public class ElectionServiceImpl implements ElectionService {
                 creator
         );
 
-        // ===== ADD CANDIDATS =====
-
-        if(
+        // Ajout candidats initiaux
+        if (
                 request.getCandidats() != null
         ) {
+
+            // Vérification doublons candidats
             Set<String> unique =
                     new HashSet<>(
                             request.getCandidats()
                     );
 
-            if(
+            if (
                     unique.size()
                             != request.getCandidats().size()
             ) {
@@ -158,7 +171,8 @@ public class ElectionServiceImpl implements ElectionService {
                 );
             }
 
-            if(
+            // Vérification limite candidats
+            if (
                     request.getCandidats().size()
                             > request.getNombreCandidats()
             ) {
@@ -168,7 +182,7 @@ public class ElectionServiceImpl implements ElectionService {
                 );
             }
 
-            for(
+            for (
                     String matricule :
                     request.getCandidats()
             ) {
@@ -182,7 +196,8 @@ public class ElectionServiceImpl implements ElectionService {
                                         )
                                 );
 
-                if(
+                // Interdiction responsable élection
+                if (
                         adherent.getTypeAdherent()
                                 == TypeAdherent.RESPONSABLE_ELECTION
                 ) {
@@ -203,17 +218,20 @@ public class ElectionServiceImpl implements ElectionService {
                         .add(candidat);
             }
         }
+
         election = electionRepository.save(election);
 
         return mapToDTO(election);
     }
 
+    // Liste toutes les élections
     @Override
     public List<ElectionResponseDTO> getAll() {
 
         List<Election> elections =
                 electionRepository.findAll();
 
+        // Mise à jour automatique statuts
         elections.forEach(this::updateStatut);
 
         electionRepository.saveAll(elections);
@@ -223,13 +241,17 @@ public class ElectionServiceImpl implements ElectionService {
                 .toList();
     }
 
+    // Recherche élection par id
     @Override
     public ElectionResponseDTO getById(Long id) {
 
-        Election election = electionRepository.findById(id)
-                .orElseThrow(() ->
-                        new RuntimeException("Election introuvable")
-                );
+        Election election =
+                electionRepository.findById(id)
+                        .orElseThrow(() ->
+                                new RuntimeException(
+                                        "Election introuvable"
+                                )
+                        );
 
         updateStatut(election);
 
@@ -238,8 +260,12 @@ public class ElectionServiceImpl implements ElectionService {
         return mapToDTO(election);
     }
 
+    // Mise à jour élection
     @Override
-    public ElectionResponseDTO update(Long id, CreateElectionRequest request) {
+    public ElectionResponseDTO update(
+            Long id,
+            CreateElectionRequest request
+    ) {
 
         Election election =
                 electionRepository.findById(id)
@@ -249,11 +275,11 @@ public class ElectionServiceImpl implements ElectionService {
                                 )
                         );
 
-        // UPDATE STATUS
+        // Synchronisation statut
         updateStatut(election);
 
-        // ONLY BROUILLON
-        if(
+        // Modification autorisée uniquement brouillon
+        if (
                 election.getStatut()
                         != StatutElection.BROUILLON
         ) {
@@ -263,8 +289,8 @@ public class ElectionServiceImpl implements ElectionService {
             );
         }
 
-        // VALIDATION
-        if(
+        // Validation dates
+        if (
                 request.getDateDebut() == null
                         || request.getDateFin() == null
         ) {
@@ -274,7 +300,7 @@ public class ElectionServiceImpl implements ElectionService {
             );
         }
 
-        if(
+        if (
                 request.getDateFin()
                         .isBefore(request.getDateDebut())
         ) {
@@ -284,7 +310,7 @@ public class ElectionServiceImpl implements ElectionService {
             );
         }
 
-        if(
+        if (
                 request.getDateDebut()
                         .isBefore(LocalDateTime.now())
         ) {
@@ -294,7 +320,8 @@ public class ElectionServiceImpl implements ElectionService {
             );
         }
 
-        if(
+        // Validation candidats / gagnants
+        if (
                 request.getNombreCandidats() == null
                         || request.getNombreCandidats() <= 0
         ) {
@@ -304,7 +331,7 @@ public class ElectionServiceImpl implements ElectionService {
             );
         }
 
-        if(
+        if (
                 request.getNombreGagnants() == null
                         || request.getNombreGagnants() <= 0
         ) {
@@ -314,7 +341,7 @@ public class ElectionServiceImpl implements ElectionService {
             );
         }
 
-        if(
+        if (
                 request.getNombreGagnants()
                         >= request.getNombreCandidats()
         ) {
@@ -324,10 +351,8 @@ public class ElectionServiceImpl implements ElectionService {
             );
         }
 
-        // UPDATE INFOS
-        election.setTitle(
-                request.getTitle()
-        );
+        // Mise à jour informations principales
+        election.setTitle(request.getTitle());
 
         election.setDescription(
                 request.getDescription()
@@ -349,25 +374,26 @@ public class ElectionServiceImpl implements ElectionService {
                 request.getNombreGagnants()
         );
 
-        // ===== RESET CANDIDATS =====
-
-        candidatRepository.deleteAll(election.getCandidats());
+        // Réinitialisation candidats
+        candidatRepository.deleteAll(
+                election.getCandidats()
+        );
 
         election.getCandidats().clear();
 
         candidatRepository.flush();
 
-        // ===== RE-ADD =====
-
-        if(
+        // Réajout nouveaux candidats
+        if (
                 request.getCandidats() != null
         ) {
+
             Set<String> unique =
                     new HashSet<>(
                             request.getCandidats()
                     );
 
-            if(
+            if (
                     unique.size()
                             != request.getCandidats().size()
             ) {
@@ -377,7 +403,7 @@ public class ElectionServiceImpl implements ElectionService {
                 );
             }
 
-            if(
+            if (
                     request.getCandidats().size()
                             > request.getNombreCandidats()
             ) {
@@ -387,7 +413,7 @@ public class ElectionServiceImpl implements ElectionService {
                 );
             }
 
-            for(
+            for (
                     String matricule :
                     request.getCandidats()
             ) {
@@ -401,7 +427,7 @@ public class ElectionServiceImpl implements ElectionService {
                                         )
                                 );
 
-                if(
+                if (
                         adherent.getTypeAdherent()
                                 == TypeAdherent.RESPONSABLE_ELECTION
                 ) {
@@ -428,25 +454,46 @@ public class ElectionServiceImpl implements ElectionService {
         return mapToDTO(election);
     }
 
+    // Conversion entité Election vers DTO
     private ElectionResponseDTO mapToDTO(Election election) {
 
-        ElectionResponseDTO dto = new ElectionResponseDTO();
+        ElectionResponseDTO dto =
+                new ElectionResponseDTO();
 
         dto.setId(election.getId());
+
         dto.setTitle(election.getTitle());
-        dto.setDescription(election.getDescription());
 
-        dto.setDateCreation(election.getDateCreation());
-        dto.setDateDebut(election.getDateDebut());
-        dto.setDateFin(election.getDateFin());
+        dto.setDescription(
+                election.getDescription()
+        );
 
-        dto.setNombreCandidats(election.getNombreCandidats());
+        dto.setDateCreation(
+                election.getDateCreation()
+        );
 
-        dto.setNombreGagnants(election.getNombreGagnants());
+        dto.setDateDebut(
+                election.getDateDebut()
+        );
 
-        dto.setStatut(election.getStatut());
+        dto.setDateFin(
+                election.getDateFin()
+        );
 
-        if(election.getCreatedBy() != null) {
+        dto.setNombreCandidats(
+                election.getNombreCandidats()
+        );
+
+        dto.setNombreGagnants(
+                election.getNombreGagnants()
+        );
+
+        dto.setStatut(
+                election.getStatut()
+        );
+
+        // Informations créateur
+        if (election.getCreatedBy() != null) {
 
             dto.setCreatedByNom(
                     election.getCreatedBy().getNom()
@@ -457,6 +504,7 @@ public class ElectionServiceImpl implements ElectionService {
             );
         }
 
+        // Conversion candidats vers DTO
         dto.setCandidats(
 
                 election.getCandidats()
@@ -505,15 +553,23 @@ public class ElectionServiceImpl implements ElectionService {
         return dto;
     }
 
+    // Suppression élection
     @Override
     public void delete(Long id) {
 
-        Election election = electionRepository.findById(id)
-                .orElseThrow(() ->
-                        new RuntimeException("Election introuvable")
-                );
+        Election election =
+                electionRepository.findById(id)
+                        .orElseThrow(() ->
+                                new RuntimeException(
+                                        "Election introuvable"
+                                )
+                        );
 
-        if(election.getStatut() != StatutElection.REJETEE) {
+        // Suppression uniquement si rejetée
+        if (
+                election.getStatut()
+                        != StatutElection.REJETEE
+        ) {
 
             throw new RuntimeException(
                     "Seules les élections rejetées peuvent être supprimées"
@@ -523,129 +579,171 @@ public class ElectionServiceImpl implements ElectionService {
         electionRepository.delete(election);
     }
 
+    // Mise à jour automatique statut élection
     @Override
     public void updateStatut(Election e) {
 
-        // 🔒 NEVER TOUCH FINAL STATES
+        // Ignore statuts finaux
         if (
                 e.getStatut() == StatutElection.TERMINEE
                         || e.getStatut() == StatutElection.REJETEE
                         || e.getStatut() == StatutElection.FINALISEE
         ) {
+
             return;
         }
 
         LocalDateTime now = LocalDateTime.now();
 
-        // ❌ BROUILLON expired → REJETEE
+        // Brouillon expiré automatiquement
         if (
                 e.getStatut() == StatutElection.BROUILLON
                         && now.isAfter(e.getDateDebut())
         ) {
 
-            e.setStatut(StatutElection.REJETEE);
+            e.setStatut(
+                    StatutElection.REJETEE
+            );
 
             return;
         }
 
-        // 🟢 PUBLIEE → ACTIF
+        // Activation automatique élection
         if (
                 e.getStatut() == StatutElection.PUBLIEE
                         &&
                         (
                                 now.isEqual(e.getDateDebut())
-                                        || now.isAfter(e.getDateDebut())
+                                        || now.isAfter(
+                                        e.getDateDebut()
+                                )
                         )
                         &&
                         now.isBefore(e.getDateFin())
         ) {
 
-            e.setStatut(StatutElection.ACTIF);
+            e.setStatut(
+                    StatutElection.ACTIF
+            );
 
             return;
         }
 
-        // 🔴 ACTIF → TERMINEE
+        // Fin automatique élection
         if (
                 e.getStatut() == StatutElection.ACTIF
                         &&
                         now.isAfter(e.getDateFin())
         ) {
 
-            e.setStatut(StatutElection.TERMINEE);
+            e.setStatut(
+                    StatutElection.TERMINEE
+            );
         }
     }
 
+    // Publication élection
     @Override
     public void publish(Long id) {
 
-        Election election = electionRepository.findById(id)
-                .orElseThrow(() ->
-                        new RuntimeException("Election introuvable")
-                );
+        Election election =
+                electionRepository.findById(id)
+                        .orElseThrow(() ->
+                                new RuntimeException(
+                                        "Election introuvable"
+                                )
+                        );
 
-        if(election.getStatut() != StatutElection.BROUILLON) {
+        if (
+                election.getStatut()
+                        != StatutElection.BROUILLON
+        ) {
 
             throw new RuntimeException(
                     "Publication impossible"
             );
         }
 
-        election.setStatut(StatutElection.PUBLIEE);
+        election.setStatut(
+                StatutElection.PUBLIEE
+        );
 
         electionRepository.save(election);
     }
 
+    // Annulation publication
     @Override
     public void unpublish(Long id) {
 
-        Election election = electionRepository.findById(id)
-                .orElseThrow(() ->
-                        new RuntimeException("Election introuvable")
-                );
+        Election election =
+                electionRepository.findById(id)
+                        .orElseThrow(() ->
+                                new RuntimeException(
+                                        "Election introuvable"
+                                )
+                        );
 
-        if(election.getStatut() != StatutElection.PUBLIEE) {
+        if (
+                election.getStatut()
+                        != StatutElection.PUBLIEE
+        ) {
 
             throw new RuntimeException(
                     "Annulation impossible"
             );
         }
 
-        election.setStatut(StatutElection.BROUILLON);
+        election.setStatut(
+                StatutElection.BROUILLON
+        );
 
         electionRepository.save(election);
     }
 
+    // Rejet élection
     @Override
     public void reject(Long id) {
 
-        Election election = electionRepository.findById(id)
-                .orElseThrow(() ->
-                        new RuntimeException("Election introuvable")
-                );
+        Election election =
+                electionRepository.findById(id)
+                        .orElseThrow(() ->
+                                new RuntimeException(
+                                        "Election introuvable"
+                                )
+                        );
 
-        if(election.getStatut() != StatutElection.BROUILLON) {
+        if (
+                election.getStatut()
+                        != StatutElection.BROUILLON
+        ) {
 
             throw new RuntimeException(
                     "Seules les élections brouillon peuvent être rejetées"
             );
         }
 
-        election.setStatut(StatutElection.REJETEE);
+        election.setStatut(
+                StatutElection.REJETEE
+        );
 
         electionRepository.save(election);
     }
 
+    // Liste adhérents éligibles candidature
     @Override
-    public List<AdherentLiteDTO> getEligibleAdherents(Long electionId) {
+    public List<AdherentLiteDTO> getEligibleAdherents(
+            Long electionId
+    ) {
 
-        Election election = electionRepository.findById(electionId)
-                .orElseThrow(() ->
-                        new RuntimeException(
-                                "Election introuvable"
-                        )
-                );
+        Election election =
+                electionRepository.findById(electionId)
+                        .orElseThrow(() ->
+                                new RuntimeException(
+                                        "Election introuvable"
+                                )
+                        );
 
+        // Liste matricules déjà candidats
         Set<String> candidatMatricules =
                 election.getCandidats()
                         .stream()
@@ -658,14 +756,14 @@ public class ElectionServiceImpl implements ElectionService {
         return adherentRepository.findAll()
                 .stream()
 
-                // exclude already candidates
+                // Exclusion candidats existants
                 .filter(a ->
                         !candidatMatricules.contains(
                                 a.getMatricule()
                         )
                 )
 
-                // exclude responsables election
+                // Exclusion responsables élections
                 .filter(a ->
                         a.getTypeAdherent()
                                 != TypeAdherent.RESPONSABLE_ELECTION
@@ -704,6 +802,7 @@ public class ElectionServiceImpl implements ElectionService {
                 .toList();
     }
 
+    // Liste élections actives
     @Override
     public List<ElectionResponseDTO> getActiveElections() {
 
@@ -726,6 +825,7 @@ public class ElectionServiceImpl implements ElectionService {
                 .toList();
     }
 
+    // Recherche élection active
     @Override
     public ElectionResponseDTO getActiveElectionById(Long id) {
 
@@ -740,8 +840,10 @@ public class ElectionServiceImpl implements ElectionService {
 
         electionRepository.save(election);
 
-        if (election.getStatut()
-                != StatutElection.ACTIF) {
+        if (
+                election.getStatut()
+                        != StatutElection.ACTIF
+        ) {
 
             throw new RuntimeException(
                     "Election inactive"
@@ -751,6 +853,7 @@ public class ElectionServiceImpl implements ElectionService {
         return mapToDTO(election);
     }
 
+    // Statistiques votes candidats
     @Override
     public List<ElectionStatsDTO> getStats(Long electionId) {
 
@@ -761,12 +864,16 @@ public class ElectionServiceImpl implements ElectionService {
                                         "Election introuvable"
                                 ));
 
+        // Autorisation statistiques
         if (
-                election.getStatut() != StatutElection.ACTIF
+                election.getStatut()
+                        != StatutElection.ACTIF
                         &&
-                        election.getStatut() != StatutElection.TERMINEE
+                        election.getStatut()
+                                != StatutElection.TERMINEE
                         &&
-                        election.getStatut() != StatutElection.FINALISEE
+                        election.getStatut()
+                                != StatutElection.FINALISEE
         ) {
 
             throw new RuntimeException(
@@ -800,6 +907,7 @@ public class ElectionServiceImpl implements ElectionService {
                             .name()
             );
 
+            // Nombre votes candidat
             dto.setVotes(
                     voteRepository.countVotesByCandidatId(
                             candidat.getId()
@@ -809,6 +917,7 @@ public class ElectionServiceImpl implements ElectionService {
             stats.add(dto);
         }
 
+        // Tri décroissant votes
         stats.sort((a, b) ->
                 Long.compare(
                         b.getVotes(),
@@ -818,6 +927,7 @@ public class ElectionServiceImpl implements ElectionService {
         return stats;
     }
 
+    // Liste gagnants élection
     @Override
     public List<ElectionWinnerDTO>
     getElectionWinners(Long electionId) {
@@ -831,6 +941,7 @@ public class ElectionServiceImpl implements ElectionService {
                         )
                 );
 
+        // Vérification fin élection
         if (
                 election.getStatut()
                         != StatutElection.TERMINEE
@@ -849,8 +960,7 @@ public class ElectionServiceImpl implements ElectionService {
                         election.getCandidats()
                 );
 
-        // ===== SORT =====
-
+        // Tri candidats selon votes
         candidats.sort((a, b) -> {
 
             Long votesA =
@@ -869,15 +979,13 @@ public class ElectionServiceImpl implements ElectionService {
                             votesA
                     );
 
-            // votes different
+            // Classement principal votes
             if (compareVotes != 0) {
 
                 return compareVotes;
             }
 
-            // same votes
-            // oldest adherent wins
-
+            // Égalité → ancienneté adhérent
             return a.getAdherent()
                     .getDateinscription()
                     .compareTo(
@@ -942,10 +1050,15 @@ public class ElectionServiceImpl implements ElectionService {
         return winners;
     }
 
+    // Attribution rôles membres amicale
     @Override
     @Transactional
-    public void attribuerRoles(Long electionId, List<AttribuerRoleDTO> request) {
+    public void attribuerRoles(
+            Long electionId,
+            List<AttribuerRoleDTO> request
+    ) {
 
+        // Vérification liste vide
         if (
                 request == null
                         || request.isEmpty()
@@ -965,8 +1078,7 @@ public class ElectionServiceImpl implements ElectionService {
                         )
                 );
 
-        // ===== ONLY TERMINEE / FINALISEE =====
-
+        // Vérification élection terminée
         if (
                 election.getStatut()
                         != StatutElection.TERMINEE
@@ -980,8 +1092,7 @@ public class ElectionServiceImpl implements ElectionService {
             );
         }
 
-        // ===== GET WINNERS =====
-
+        // Récupération gagnants
         List<ElectionWinnerDTO> winners =
                 getElectionWinners(
                         electionId
@@ -995,6 +1106,7 @@ public class ElectionServiceImpl implements ElectionService {
                         )
                         .collect(Collectors.toSet());
 
+        // Vérification nombre membres
         if (
                 request.size()
                         != election.getNombreGagnants()
@@ -1005,6 +1117,7 @@ public class ElectionServiceImpl implements ElectionService {
             );
         }
 
+        // Vérification doublons utilisateurs
         Set<String> uniqueMatricules =
                 new HashSet<>();
 
@@ -1025,8 +1138,7 @@ public class ElectionServiceImpl implements ElectionService {
             }
         }
 
-        // ===== VALIDATE REQUEST =====
-
+        // Vérification utilisateurs gagnants
         for (
                 AttribuerRoleDTO dto
                 : request
@@ -1044,8 +1156,7 @@ public class ElectionServiceImpl implements ElectionService {
             }
         }
 
-        // ===== REMOVE OLD MEMBERS =====
-
+        // Réinitialisation anciens membres amicale
         List<Adherent> oldResponsables =
                 adherentRepository
                         .findByTypeAdherent(
@@ -1058,13 +1169,10 @@ public class ElectionServiceImpl implements ElectionService {
                     TypeAdherent.ADHERENT
             );
 
-            adherent.setTypeEvenement(
-                    null
-            );
+            adherent.setTypeEvenement(null);
         }
 
-        // ===== ASSIGN NEW MEMBERS =====
-
+        // Attribution nouveaux rôles
         for (
                 AttribuerRoleDTO dto
                 : request
@@ -1101,15 +1209,12 @@ public class ElectionServiceImpl implements ElectionService {
             );
         }
 
-        // ===== FINALIZE ELECTION =====
-
+        // Finalisation élection
         election.setStatut(
                 StatutElection.FINALISEE
         );
 
-        electionRepository.save(
-                election
-        );
+        electionRepository.save(election);
     }
 
 }

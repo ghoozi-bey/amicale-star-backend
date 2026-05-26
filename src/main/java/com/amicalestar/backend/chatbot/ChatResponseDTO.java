@@ -4,11 +4,21 @@ import java.util.List;
 
 public class ChatResponseDTO {
 
-    public String intent;        // search_event, greeting...
-    public Integer participants; // nombre de personnes
-    public Integer budget;      // budget
-    public String type;         // omra, voyage...
-    public List<String> keywords;
+    // === Intention détectée par l’IA ===
+    // Exemple : search_event, greeting...
+    public String intent;
 
+    // === Nombre de participants ===
+    public Integer participants;
+
+    // === Budget utilisateur ===
+    public Integer budget;
+
+    // === Type événement ===
+    // Exemple : omra, voyage, convention...
+    public String type;
+
+    // === Mots-clés détectés ===
+    public List<String> keywords;
 
 }

@@ -26,9 +26,11 @@ public class Question {
     @JoinColumn(name = "sondage_id")
     private Sondage sondage;
 
+    // Suppression automatique des choix liés à la question
     @OneToMany(mappedBy = "question", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Choix> choixList = new ArrayList<>();
 
+    // Valeur par défaut d’une question obligatoire
     @Column(nullable = false, columnDefinition = "BOOLEAN DEFAULT TRUE")
     private Boolean required = true;
 

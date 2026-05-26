@@ -61,12 +61,11 @@ public class Adherent {
 
     private Boolean actif;
 
-    // ✅ BLOB IMAGE
+    // Stockage de la photo de profil en base
     @Column(name = "photo_profil", columnDefinition = "BYTEA")
     private byte[] photoProfil;
 
-
-    // ✅ TYPE IMAGE (image/jpeg, image/png…)
+    // Type MIME de l’image
     @Column(name = "photo_type")
     private String photoType;
 
@@ -83,14 +82,18 @@ public class Adherent {
     @OneToMany(mappedBy = "adherent")
     private List<Evenement> evenements;
 
+    // === Initialisation automatique avant insertion ===
     @PrePersist
     public void prePersist() {
+
         this.dateinscription = new Date();
+
         if (this.actif == null) {
             this.actif = true;
         }
     }
 
+    // === Génération automatique du rôle Spring Security ===
     public String getRoleName() {
         return "ROLE_" + this.typeAdherent.name();
     }

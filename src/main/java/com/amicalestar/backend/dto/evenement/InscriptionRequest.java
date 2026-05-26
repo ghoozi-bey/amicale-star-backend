@@ -10,24 +10,22 @@ import java.util.List;
 @Builder
 public class InscriptionRequest {
 
-    // 👤 utilisateur
+    // Informations de l’utilisateur
     private String matricule;
     private Long evenementId;
 
-    // 💳 paiement principal
+    // Informations du paiement principal
     private String modePaiement;
 
-    // 👩 conjoint (optionnel)
+    // Informations du conjoint (optionnel)
     private ConjointDTO conjoint;
 
-    // 👶 enfants (optionnel)
+    // Liste des enfants (optionnel)
     private List<EnfantDTO> enfants;
 
-    // =========================
-    // 🔥 NOUVEAU (AVANCE)
-    // =========================
-    private Double avance;                 // montant payé au début
-    private String modePaiementAvance;// cash / virement / carte
+    // Informations du paiement en avance
+    private Double avance;
+    private String modePaiementAvance;
     private Integer nombreMois;
     private String dateDebutPaiement;
     private String modePaiementEcheance;

@@ -12,6 +12,7 @@ import lombok.Setter;
 @Setter
 @Entity
 @Table(
+        // Empêche un vote dupliqué pour le même candidat
         uniqueConstraints = {
                 @UniqueConstraint(
                         columnNames = {

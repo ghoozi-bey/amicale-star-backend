@@ -18,15 +18,20 @@ import java.util.Date;
 @RequiredArgsConstructor
 public class DataInitializer {
 
+    // Repository pour gérer les opérations sur les adhérents
     private final AdherentRepository adherentRepository;
+
+    // Encodeur pour sécuriser le mot de passe
     private final PasswordEncoder passwordEncoder;
 
     @Bean
     CommandLineRunner initAdmin() {
         return args -> {
 
+            // Vérifie si l'administrateur existe déjà
             if (adherentRepository.findByEmail("admin@test.com").isEmpty()) {
 
+                // Création du compte administrateur par défaut
                 Adherent admin = Adherent.builder()
                         .matricule("STAR000001")
                         .nom("Admin")
@@ -41,6 +46,7 @@ public class DataInitializer {
                         .actif(true)
                         .build();
 
+                // Sauvegarde de l'administrateur dans la base de données
                 adherentRepository.save(admin);
 
                 System.out.println("✅ ADMIN créé !");

@@ -7,5 +7,6 @@ import java.util.Optional;
 
 public interface ConjointRepository extends JpaRepository<Conjoint, Long> {
 
+    // === Recherche du conjoint par inscription ===
     Optional<Conjoint> findByInscriptionId(Long inscriptionId);
 }

@@ -11,10 +11,25 @@ import java.util.Optional;
 
 public interface ParticipationRepository extends JpaRepository<Participation, Long> {
 
-    boolean existsByAdherentAndSondage(Adherent adherent, Sondage sondage);
-    Optional<Participation> findByAdherentAndSondage(Adherent adherent, Sondage sondage);
+    // === Vérification de participation à un sondage ===
+    boolean existsByAdherentAndSondage(
+            Adherent adherent,
+            Sondage sondage
+    );
+
+    // === Recherche de participation d’un adhérent ===
+    Optional<Participation> findByAdherentAndSondage(
+            Adherent adherent,
+            Sondage sondage
+    );
+
+    // === Nombre de participations d’un sondage ===
     int countBySondageId(Long sondageId);
+
+    // === Liste des participations d’un sondage ===
     List<Participation> findBySondageId(Long sondageId);
+
+    // === Chargement complet des participations et réponses ===
     @Query("""
         SELECT DISTINCT p
         FROM Participation p

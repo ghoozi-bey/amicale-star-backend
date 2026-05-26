@@ -9,21 +9,51 @@ import java.util.List;
 
 public interface InscriptionService {
 
-    // ✅ ancien
-    Inscription inscrire(String matricule, Long eventId);
+    // === Inscription simple à un événement ===
+    Inscription inscrire(
+            String matricule,
+            Long eventId
+    );
 
-    // ✅ nouveau (AVEC PASSEPORT ADHERENT)
-    void createInscription(InscriptionRequest request,
-                           MultipartFile adherentFile,
-                           MultipartFile conjointFile,
-                           List<MultipartFile> enfantsFiles);
+    // === Création complète d’une inscription ===
+    void createInscription(
+            InscriptionRequest request,
+            MultipartFile adherentFile,
+            MultipartFile conjointFile,
+            List<MultipartFile> enfantsFiles
+    );
 
-    // ✅ get (OPTIMISÉ DTO 🔥)
+    // === Liste des inscriptions d’un adhérent ===
     List<InscriptionDTO> getInscriptionsAdherent(String email);
-    InscriptionDetailsDTO getByIdSecure(Long id, String email);
+
+    // === Détails sécurisés d’une inscription ===
+    InscriptionDetailsDTO getByIdSecure(
+            Long id,
+            String email
+    );
+
+    // === Détails complets d’une inscription ===
     InscriptionFullDTO getFullDetails(Long id);
-    void updateStatut(Long id, String statut);
-    void uploadJustificatif(Long id, MultipartFile file);
+
+    // === Mise à jour du statut d’une inscription ===
+    void updateStatut(
+            Long id,
+            String statut
+    );
+
+    // === Upload du justificatif de paiement ===
+    void uploadJustificatif(
+            Long id,
+            MultipartFile file
+    );
+
+    // === Calcul détaillé de la facture ===
     FactureDTO calculerFactureDetaillee(Inscription inscription);
-    Page<InscriptionListDTO> getInscriptionsByEvent(Long eventId, int page, int size);
+
+    // === Liste paginée des inscriptions d’un événement ===
+    Page<InscriptionListDTO> getInscriptionsByEvent(
+            Long eventId,
+            int page,
+            int size
+    );
 }

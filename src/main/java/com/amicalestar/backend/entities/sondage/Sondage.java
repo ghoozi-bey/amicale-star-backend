@@ -34,15 +34,19 @@ public class Sondage {
     @JoinColumn(name = "created_by")
     private Adherent createdBy;
 
+    // Suppression automatique des questions liées au sondage
     @OneToMany(mappedBy = "sondage", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Question> questions = new ArrayList<>();
 
+    // === Initialisation automatique avant insertion ===
     @PrePersist
     public void prePersist() {
+
         this.dateCreation = LocalDateTime.now();
         this.statut = StatutSondage.BROUILLON;
     }
 
+    // Suppression automatique des participations liées au sondage
     @OneToMany(mappedBy = "sondage", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Participation> participations = new ArrayList<>();
 }

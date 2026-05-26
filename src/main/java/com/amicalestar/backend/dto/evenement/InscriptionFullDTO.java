@@ -11,31 +11,32 @@ import java.util.List;
 @Builder
 public class InscriptionFullDTO {
 
+    // Informations de l’inscription
     private Long id;
 
-    // 🔹 ADHERENT
+    // Informations de l’adhérent
     private String nom;
     private String prenom;
     private String email;
     private String telephone;
     private String cin;
 
-    // 🔹 EVENEMENT
+    // Informations de l’événement
     private String titre;
     private Double prix;
     private String typeEvenement;
 
-    // 🔹 STATUT
+    // Statut de l’inscription
     private String statut;
 
-    // 🔹 FAMILLE (DTO FULL)
+    // Informations de la famille
     private ConjointFullDTO conjoint;
     private List<EnfantFullDTO> enfants;
 
-    // 🔹 PASSEPORT ADHERENT
+    // Passeport de l’adhérent
     private String passeport;
 
-    // 🔹 PRIX TOTAL
+    // Informations du paiement total
     private Double prixTotal;
     private List<PaiementDTO> paiements;
 }

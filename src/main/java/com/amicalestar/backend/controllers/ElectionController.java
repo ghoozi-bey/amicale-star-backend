@@ -20,10 +20,13 @@ import java.util.List;
 @RequiredArgsConstructor
 public class ElectionController {
 
+    // Service de gestion des élections
     private final ElectionService electionService;
+
+    // Service de gestion des types d’événements
     private final TypeEvenementService typeEvenementService;
 
-    // Endpoints for all users
+    // === Liste des élections actives ===
     @GetMapping("/actifs")
     public ResponseEntity<List<ElectionResponseDTO>> getAllPublic() {
 
@@ -32,6 +35,7 @@ public class ElectionController {
         );
     }
 
+    // === Détails d’une élection active ===
     @GetMapping("/actifs/{id}")
     public ResponseEntity<ElectionResponseDTO> getPublicById(
             @PathVariable Long id
@@ -42,16 +46,14 @@ public class ElectionController {
         );
     }
 
-    //Endpoints for responsable election
-
-    //Load types evenements
+    // === Liste des types d’événements ===
     @GetMapping("/types-evenements")
     public List<TypeEvenement> getTypeEvenements() {
 
         return typeEvenementService.getAll();
     }
 
-    // CREATE
+    // === Création d’une élection ===
     @PostMapping
     public ElectionResponseDTO createElection(
             @RequestBody CreateElectionRequest request,
@@ -63,14 +65,14 @@ public class ElectionController {
         return electionService.create(request, email);
     }
 
-    // GET ALL
+    // === Liste de toutes les élections ===
     @GetMapping
     public List<ElectionResponseDTO> getAllElections() {
 
         return electionService.getAll();
     }
 
-    // GET BY ID
+    // === Détails d’une élection ===
     @GetMapping("/{id}")
     public ElectionResponseDTO getElectionById(
             @PathVariable Long id
@@ -79,7 +81,7 @@ public class ElectionController {
         return electionService.getById(id);
     }
 
-    // UPDATE
+    // === Mise à jour d’une élection ===
     @PutMapping("/{id}")
     public ElectionResponseDTO updateElection(
             @PathVariable Long id,
@@ -89,15 +91,16 @@ public class ElectionController {
         return electionService.update(id, request);
     }
 
-    // DELETE
+    // === Suppression d’une élection ===
     @DeleteMapping("/{id}")
     public void deleteElection(
             @PathVariable Long id
     ) {
+
         electionService.delete(id);
     }
 
-    // PUBLISH
+    // === Publication d’une élection ===
     @PutMapping("/{id}/publish")
     public void publish(
             @PathVariable Long id
@@ -106,7 +109,7 @@ public class ElectionController {
         electionService.publish(id);
     }
 
-    // UNPUBLISH
+    // === Annulation de publication d’une élection ===
     @PutMapping("/{id}/unpublish")
     public void unpublish(
             @PathVariable Long id
@@ -115,7 +118,7 @@ public class ElectionController {
         electionService.unpublish(id);
     }
 
-    // REJECT
+    // === Rejet d’une élection ===
     @PutMapping("/{id}/reject")
     public void reject(
             @PathVariable Long id
@@ -124,15 +127,16 @@ public class ElectionController {
         electionService.reject(id);
     }
 
+    // === Liste des adhérents éligibles ===
     @GetMapping("/{id}/eligible-adherents")
     public List<AdherentLiteDTO> getEligibleAdherents(
             @PathVariable Long id
     ) {
 
-        return electionService
-                .getEligibleAdherents(id);
+        return electionService.getEligibleAdherents(id);
     }
 
+    // === Statistiques d’une élection ===
     @GetMapping("/{id}/stats")
     public ResponseEntity<?> getStats(
             @PathVariable Long id
@@ -143,6 +147,7 @@ public class ElectionController {
         );
     }
 
+    // === Attribution des rôles aux gagnants ===
     @PostMapping("/{id}/attribuer-roles")
     public ResponseEntity<?> attribuerRoles(
 
@@ -160,14 +165,14 @@ public class ElectionController {
         return ResponseEntity.ok().build();
     }
 
+    // === Liste des gagnants d’une élection ===
     @GetMapping("/{id}/winners")
     public ResponseEntity<?> getWinners(
             @PathVariable Long id
     ) {
 
         return ResponseEntity.ok(
-                electionService
-                        .getElectionWinners(id)
+                electionService.getElectionWinners(id)
         );
     }
 

@@ -7,10 +7,16 @@ import java.util.List;
 
 public interface CandidatService {
 
-    CandidatResponseDTO addCandidat(Long electionId, String matricule);
+    // === Ajout d’un candidat à une élection ===
+    CandidatResponseDTO addCandidat(
+            Long electionId,
+            String matricule
+    );
 
+    // === Suppression d’un candidat ===
     void removeCandidat(Long candidatId);
 
+    // === Liste des candidats d’une élection ===
     List<CandidatResponseDTO> getElectionCandidats(Long electionId);
 
 }

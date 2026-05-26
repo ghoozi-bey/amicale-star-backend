@@ -5,27 +5,36 @@ import java.util.List;
 
 public interface EvenementService {
 
+    // === Création d’un événement ===
     Evenement createEvenement(Evenement evenement);
 
+    // === Liste de tous les événements ===
     List<Evenement> getAllEvenements();
 
-    // 🔥 AJOUT IMPORTANT (pour image BLOB)
+    // === Recherche d’un événement par id ===
     Evenement getEvenementById(Long id);
 
+    // === Liste des événements créés par un adhérent ===
     List<Evenement> getEvenementsCrees(String matricule);
 
+    // === Archivage d’un événement ===
     Evenement archiverEvenement(Long id);
 
+    // === Suppression d’un événement ===
     void deleteEvenement(Long id);
 
-    Evenement updateEvenement(Long id, Evenement evenement);
+    // === Mise à jour d’un événement ===
+    Evenement updateEvenement(
+            Long id,
+            Evenement evenement
+    );
 
-    // 🔵 participation
+    // === Liste des événements participés ===
     List<Evenement> getMesEvenements(String matricule);
 
-    // 🟢 inscriptions
+    // === Liste des inscriptions d’un adhérent ===
     List<Evenement> getMesInscriptions(Long matricule);
 
-    // 🟡 dashboard
+    // === Liste des événements actifs ===
     List<Evenement> getEvenementsActifs();
 }

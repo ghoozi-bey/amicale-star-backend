@@ -29,6 +29,7 @@ public class VoteServiceImpl implements VoteService {
 
     private final CandidatRepository candidatRepository;
 
+    // === Vote utilisateur ===
     @Override
     @Transactional
     public void voter(
@@ -95,6 +96,7 @@ public class VoteServiceImpl implements VoteService {
                                 currentUser.getMatricule()
                         );
 
+        // Vérification vote déjà effectué
         if (alreadyParticipated) {
 
             throw new ValidationException(
@@ -115,7 +117,7 @@ public class VoteServiceImpl implements VoteService {
                                             "Candidat introuvable"
                                     ));
 
-            // candidat belongs to election
+            // Vérification candidat appartient à l’élection
             if (!candidat.getElection()
                     .getId()
                     .equals(election.getId())) {
@@ -125,7 +127,7 @@ public class VoteServiceImpl implements VoteService {
                 );
             }
 
-            // prevent self vote
+            // Vérification auto vote
             if (candidat.getAdherent()
                     .getMatricule()
                     .equals(
@@ -154,6 +156,7 @@ public class VoteServiceImpl implements VoteService {
         }
     }
 
+    // === Vérification participation utilisateur ===
     @Override
     public boolean hasVoted(
             Long electionId,
@@ -166,4 +169,5 @@ public class VoteServiceImpl implements VoteService {
                         currentUser.getMatricule()
                 );
     }
+
 }

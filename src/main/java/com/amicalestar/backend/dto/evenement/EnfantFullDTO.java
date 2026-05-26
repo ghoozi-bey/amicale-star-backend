@@ -12,7 +12,7 @@ public class EnfantFullDTO {
     private String nom;
     private String prenom;
 
-    private String dateNaissance; // ✅ IMPORTANT
+    private String dateNaissance;
 
     private String passeport;
 }

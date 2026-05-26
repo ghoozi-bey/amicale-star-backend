@@ -28,24 +28,26 @@ public class ParticipationServiceImpl implements ParticipationService {
     private final ParticipationRepository participationRepository;
     private final SondageService sondageService;
 
+    // === Soumission participation sondage ===
     @Override
     public void submitParticipation(ParticipationRequest request, String email) {
 
-        // 1. Get user
+        // Récupération utilisateur
         Adherent user = adherentRepository.findByEmail(email)
                 .orElseThrow(() -> new RuntimeException("Utilisateur introuvable"));
 
-        // 2. Get sondage
+        // Récupération sondage
         Sondage sondage = sondageRepository.findById(request.getSondageId())
                 .orElseThrow(() -> new RuntimeException("Sondage introuvable"));
 
-        // 3. Check status
+        // Vérification statut sondage
         sondageService.updateStatut(sondage);
+
         if (sondage.getStatut() != StatutSondage.ACTIF) {
             throw new RuntimeException("Ce sondage n'est pas actif");
         }
 
-        // 4. Prevent duplicate participation
+        // Vérification participation existante
         Participation existing = participationRepository
                 .findByAdherentAndSondage(user, sondage)
                 .orElse(null);
@@ -54,23 +56,25 @@ public class ParticipationServiceImpl implements ParticipationService {
             participationRepository.delete(existing);
         }
 
-        // 5. Create participation
+        // Création participation
         Participation participation = new Participation();
         participation.setAdherent(user);
         participation.setSondage(sondage);
 
         List<Reponse> reponses = new ArrayList<>();
 
-        // 6. Process answers
+        // Vérification réponses
         if (request.getAnswers() == null || request.getAnswers().isEmpty()) {
             throw new RuntimeException("Aucune réponse fournie");
         }
 
+        // Parcours réponses
         for (ParticipationRequest.QuestionAnswer qa : request.getAnswers()) {
 
             Question question = questionRepository.findById(qa.getQuestionId())
                     .orElseThrow(() -> new RuntimeException("Question introuvable"));
 
+            // Vérification question obligatoire
             if (question.getRequired()) {
 
                 boolean answered =
@@ -82,13 +86,14 @@ public class ParticipationServiceImpl implements ParticipationService {
                 }
             }
 
-            // Validate belongs to sondage
+            // Vérification appartenance sondage
             if (!question.getSondage().getId().equals(sondage.getId())) {
                 throw new RuntimeException("Question invalide pour ce sondage");
             }
 
             switch (question.getType()) {
 
+                // === Choix unique ===
                 case CHOIX_UNIQUE -> {
 
                     if (qa.getChoixIds() == null || qa.getChoixIds().size() != 1) {
@@ -114,6 +119,7 @@ public class ParticipationServiceImpl implements ParticipationService {
                     reponses.add(r);
                 }
 
+                // === Choix multiple ===
                 case CHOIX_MULTIPLE -> {
 
                     if (qa.getChoixIds() == null || qa.getChoixIds().isEmpty()) {
@@ -144,6 +150,7 @@ public class ParticipationServiceImpl implements ParticipationService {
                     }
                 }
 
+                // === Réponse texte ===
                 case TEXTE -> {
 
                     if (qa.getTexte() == null || qa.getTexte().isBlank()) {
@@ -164,28 +171,34 @@ public class ParticipationServiceImpl implements ParticipationService {
             }
         }
 
-        // 7. Save everything
+        // Sauvegarde participation
         participation.setReponses(reponses);
         participationRepository.save(participation);
     }
 
+    // === Récupération participation utilisateur ===
     @Override
     public ParticipationResponse getUserParticipation(Long sondageId, String email) {
 
+        // Récupération utilisateur
         Adherent user = adherentRepository.findByEmail(email)
                 .orElseThrow(() -> new RuntimeException("Utilisateur introuvable"));
 
+        // Récupération sondage
         Sondage sondage = sondageRepository.findById(sondageId)
                 .orElseThrow(() -> new RuntimeException("Sondage introuvable"));
 
         ParticipationResponse response = new ParticipationResponse();
 
+        // Recherche participation
         Participation participation = participationRepository
                 .findByAdherentAndSondage(user, sondage)
                 .orElse(null);
 
         if (participation == null) {
+
             response.setHasParticipated(false);
+
             return response;
         }
 
@@ -195,6 +208,7 @@ public class ParticipationServiceImpl implements ParticipationService {
 
         Map<Long, ParticipationResponse.QuestionAnswer> map = new HashMap<>();
 
+        // Parcours réponses
         for (Reponse r : participation.getReponses()) {
 
             Long qId = r.getQuestion().getId();
@@ -202,18 +216,20 @@ public class ParticipationServiceImpl implements ParticipationService {
             ParticipationResponse.QuestionAnswer qa = map.get(qId);
 
             if (qa == null) {
+
                 qa = new ParticipationResponse.QuestionAnswer();
                 qa.setQuestionId(qId);
                 qa.setChoixIds(new ArrayList<>());
+
                 map.put(qId, qa);
             }
 
-            // TEXT
+            // Réponse texte
             if (r.getTexte() != null) {
                 qa.setTexte(r.getTexte());
             }
 
-            // CHOIX
+            // Réponse choix
             if (r.getChoix() != null) {
                 qa.getChoixIds().add(r.getChoix().getId());
             }

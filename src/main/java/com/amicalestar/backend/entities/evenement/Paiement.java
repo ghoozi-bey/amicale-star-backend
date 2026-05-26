@@ -26,17 +26,20 @@ public class Paiement {
 
     private String statut;
 
-    // 🔥 CORRECTION ICI
+    // Chargement lazy et exclusion du JSON
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "inscription_id")
     @JsonIgnore
     private Inscription inscription;
+
+    // Stockage du justificatif avec chargement lazy
     @Lob
     @Basic(fetch = FetchType.LAZY)
     @JsonIgnore
     @ToString.Exclude
     @EqualsAndHashCode.Exclude
-    private byte[] justificatifVirement; // base64 ou path
+    private byte[] justificatifVirement;
+
     private Boolean justificatifValide = false;
 
 }

@@ -20,17 +20,17 @@ public class Participation {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    // participant
+    // Participant
     @ManyToOne
     @JoinColumn(name = "adherent_id", nullable = false)
     private Adherent adherent;
 
-    // sondage
+    // Sondage
     @ManyToOne
     @JoinColumn(name = "sondage_id", nullable = false)
     private Sondage sondage;
 
-    // reponses
+    // Reponses
     @OneToMany(mappedBy = "participation", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Reponse> reponses = new ArrayList<>();
 }

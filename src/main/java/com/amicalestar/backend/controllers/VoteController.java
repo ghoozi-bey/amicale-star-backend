@@ -15,9 +15,13 @@ import org.springframework.web.bind.annotation.*;
 @RequiredArgsConstructor
 public class VoteController {
 
+    // Service de gestion des votes
     private final VoteService voteService;
+
+    // Repository des adhérents
     private final AdherentRepository adherentRepository;
 
+    // === Enregistrement d’un vote ===
     @PostMapping
     public ResponseEntity<?> voter(
             @RequestBody VoteRequest request,
@@ -41,6 +45,7 @@ public class VoteController {
         return ResponseEntity.ok().build();
     }
 
+    // === Vérification du vote de l’utilisateur ===
     @GetMapping("/me/{electionId}")
     public ResponseEntity<?> hasVoted(
             @PathVariable Long electionId,

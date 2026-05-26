@@ -7,5 +7,6 @@ import java.util.List;
 
 public interface EnfantRepository extends JpaRepository<Enfant, Long> {
 
+    // === Liste des enfants liés à une inscription ===
     List<Enfant> findByInscriptionId(Long inscriptionId);
 }

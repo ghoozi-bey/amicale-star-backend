@@ -16,33 +16,68 @@ import static java.awt.SystemColor.text;
 @RestController
 @RequestMapping("/api/chatbot")
 public class ChatbotController {
+
     private final OllamaService ollamaService;
+
     private final EvenementRepository evenementRepository;
-    private final Map<String, ChatSession> sessions = new HashMap<>();
-    public ChatbotController(OllamaService ollamaService,
-                             EvenementRepository evenementRepository) {
+
+    private final Map<String, ChatSession> sessions =
+            new HashMap<>();
+
+    public ChatbotController(
+            OllamaService ollamaService,
+            EvenementRepository evenementRepository
+    ) {
+
         this.ollamaService = ollamaService;
+
         this.evenementRepository = evenementRepository;
     }
 
+    // === Chatbot endpoint ===
     @PostMapping("/ai")
-    public Object chat(@RequestBody String message, Principal principal) {
+    public Object chat(
+            @RequestBody String message,
+            Principal principal
+    ) {
 
-        String username = principal != null ? principal.getName() : "Utilisateur";
+        String username =
+                principal != null
+                        ? principal.getName()
+                        : "Utilisateur";
 
-        String cleanMessage = message.toLowerCase().trim();
-        if (cleanMessage.contains("bonjour") || cleanMessage.contains("salut") || cleanMessage.contains("bonsoir") || cleanMessage.contains("cc") || cleanMessage.contains("coucou")|| cleanMessage.contains("hey")|| cleanMessage.contains("hi") ) {
+        String cleanMessage =
+                message.toLowerCase().trim();
+
+        // === Messages salutation ===
+        if (
+                cleanMessage.contains("bonjour")
+                        || cleanMessage.contains("salut")
+                        || cleanMessage.contains("bonsoir")
+                        || cleanMessage.contains("cc")
+                        || cleanMessage.contains("coucou")
+                        || cleanMessage.contains("hey")
+                        || cleanMessage.contains("hi")
+        ) {
+
             return Map.of(
                     "type", "text",
                     "message", "Bonjour 👋 Comment puis-je vous aider ?"
             );
         }
 
-        if (cleanMessage.contains("tout") && cleanMessage.contains("evenement")) {
+        // === Affichage tous les événements ===
+        if (
+                cleanMessage.contains("tout")
+                        && cleanMessage.contains("evenement")
+        ) {
+
             sessions.remove(username);
 
             List<Evenement> results =
-                    evenementRepository.findByStatut(StatutEvenement.ACTIF);
+                    evenementRepository.findByStatut(
+                            StatutEvenement.ACTIF
+                    );
 
             return Map.of(
                     "type", "events",
@@ -51,8 +86,13 @@ public class ChatbotController {
                         String imageBase64 = null;
 
                         if (e.getPhoto() != null) {
-                            imageBase64 = "data:image/jpeg;base64," +
-                                    Base64.getEncoder().encodeToString(e.getPhoto());
+
+                            imageBase64 =
+                                    "data:image/jpeg;base64," +
+                                            Base64.getEncoder()
+                                                    .encodeToString(
+                                                            e.getPhoto()
+                                                    );
                         }
 
                         return Map.of(
@@ -62,58 +102,79 @@ public class ChatbotController {
                                 "prix", e.getPrix(),
                                 "imageUrl", imageBase64
                         );
+
                     }).toList()
             );
         }
 
-        // 🧠 récupérer session
-        ChatSession session = sessions.getOrDefault(username, new ChatSession());
+        // === Récupération session utilisateur ===
+        ChatSession session =
+                sessions.getOrDefault(
+                        username,
+                        new ChatSession()
+                );
 
-        // 🧠 IA extraction
-        ChatResponseDTO dto = ollamaService.askAI(cleanMessage);
+        // === Analyse IA ===
+        ChatResponseDTO dto =
+                ollamaService.askAI(cleanMessage);
 
-        // 🔥 NORMALISATION TYPE
-        String normalizedType = normalizeType(dto.type, cleanMessage);
+        // === Normalisation type événement ===
+        String normalizedType =
+                normalizeType(
+                        dto.type,
+                        cleanMessage
+                );
 
+        Integer participants =
+                dto.participants;
 
-        Integer participants = dto.participants;
-        Integer budget = dto.budget;
+        Integer budget =
+                dto.budget;
 
+        // Sauvegarde type
+        if (
+                session.type == null
+                        && normalizedType != null
+        ) {
 
-
-        if (session.type == null && normalizedType != null) {
             session.type = normalizedType;
         }
 
+        // Sauvegarde participants
+        if (
+                session.participants == null
+                        && participants != null
+        ) {
 
-
-        if (session.participants == null && participants != null) {
             session.participants = participants;
         }
 
+        // Sauvegarde budget
+        if (
+                session.budget == null
+                        && budget != null
+        ) {
 
-
-        if (session.budget == null && budget != null) {
             session.budget = budget;
         }
 
         sessions.put(username, session);
 
-
-
+        // === Demande type événement ===
         if (session.type == null) {
+
             return Map.of(
                     "type", "text",
                     "message", "Quel type d’événement cherchez-vous ? (voyage, omra, convention)"
             );
         }
-        // 🔥 CAS SPECIAL CONVENTION
+
+        // === Cas spécial convention ===
         if ("CONVENTION".equals(session.type)) {
 
-            // première demande
+            // Première demande société
             if (session.societe == null) {
 
-                // utilisateur vient juste d’écrire "convention"
                 if (cleanMessage.contains("convention")) {
 
                     return Map.of(
@@ -122,13 +183,17 @@ public class ChatbotController {
                     );
                 }
 
-                // sauvegarder société
                 session.societe = cleanMessage;
+
                 sessions.put(username, session);
             }
 
             List<Evenement> results =
-                    evenementRepository.searchConvention(session.societe);
+                    evenementRepository.searchConvention(
+                            session.societe
+                    );
+
+            // Aucun résultat convention
             if (results.isEmpty()) {
 
                 sessions.remove(username);
@@ -148,8 +213,13 @@ public class ChatbotController {
                         String imageBase64 = null;
 
                         if (e.getPhoto() != null) {
-                            imageBase64 = "data:image/jpeg;base64," +
-                                    Base64.getEncoder().encodeToString(e.getPhoto());
+
+                            imageBase64 =
+                                    "data:image/jpeg;base64," +
+                                            Base64.getEncoder()
+                                                    .encodeToString(
+                                                            e.getPhoto()
+                                                    );
                         }
 
                         return Map.of(
@@ -159,23 +229,30 @@ public class ChatbotController {
                                 "prix", e.getPrix(),
                                 "imageUrl", imageBase64
                         );
+
                     }).toList()
             );
         }
 
-// 🔥 CAS NORMAL
+        // === Cas normal participants ===
         if (session.participants == null) {
-            Integer number = extractNumber(cleanMessage);
+
+            Integer number =
+                    extractNumber(cleanMessage);
 
             if (number != null) {
+
                 session.participants = number;
+
                 sessions.put(username, session);
 
                 return Map.of(
                         "type", "text",
                         "message", "Quel est votre budget approximatif ?"
                 );
+
             } else {
+
                 return Map.of(
                         "type", "text",
                         "message", "Pour combien de personnes ?"
@@ -183,24 +260,35 @@ public class ChatbotController {
             }
         }
 
+        // === Gestion budget ===
         if (session.budget == null) {
 
             if (cleanMessage.matches("\\d+")) {
-                session.budget = Integer.parseInt(cleanMessage);
+
+                session.budget =
+                        Integer.parseInt(cleanMessage);
+
                 sessions.put(username, session);
+
             } else {
+
                 return Map.of(
                         "type", "text",
                         "message", "Quel est votre budget approximatif ?"
                 );
             }
         }
-        List<Evenement> results = evenementRepository.searchAdvanced(
-                session.budget,
-                session.participants,
-                session.type,
-                ""
-        );
+
+        // === Recherche avancée événements ===
+        List<Evenement> results =
+                evenementRepository.searchAdvanced(
+                        session.budget,
+                        session.participants,
+                        session.type,
+                        ""
+                );
+
+        // Aucun événement trouvé
         if (results.isEmpty()) {
 
             sessions.remove(username);
@@ -211,10 +299,9 @@ public class ChatbotController {
             );
         }
 
-
         sessions.remove(username);
 
-
+        // === Retour événements ===
         return Map.of(
                 "type", "events",
                 "events", results.stream().map(e -> {
@@ -222,8 +309,13 @@ public class ChatbotController {
                     String imageBase64 = null;
 
                     if (e.getPhoto() != null) {
-                        imageBase64 = "data:image/jpeg;base64," +
-                                Base64.getEncoder().encodeToString(e.getPhoto());
+
+                        imageBase64 =
+                                "data:image/jpeg;base64," +
+                                        Base64.getEncoder()
+                                                .encodeToString(
+                                                        e.getPhoto()
+                                                );
                     }
 
                     return Map.of(
@@ -233,43 +325,84 @@ public class ChatbotController {
                             "prix", e.getPrix(),
                             "imageUrl", imageBase64
                     );
+
                 }).toList()
         );
     }
-    private String normalizeType(String type, String message) {
 
-        if (type == null || type.equalsIgnoreCase("null")) {
+    // === Normalisation type événement ===
+    private String normalizeType(
+            String type,
+            String message
+    ) {
+
+        if (
+                type == null
+                        || type.equalsIgnoreCase("null")
+        ) {
+
             return null;
         }
 
-        String text = type + " " + message;
+        String text =
+                type + " " + message;
+
         text = text.toLowerCase();
 
-        if (text.contains("omra") || text.contains("hajj") || text.contains("haj")) {
+        // OMRA / HAJ
+        if (
+                text.contains("omra")
+                        || text.contains("hajj")
+                        || text.contains("haj")
+        ) {
+
             return "OMRA & HAJ";
         }
 
-        if (text.contains("voyage") || text.contains("trip") || text.contains("travel")||text.contains("hotel") || text.contains("voyage dans le sud")  ) {
+        // VOYAGE
+        if (
+                text.contains("voyage")
+                        || text.contains("trip")
+                        || text.contains("travel")
+                        || text.contains("hotel")
+                        || text.contains("voyage dans le sud")
+        ) {
+
             return "VOYAGE";
         }
 
-        if (text.contains("convention") || text.contains("ooredoo") || text.contains("tunisieTelecon")||text.contains("orange") ||text.contains("OOREDOO") || text.contains("TunisieTélécom") || text.contains("ORANGE")) {
+        // CONVENTION
+        if (
+                text.contains("convention")
+                        || text.contains("ooredoo")
+                        || text.contains("tunisieTelecon")
+                        || text.contains("orange")
+                        || text.contains("OOREDOO")
+                        || text.contains("TunisieTélécom")
+                        || text.contains("ORANGE")
+        ) {
+
             return "CONVENTION";
         }
 
         return null;
     }
+
+    // === Extraction nombre participants ===
     private Integer extractNumber(String text) {
 
         text = text.toLowerCase();
 
-        // chiffres
-        String digits = text.replaceAll("\\D", "");
+        // Extraction chiffres
+        String digits =
+                text.replaceAll("\\D", "");
+
         if (!digits.isEmpty()) {
+
             return Integer.parseInt(digits);
         }
 
-        // mots
+        // Extraction mots
         if (text.contains("un") || text.contains("une")) return 1;
         if (text.contains("deux")) return 2;
         if (text.contains("trois")) return 3;

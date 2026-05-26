@@ -31,13 +31,14 @@ public class SondageServiceImpl implements SondageService {
     private final SondageRepository sondageRepository;
     private final AdherentRepository adherentRepository;
 
+    // === Création sondage ===
     @Override
     public Sondage createSondage(CreateSondageRequest request, String matricule) {
 
         Adherent creator = adherentRepository.findByEmail(matricule)
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
-        // 🔒 validate dates
+        // Validation dates
         if (request.getDateDebut().isAfter(request.getDateFin())) {
             throw new RuntimeException("dateDebut must be before dateFin");
         }
@@ -57,6 +58,7 @@ public class SondageServiceImpl implements SondageService {
             question.setText(qdto.getText());
             question.setType(qdto.getType());
             question.setSondage(sondage);
+
             if (qdto.getRequired() == null) {
                 question.setRequired(true);
             } else {
@@ -65,30 +67,33 @@ public class SondageServiceImpl implements SondageService {
 
             List<Choix> choixList = new ArrayList<>();
 
-            // Logic based on type
+            // Gestion selon type question
             if (qdto.getType() == TypeQuestion.TEXTE) {
 
-                // TEXT question should NOT have choices
+                // Une question texte ne doit pas contenir de choix
                 if (qdto.getChoix() != null && !qdto.getChoix().isEmpty()) {
                     throw new RuntimeException("Text question cannot have choices");
                 }
 
             } else {
 
-                // CHOIX_UNIQUE or CHOIX_MULTIPLE must have choices
+                // Les questions à choix doivent contenir des choix
                 if (qdto.getChoix() == null || qdto.getChoix().isEmpty()) {
                     throw new RuntimeException("Choices required for this question type");
                 }
 
                 for (String label : qdto.getChoix()) {
+
                     Choix choix = new Choix();
                     choix.setLabel(label);
                     choix.setQuestion(question);
+
                     choixList.add(choix);
                 }
             }
 
             question.setChoixList(choixList);
+
             questions.add(question);
         }
 
@@ -97,6 +102,7 @@ public class SondageServiceImpl implements SondageService {
         return sondageRepository.save(sondage);
     }
 
+    // === Liste de tous les sondages ===
     @Override
     public List<SondageResponse> getAllSondages() {
 
@@ -104,38 +110,48 @@ public class SondageServiceImpl implements SondageService {
 
         sondages.forEach(this::updateStatut);
 
-        sondageRepository.saveAll(sondages); // persist updates
+        sondageRepository.saveAll(sondages);
 
-        return sondages.stream().map(this::toResponse).toList();
+        return sondages.stream()
+                .map(this::toResponse)
+                .toList();
     }
 
+    // === Liste des sondages actifs ===
     @Override
     public List<SondageResponse> getActiveSondages() {
 
         List<Sondage> sondages = sondageRepository.findAll();
 
-        // update status first
+        // Mise à jour statuts
         sondages.forEach(this::updateStatut);
+
         sondageRepository.saveAll(sondages);
 
-        // filter actif
+        // Filtrage actifs
         return sondages.stream()
                 .filter(s -> s.getStatut() == StatutSondage.ACTIF)
                 .map(this::toResponse)
                 .toList();
     }
 
+    // === Liste sondages créateur ===
     @Override
     public List<SondageResponse> getSondagesByCreatorEmail(String email) {
 
-        List<Sondage> sondages = sondageRepository.findByCreatedBy_Email(email);
+        List<Sondage> sondages =
+                sondageRepository.findByCreatedBy_Email(email);
 
         sondages.forEach(this::updateStatut);
+
         sondageRepository.saveAll(sondages);
 
-        return sondages.stream().map(this::toResponse).toList();
+        return sondages.stream()
+                .map(this::toResponse)
+                .toList();
     }
 
+    // === Détails sondage ===
     @Override
     public SondageResponse getSondageById(Long id) {
 
@@ -143,11 +159,13 @@ public class SondageServiceImpl implements SondageService {
                 .orElseThrow(() -> new RuntimeException("Sondage not found"));
 
         updateStatut(sondage);
+
         sondageRepository.save(sondage);
 
         return toResponse(sondage);
     }
 
+    // === Détails sondage actif ===
     @Override
     public SondageResponse getActiveSondageById(Long id) {
 
@@ -159,9 +177,11 @@ public class SondageServiceImpl implements SondageService {
 
         updateStatut(sondage);
 
-        // optional optimization
+        // Vérification actif
         if (sondage.getStatut() != StatutSondage.ACTIF) {
-            sondageRepository.save(sondage); // only save if needed
+
+            sondageRepository.save(sondage);
+
             throw new ResponseStatusException(
                     HttpStatus.FORBIDDEN,
                     "Sondage is not active"
@@ -171,7 +191,9 @@ public class SondageServiceImpl implements SondageService {
         return toResponse(sondage);
     }
 
+    // === Conversion Sondage -> DTO ===
     private SondageResponse toResponse(Sondage s) {
+
         return new SondageResponse(
                 s.getId(),
                 s.getTitle(),
@@ -180,26 +202,47 @@ public class SondageServiceImpl implements SondageService {
                 s.getDateDebut(),
                 s.getDateFin(),
                 s.getStatut(),
-                s.getCreatedBy() != null ? s.getCreatedBy().getEmail() : null,
-                s.getQuestions() == null ? List.of() : s.getQuestions().stream().map(this::toQuestionResponse).toList()
+                s.getCreatedBy() != null
+                        ? s.getCreatedBy().getEmail()
+                        : null,
+                s.getQuestions() == null
+                        ? List.of()
+                        : s.getQuestions()
+                        .stream()
+                        .map(this::toQuestionResponse)
+                        .toList()
         );
     }
 
+    // === Conversion Question -> DTO ===
     private QuestionResponse toQuestionResponse(Question q) {
+
         return new QuestionResponse(
                 q.getId(),
                 q.getText(),
                 q.getType(),
-                q.getChoixList() == null ? List.of() : q.getChoixList().stream().map(this::toChoixResponse).toList(),
+                q.getChoixList() == null
+                        ? List.of()
+                        : q.getChoixList()
+                        .stream()
+                        .map(this::toChoixResponse)
+                        .toList(),
                 q.getRequired()
         );
     }
 
+    // === Conversion Choix -> DTO ===
     private ChoixResponse toChoixResponse(Choix c) {
-        return new ChoixResponse(c.getId(), c.getLabel());
+
+        return new ChoixResponse(
+                c.getId(),
+                c.getLabel()
+        );
     }
 
+    // === Publication sondage ===
     public Sondage publierSondage(Long id) {
+
         Sondage sondage = sondageRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Sondage not found"));
 
@@ -210,9 +253,9 @@ public class SondageServiceImpl implements SondageService {
         sondage.setStatut(StatutSondage.PUBLISHED);
 
         return sondageRepository.save(sondage);
-
     }
 
+    // === Annulation publication ===
     public Sondage annulerPublication(Long id) {
 
         Sondage sondage = sondageRepository.findById(id)
@@ -227,6 +270,7 @@ public class SondageServiceImpl implements SondageService {
         return sondageRepository.save(sondage);
     }
 
+    // === Rejet sondage ===
     public void rejeterSondage(Long id) {
 
         Sondage sondage = sondageRepository.findById(id)
@@ -241,34 +285,38 @@ public class SondageServiceImpl implements SondageService {
         sondageRepository.save(sondage);
     }
 
+    // === Mise à jour statut sondage ===
     public void updateStatut(Sondage s) {
 
-        // 🔒 Never touch final states
+        // États finaux
         if (s.getStatut() == StatutSondage.TERMINE ||
                 s.getStatut() == StatutSondage.REJECTED) {
+
             return;
         }
 
         LocalDateTime now = LocalDateTime.now();
 
-        // ❌ BROUILLON expired → REJECTED
+        // Brouillon expiré -> rejeté
         if (s.getStatut() == StatutSondage.BROUILLON &&
                 (now.isEqual(s.getDateDebut()) || now.isAfter(s.getDateDebut()))) {
 
             s.setStatut(StatutSondage.REJECTED);
+
             return;
         }
 
-        // 🟢 PUBLISHED → ACTIF
+        // Published -> actif
         if (s.getStatut() == StatutSondage.PUBLISHED &&
                 (now.isEqual(s.getDateDebut()) || now.isAfter(s.getDateDebut())) &&
                 now.isBefore(s.getDateFin())) {
 
             s.setStatut(StatutSondage.ACTIF);
+
             return;
         }
 
-        // 🔴 ACTIF → TERMINE
+        // Actif -> terminé
         if (s.getStatut() == StatutSondage.ACTIF &&
                 now.isAfter(s.getDateFin())) {
 
@@ -276,6 +324,7 @@ public class SondageServiceImpl implements SondageService {
         }
     }
 
+    // === Mise à jour sondage ===
     @Override
     public Sondage updateSondage(Long id, CreateSondageRequest request) {
 
@@ -292,9 +341,11 @@ public class SondageServiceImpl implements SondageService {
         request.getQuestions().forEach(q -> {
 
             Question question = new Question();
+
             question.setText(q.getText());
             question.setType(q.getType());
             question.setSondage(sondage);
+
             if (q.getRequired() == null) {
                 question.setRequired(true);
             } else {
@@ -307,16 +358,23 @@ public class SondageServiceImpl implements SondageService {
                     throw new RuntimeException("Choices required");
                 }
 
-                List<Choix> choixList = q.getChoix().stream().map(label -> {
-                    Choix c = new Choix();
-                    c.setLabel(label);
-                    c.setQuestion(question);
-                    return c;
-                }).collect(Collectors.toList());
+                List<Choix> choixList = q.getChoix()
+                        .stream()
+                        .map(label -> {
+
+                            Choix c = new Choix();
+
+                            c.setLabel(label);
+                            c.setQuestion(question);
+
+                            return c;
+
+                        }).collect(Collectors.toList());
 
                 question.setChoixList(choixList);
 
             } else {
+
                 question.setChoixList(new ArrayList<>());
             }
 
@@ -326,12 +384,13 @@ public class SondageServiceImpl implements SondageService {
         return sondageRepository.save(sondage);
     }
 
+    // === Suppression sondage ===
     public void supprimerSondage(Long id) {
 
         Sondage sondage = sondageRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Sondage introuvable"));
 
-        // 🔥 rule: only rejected can be deleted
+        // Seuls les sondages rejetés peuvent être supprimés
         if (sondage.getStatut() != StatutSondage.REJECTED) {
             throw new RuntimeException("Seuls les sondages rejetés peuvent être supprimés");
         }

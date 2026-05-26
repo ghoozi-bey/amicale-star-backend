@@ -15,17 +15,16 @@ import org.springframework.stereotype.Service;
 public class AuthServiceImpl implements AuthService {
 
     private final AdherentRepository adherentRepository;
-
     private final PasswordEncoder passwordEncoder;
-
     private final JwtService jwtService;
 
+    // Authentification utilisateur
     @Override
     public AuthResponse login(LoginRequest request) {
 
         try {
 
-            // EMAIL REQUIRED
+            // Vérification email obligatoire
             if (request.getEmail() == null
                     || request.getEmail().trim().isEmpty()) {
 
@@ -35,7 +34,7 @@ public class AuthServiceImpl implements AuthService {
                 );
             }
 
-            // PASSWORD REQUIRED
+            // Vérification mot de passe obligatoire
             if (request.getPassword() == null
                     || request.getPassword().trim().isEmpty()) {
 
@@ -45,12 +44,12 @@ public class AuthServiceImpl implements AuthService {
                 );
             }
 
-            // FIND USER
+            // Recherche utilisateur par email
             Adherent adherent = adherentRepository
                     .findByEmail(request.getEmail().trim())
                     .orElse(null);
 
-            // EMAIL NOT FOUND
+            // Vérification existence utilisateur
             if (adherent == null) {
 
                 return new AuthResponse(
@@ -59,7 +58,7 @@ public class AuthServiceImpl implements AuthService {
                 );
             }
 
-            // ACCOUNT DISABLED
+            // Vérification compte actif
             if (adherent.getActif() == null
                     || !adherent.getActif()) {
 
@@ -69,7 +68,7 @@ public class AuthServiceImpl implements AuthService {
                 );
             }
 
-            // PASSWORD CHECK
+            // Vérification mot de passe
             boolean matches = passwordEncoder.matches(
                     request.getPassword(),
                     adherent.getPassword()
@@ -83,9 +82,8 @@ public class AuthServiceImpl implements AuthService {
                 );
             }
 
-            // TOKEN
-            String token =
-                    jwtService.generateToken(adherent);
+            // Génération token JWT
+            String token = jwtService.generateToken(adherent);
 
             return new AuthResponse(
                     null,
@@ -94,6 +92,7 @@ public class AuthServiceImpl implements AuthService {
 
         }
 
+        // Gestion erreurs serveur
         catch (Exception e) {
 
             e.printStackTrace();
@@ -102,9 +101,6 @@ public class AuthServiceImpl implements AuthService {
                     "SERVER_ERROR",
                     null
             );
-
         }
-
     }
-
 }

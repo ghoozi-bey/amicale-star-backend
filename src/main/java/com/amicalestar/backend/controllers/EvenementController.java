@@ -27,14 +27,21 @@ import org.springframework.security.core.Authentication;
 @CrossOrigin("*")
 public class EvenementController {
 
+    // Repository des événements
     private final EvenementRepository evenementRepository;
+
+    // Repository des types d’événements
     private final TypeEvenementRepository typeRepo;
+
+    // Service de gestion des événements
     private final EvenementService evenementService;
+
+    // Repository des adhérents
     private final AdherentRepository adherentRepository;
 
-
-    // 🔥 DTO MAPPING (CORRIGÉ)
+    // === Conversion d’un événement en DTO ===
     private EvenementDTO toDTO(Evenement e) {
+
         EvenementDTO dto = new EvenementDTO();
 
         dto.id = e.getId();
@@ -56,7 +63,6 @@ public class EvenementController {
 
         dto.photoUrl = "http://localhost:8080/api/evenements/photo/" + e.getId();
 
-        // ✅ FIX PRINCIPAL
         dto.isInternational = e.getIsInternational();
 
         dto.typeEvenementId = e.getTypeEvenement() != null
@@ -66,13 +72,14 @@ public class EvenementController {
         return dto;
     }
 
-    // 🌍 PUBLIC
+    // === Liste publique des événements ===
     @GetMapping("/public")
     public ResponseEntity<?> getAllPublicEvents() {
 
         List<Object[]> events = evenementRepository.findAllLight();
 
         List<EvenementDTO> dtos = events.stream().map(obj -> {
+
             EvenementDTO dto = new EvenementDTO();
 
             dto.id = (Long) obj[0];
@@ -81,19 +88,18 @@ public class EvenementController {
             dto.lieu = (String) obj[3];
             dto.dateDebut = (LocalDate) obj[4];
 
-            // 🔥 AJOUT IMPORTANT
             dto.statut = obj[5] != null ? obj[5].toString() : "ACTIF";
 
             dto.photoUrl = "http://localhost:8080/api/evenements/photo/" + dto.id;
 
             return dto;
+
         }).toList();
 
         return ResponseEntity.ok(dtos);
     }
 
-
-    // 🔥 DETAILS
+    // === Détails d’un événement ===
     @GetMapping("/{id}")
     public ResponseEntity<?> getEvenementById(@PathVariable Long id) {
 
@@ -103,7 +109,7 @@ public class EvenementController {
         return ResponseEntity.ok(toDTO(e));
     }
 
-    // ✅ ALL
+    // === Liste de tous les événements ===
     @GetMapping
     public ResponseEntity<?> getAllEvenements() {
 
@@ -115,11 +121,12 @@ public class EvenementController {
         return ResponseEntity.ok(dtos);
     }
 
-    // ✅ MES EVENEMENTS
+    // === Liste des événements créés par l’utilisateur ===
     @GetMapping("/mes-evenements-crees")
     public ResponseEntity<?> getMesEvenements() {
 
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+
         String email = authentication.getName();
 
         Adherent adherent = adherentRepository.findByEmail(email)
@@ -130,12 +137,12 @@ public class EvenementController {
                 .stream()
                 .map(e -> {
 
-                    // 🔥 PRIORITÉ : si ARCHIVE → ne rien toucher
+                    // Vérification du statut de l’événement
                     if (e.getStatut() == StatutEvenement.ARCHIVE) {
                         return toDTO(e);
                     }
 
-                    // 🔥 logique automatique
+                    // Mise à jour automatique du statut
                     if (e.getDateFin() != null && e.getDateFin().isBefore(LocalDate.now())) {
                         e.setStatut(StatutEvenement.TERMINE);
                     } else {
@@ -143,26 +150,29 @@ public class EvenementController {
                     }
 
                     return toDTO(e);
+
                 })
                 .toList();
 
         return ResponseEntity.ok(dtos);
     }
 
-    // ✅ PLACES
+    // === Nombre de places disponibles ===
     @GetMapping("/{id}/places")
     public ResponseEntity<Integer> getNbPlaces(@PathVariable Long id) {
+
         Evenement event = evenementRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Evenement non trouvé"));
 
         return ResponseEntity.ok(event.getNbPlaces());
     }
 
-    // ✅ PHOTO
+    // === Récupération de la photo d’un événement ===
     @GetMapping("/photo/{id}")
     public ResponseEntity<byte[]> getPhoto(@PathVariable Long id) {
 
         byte[] photo = evenementRepository.getPhotoById(id);
+
         String type = evenementRepository.getPhotoTypeById(id);
 
         if (photo == null) {
@@ -174,7 +184,7 @@ public class EvenementController {
                 .body(photo);
     }
 
-    // 🔥 CREATE (CORRIGÉ)
+    // === Création d’un événement ===
     @PostMapping(consumes = "multipart/form-data")
     public ResponseEntity<?> createEvenement(
             @RequestParam("titre") String titre,
@@ -221,7 +231,7 @@ public class EvenementController {
         e.setAgence(agence);
         e.setDestination(destination);
 
-        // 🔥 TYPE
+        // Récupération du type d’événement
         TypeEvenement type = typeRepo.findById(typeId)
                 .orElseThrow(() -> new RuntimeException("Type introuvable"));
 
@@ -229,19 +239,20 @@ public class EvenementController {
 
         String typeNom = type.getNom().toUpperCase();
 
+        // Gestion des événements internationaux
         if (typeNom.contains("OMRA") || typeNom.contains("HAJJ")) {
             e.setIsInternational(true);
         } else {
             e.setIsInternational(isInternational != null ? isInternational : false);
         }
 
-        // 🔥 PHOTO
+        // Ajout de la photo
         if (photo != null && !photo.isEmpty()) {
             e.setPhoto(photo.getBytes());
             e.setPhotoType(photo.getContentType());
         }
 
-        // 🔥 REMISES (LA PARTIE QUI MANQUAIT)
+        // Configuration des remises
         e.setRemiseEnfant12Active(remiseEnfant12Active != null ? remiseEnfant12Active : false);
         e.setRemiseEnfant12Pourcentage(remiseEnfant12Pourcentage != null ? remiseEnfant12Pourcentage : 0);
 
@@ -251,23 +262,31 @@ public class EvenementController {
         e.setRemiseCoupleActive(remiseCoupleActive != null ? remiseCoupleActive : false);
         e.setRemiseCouplePourcentage(remiseCouplePourcentage != null ? remiseCouplePourcentage : 0);
 
-        // 🔥 USER
+        // Récupération de l’utilisateur connecté
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+
         String email = authentication.getName();
 
         Adherent adherent = adherentRepository.findByEmail(email)
                 .orElseThrow(() -> new RuntimeException("Adhérent non trouvé"));
 
         e.setAdherent(adherent);
+
         e.setStatut(StatutEvenement.valueOf("ACTIF"));
 
         return ResponseEntity.ok(evenementService.createEvenement(e));
     }
+
+    // === Suppression d’un événement ===
     @DeleteMapping("/{id}")
     public ResponseEntity<?> deleteEvenement(@PathVariable Long id) {
+
         evenementService.deleteEvenement(id);
+
         return ResponseEntity.ok("Evenement supprimé");
     }
+
+    // === Mise à jour d’un événement ===
     @PutMapping("/{id}")
     public ResponseEntity<?> updateEvenement(
             @PathVariable Long id,
@@ -277,7 +296,6 @@ public class EvenementController {
         Evenement e = evenementRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Evenement introuvable"));
 
-        // 🔥 update champs
         e.setTitre(updatedEvent.getTitre());
         e.setDescription(updatedEvent.getDescription());
         e.setLieu(updatedEvent.getLieu());
@@ -293,6 +311,8 @@ public class EvenementController {
 
         return ResponseEntity.ok(evenementRepository.save(e));
     }
+
+    // === Archivage d’un événement ===
     @PutMapping("/{id}/archive")
     public ResponseEntity<?> archiver(@PathVariable Long id) {
 

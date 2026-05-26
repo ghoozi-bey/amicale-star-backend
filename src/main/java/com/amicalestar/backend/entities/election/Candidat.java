@@ -11,6 +11,7 @@ import java.time.LocalDateTime;
 @Getter
 @Setter
 @Table(
+        // Empêche un adhérent de candidater plusieurs fois à la même élection
         uniqueConstraints = {
                 @UniqueConstraint(
                         columnNames = {"adherent_id", "election_id"}
@@ -33,8 +34,10 @@ public class Candidat {
 
     private LocalDateTime dateCandidature;
 
+    // === Initialisation automatique de la date de candidature ===
     @PrePersist
     public void prePersist() {
+
         this.dateCandidature = LocalDateTime.now();
     }
 }

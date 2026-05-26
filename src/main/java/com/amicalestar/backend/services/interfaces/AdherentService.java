@@ -7,35 +7,35 @@ import com.amicalestar.backend.dto.adherent.AdherentDTO;
 
 import java.util.List;
 
-
 public interface AdherentService {
 
-    // utilisé pour image endpoint
+    // === Recherche d’un adhérent par matricule ===
     Adherent getByMatricule(String matricule);
 
-    // ================= UPDATE ADMIN =================
-    Adherent updateAdherent(String matricule, Adherent adherent);
-
-    // ================= DELETE =================
+    // === Suppression d’un adhérent ===
     void deleteAdherent(String matricule);
 
-    // ================= OLD PROFILE =================
-    void updateProfile(String matricule, UpdateProfileRequest request);
+    // === Mise à jour du profil utilisateur ===
+    void updateProfile(
+            String matricule,
+            UpdateProfileRequest request
+    );
 
+    // === Récupération du profil utilisateur ===
     Adherent getProfile(String matricule);
 
-    // ================= 🔥 NEW PRO VERSION =================
-
-    /**
-     * Profil via email (JWT)
-     */
+    // === Récupération du profil via email JWT ===
     Adherent getProfileByEmail(String email);
 
-    /**
-     * Update profil + image
-     */
-    void updateProfileByEmail(String email, UpdateProfileRequest request);
+    // === Mise à jour du profil via email JWT ===
+    void updateProfileByEmail(
+            String email,
+            UpdateProfileRequest request
+    );
+
+    // === Récupération du profil sous forme DTO ===
     AdherentDTO getProfileDTOByEmail(String email);
 
+    // === Liste simplifiée des adhérents ===
     List<AdherentLiteDTO> getAllLite();
 }

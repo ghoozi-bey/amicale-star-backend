@@ -10,30 +10,41 @@ import java.util.List;
 
 public interface EvenementRepository extends JpaRepository<Evenement, Long> {
 
-    // 🔵 créés
+    // === Liste des événements créés par un adhérent ===
     List<Evenement> findByAdherent_Matricule(String matricule);
 
-    // 🟢 dashboard
+    // === Liste des événements non archivés ===
     List<Evenement> findByStatutNot(StatutEvenement statut);
 
-    // 🔵 participation
+    // === Liste des événements auxquels participe un adhérent ===
     @Query("""
     SELECT e FROM Evenement e
     JOIN e.inscriptions i
     WHERE i.adherent.matricule = :matricule
     """)
     List<Evenement> findEventsWhereUserParticipates(@Param("matricule") String matricule);
+
+    // === Liste des événements d’un adhérent inscrit ===
     @Query("SELECT i.evenement FROM Inscription i WHERE i.adherent.matricule = :matricule")
     List<Evenement> findEvenementsByAdherentInscrit(@Param("matricule") Long matricule);
+
+    // === Récupération simplifiée des événements ===
     @Query("SELECT e.id, e.titre, e.description, e.lieu, e.dateDebut, e.statut FROM Evenement e")
     List<Object[]> findAllLight();
+
+    // === Récupération de la photo d’un événement ===
     @Query("SELECT e.photo FROM Evenement e WHERE e.id = :id")
     byte[] getPhotoById(@Param("id") Long id);
 
+    // === Récupération du type de photo ===
     @Query("SELECT e.photoType FROM Evenement e WHERE e.id = :id")
     String getPhotoTypeById(@Param("id") Long id);
+
+    // === Nombre d’inscriptions d’un événement ===
     @Query("SELECT COUNT(i) FROM Inscription i WHERE i.evenement.id = :eventId")
     int countInscriptions(@Param("eventId") Long eventId);
+
+    // === Recherche d’événements recommandés ===
     @Query("SELECT e FROM Evenement e WHERE " +
             "(:budget IS NULL OR e.prix <= :budget) AND " +
             "(:participants IS NULL OR e.nbPlaces >= :participants) AND " +
@@ -43,6 +54,8 @@ public interface EvenementRepository extends JpaRepository<Evenement, Long> {
             @Param("participants") Integer participants,
             @Param("type") String type
     );
+
+    // === Recherche avancée d’événements ===
     @Query("SELECT e FROM Evenement e WHERE " +
             "e.statut = com.amicalestar.backend.enums.StatutEvenement.ACTIF AND " +
             "(:budget IS NULL OR e.prix <= :budget) AND " +
@@ -55,7 +68,11 @@ public interface EvenementRepository extends JpaRepository<Evenement, Long> {
             @Param("type") String type,
             @Param("keyword") String keyword
     );
+
+    // === Liste des événements par statut ===
     List<Evenement> findByStatut(StatutEvenement statut);
+
+    // === Recherche des conventions par société ===
     @Query("SELECT e FROM Evenement e WHERE " +
             "e.statut = com.amicalestar.backend.enums.StatutEvenement.ACTIF AND " +
             "LOWER(e.typeEvenement.nom) LIKE '%convention%' AND " +

@@ -15,16 +15,24 @@ public class CustomUserDetailsService implements UserDetailsService {
 
     private final AdherentRepository adherentRepository;
 
+    // === Chargement des informations utilisateur pour Spring Security ===
     @Override
-    public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
+    public UserDetails loadUserByUsername(String email)
+            throws UsernameNotFoundException {
 
         Adherent user = adherentRepository.findByEmail(email)
-                .orElseThrow(() -> new UsernameNotFoundException("User not found"));
+                .orElseThrow(() ->
+                        new UsernameNotFoundException("User not found")
+                );
 
         return new User(
                 user.getEmail(),
                 user.getPassword(),
-                List.of(new SimpleGrantedAuthority("ROLE_" + user.getTypeAdherent().name()))
+                List.of(
+                        new SimpleGrantedAuthority(
+                                "ROLE_" + user.getTypeAdherent().name()
+                        )
+                )
         );
     }
 }

@@ -10,7 +10,6 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.transaction.annotation.Transactional;
 
-
 import java.time.LocalDate;
 import java.util.List;
 
@@ -20,12 +19,17 @@ import java.util.List;
 @CrossOrigin(origins = "http://localhost:4200")
 public class PaiementController {
 
+    // Repository des paiements
     private final PaiementRepository paiementRepository;
 
+    // === Liste des paiements d’une inscription ===
     @GetMapping("/inscription/{id}")
     public List<PaiementDTO> getPaiementsByInscription(@PathVariable Long id) {
+
         return paiementRepository.findDTOByInscriptionId(id);
     }
+
+    // === Validation d’un paiement ===
     @PutMapping("/{id}/statut")
     public ResponseEntity<?> updateStatut(@PathVariable Long id) {
 
@@ -40,12 +44,14 @@ public class PaiementController {
         return ResponseEntity.ok("Paiement validé ✅");
     }
 
+    // === Upload du justificatif de paiement ===
     @Transactional
     @PutMapping("/{id}/upload")
     public ResponseEntity<?> uploadJustificatif(
             @PathVariable Long id,
             @RequestParam("file") MultipartFile file
     ) {
+
         try {
 
             System.out.println("🔥 ===== DEBUG UPLOAD =====");
@@ -53,8 +59,11 @@ public class PaiementController {
             System.out.println("ID = " + id);
 
             if (file == null) {
+
                 System.out.println("❌ file = NULL");
+
             } else {
+
                 System.out.println("📁 name = " + file.getOriginalFilename());
                 System.out.println("📁 type = " + file.getContentType());
                 System.out.println("📁 size = " + file.getSize());
@@ -69,12 +78,15 @@ public class PaiementController {
             Inscription inscription = paiement.getInscription();
 
             if (inscription != null) {
+
                 System.out.println("📌 statut inscription = " + inscription.getStatut());
+
             } else {
+
                 System.out.println("❌ inscription NULL");
             }
 
-            // ⚠️ TEMPORAIRE : on supprime toutes les conditions
+            // Sauvegarde du justificatif
             paiement.setJustificatifVirement(file.getBytes());
             paiement.setStatut("EN_ATTENTE_VALIDATION");
 
@@ -85,11 +97,15 @@ public class PaiementController {
             return ResponseEntity.ok("OK");
 
         } catch (Exception e) {
+
             e.printStackTrace();
+
             return ResponseEntity.badRequest().body(e.getMessage());
         }
 
     }
+
+    // === Récupération du justificatif PDF ===
     @GetMapping("/{id}/justificatif")
     public ResponseEntity<byte[]> getJustificatif(@PathVariable Long id) {
 
@@ -104,6 +120,8 @@ public class PaiementController {
                 .header("Content-Type", "application/pdf")
                 .body(paiement.getJustificatifVirement());
     }
+
+    // === Validation du justificatif ===
     @PutMapping("/{id}/valider")
     public ResponseEntity<?> validerJustificatif(@PathVariable Long id) {
 
@@ -118,6 +136,7 @@ public class PaiementController {
         return ResponseEntity.ok("Paiement validé ✅");
     }
 
+    // === Refus du justificatif ===
     @PutMapping("/{id}/refuser")
     public ResponseEntity<?> refuserJustificatif(@PathVariable Long id) {
 

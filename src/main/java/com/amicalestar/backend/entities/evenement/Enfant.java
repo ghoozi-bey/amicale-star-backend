@@ -19,6 +19,7 @@ public class Enfant {
     private String prenom;
     private String dateNaissance;
 
+    // Stockage du passeport avec chargement lazy
     @Lob
     @Basic(fetch = FetchType.LAZY)
     @Column(name = "passport")

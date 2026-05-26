@@ -7,7 +7,9 @@ import java.util.List;
 
 public interface SondageStatsService {
 
+    // === Statistiques d’un sondage ===
     SondageStatsDTO getStats(Long sondageId);
 
+    // === Liste des participations d’un sondage ===
     List<ParticipationDTO> getParticipations(Long sondageId);
 }

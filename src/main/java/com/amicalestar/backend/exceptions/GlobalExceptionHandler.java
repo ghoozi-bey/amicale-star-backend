@@ -9,12 +9,13 @@ import java.util.Map;
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
+    // === Gestion des erreurs de validation personnalisées ===
     @ExceptionHandler(ValidationException.class)
     public ResponseEntity<?> handleValidationException(
             ValidationException ex
     ) {
 
-        // validation map
+        // Retour des erreurs sous forme de map
         if (ex.getErrors() != null) {
 
             return ResponseEntity
@@ -22,7 +23,7 @@ public class GlobalExceptionHandler {
                     .body(ex.getErrors());
         }
 
-        // simple message
+        // Retour d’un message simple
         Map<String, String> response =
                 new HashMap<>();
 
@@ -36,8 +37,10 @@ public class GlobalExceptionHandler {
                 .body(response);
     }
 
+    // === Gestion des erreurs runtime ===
     @ExceptionHandler(RuntimeException.class)
     public ResponseEntity<?> handleRuntime(RuntimeException ex) {
+
         return ResponseEntity.badRequest().body(ex.getMessage());
     }
 }
